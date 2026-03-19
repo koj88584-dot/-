@@ -1,0 +1,1260 @@
+openapi: 3.0.3
+info:
+  title: HMDP 后端 API 文档
+  version: 1.0.0
+  description: 基于 src 后端（Java Spring Boot）项目的 OpenAPI 草案，覆盖主要端点与数据结构。
+servers:
+  - url: http://localhost:8080
+    description: 本地开发服务器
+tags:
+  - name: user
+    description: 用户相关接口
+  - name: blog
+    description: 博客相关接口
+  - name: shop
+    description: 商铺相关接口
+  - name: history
+    description: 浏览历史相关接口
+  - name: upload
+    description: 文件上传相关接口
+  - name: voucher
+    description: 优惠券相关接口
+  - name: privacy
+    description: 隐私设置相关接口
+  - name: voucher-order
+    description: 代金券订单相关接口
+  - name: blog-comments
+    description: 博客评论相关接口
+  - name: shop-type
+    description: 商铺类型相关接口
+  - name: health
+    description: 健康检查相关接口
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: 系统健康检
+      operationId: getHealth
+      responses:
+        '200':
+          description: 正常
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /user/code:
+    post:
+      tags:
+        - user
+      summary: 发送手机验证码
+      operationId: sendCode
+      parameters:
+        - in: query
+          name: phone
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /user/login:
+    post:
+      tags:
+        - user
+      summary: 用户登录
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginFormDTO'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '400':
+          description: 参数错误
+        '401':
+          description: 未授权
+  /user/logout:
+    post:
+      tags:
+        - user
+      summary: 用户登出
+      operationId: logoutUser
+      parameters:
+        - in: header
+          name: authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /user/me:
+    get:
+      tags:
+        - user
+      summary: 获取当前登录用户
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /user/info/{id}:
+    get:
+      tags:
+        - user
+      summary: 获取用户详情
+      operationId: getUserInfo
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /user/{id}:
+    get:
+      tags:
+        - user
+      summary: 根据ID查询用户
+      operationId: getUserById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /user/sign:
+    post:
+      tags:
+        - user
+      summary: 用户签到
+      operationId: userSign
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /user/sign/count:
+    get:
+      tags:
+        - user
+      summary: 签到次数统计
+      operationId: userSignCount
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /shop/{id}:
+    get:
+      tags:
+        - shop
+      summary: 根据id查询商铺信息
+      operationId: getShopById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /shop:
+    post:
+      tags:
+        - shop
+      summary: 新增商铺信息
+      operationId: addShop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shop'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+    put:
+      tags:
+        - shop
+      summary: 更新商铺信息
+      operationId: updateShop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shop'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /shop/of/type:
+    get:
+      tags:
+        - shop
+      summary: 根据类型分页查询商铺信息
+      operationId: queryShopByType
+      parameters:
+        - in: query
+          name: typeId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: current
+          schema:
+            type: integer
+          description: 页码
+        - in: query
+          name: x
+          schema:
+            type: number
+        - in: query
+          name: y
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /shop/of/name:
+    get:
+      tags:
+        - shop
+      summary: 根据名称分页查询商铺信息
+      operationId: queryShopByName
+      parameters:
+        - in: query
+          name: name
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: current
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /shop-type/list:
+    get:
+      tags:
+        - shop-type
+      summary: 商铺类型列表
+      operationId: listShopTypes
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShopType'
+  /blog:
+    post:
+      tags:
+        - blog
+      summary: 新增博客
+      operationId: addBlog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Blog'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog/{id}:
+    get:
+      tags:
+        - blog
+      summary: 根据ID获取博客
+      operationId: getBlogById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog/like/{id}:
+    put:
+      tags:
+        - blog
+      summary: 点赞博客
+      operationId: likeBlog
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog/hot:
+    get:
+      tags:
+        - blog
+      summary: 获取热门博客
+      operationId: hotBlogs
+      parameters:
+        - in: query
+          name: current
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog/of/me:
+    get:
+      tags:
+        - blog
+      summary: 查询当前用户的博客
+      operationId: blogsOfMe
+      parameters:
+        - in: query
+          name: current
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog/of/user:
+    get:
+      tags:
+        - blog
+      summary: 根据用户查询博客
+      operationId: blogsOfUser
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: current
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog/of/follow:
+    get:
+      tags:
+        - blog
+      summary: 查询关注作者的博客
+      operationId: blogsOfFollow
+      parameters:
+        - in: query
+          name: lastId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog-comments:
+    post:
+      tags:
+        - blog-comments
+      summary: 发表评论
+      operationId: addComment
+      parameters:
+        - in: query
+          name: blogId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: content
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: parentId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog-comments/list/{blogId}:
+    get:
+      tags:
+        - blog-comments
+      summary: 获取博客评论列表
+      operationId: listComments
+      parameters:
+        - in: path
+          name: blogId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: current
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog-comments/like/{id}:
+    put:
+      tags:
+        - blog-comments
+      summary: 点赞评论
+      operationId: likeComment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog-comments/{id}:
+    delete:
+      tags:
+        - blog-comments
+      summary: 删除评论
+      operationId: deleteComment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /blog-comments/replies/{parentId}:
+    get:
+      tags:
+        - blog-comments
+      summary: 获取评论的回复
+      operationId: listCommentReplies
+      parameters:
+        - in: path
+          name: parentId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: current
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /history/{type}/{targetId}:
+    post:
+      tags:
+        - history
+      summary: 添加浏览记录
+      operationId: addHistory
+      parameters:
+        - in: path
+          name: type
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /history/list:
+    get:
+      tags:
+        - history
+      summary: 查询浏览历史
+      operationId: listHistory
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: integer
+        - in: query
+          name: current
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /history/clear:
+    delete:
+      tags:
+        - history
+      summary: 清空浏览历史
+      operationId: clearHistory
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /history/{id}:
+    delete:
+      tags:
+        - history
+      summary: 删除单条历史
+      operationId: deleteHistory
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /upload/blog:
+    post:
+      tags:
+        - upload
+      summary: 上传博客图片
+      operationId: uploadBlogImage
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /upload/blog/delete:
+    get:
+      tags:
+        - upload
+      summary: 删除博客图片
+      operationId: deleteBlogImage
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /privacy:
+    get:
+      tags:
+        - privacy
+      summary: 获取当前用户隐私设置
+      operationId: getMyPrivacySetting
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+    put:
+      tags:
+        - privacy
+      summary: 更新隐私设置
+      operationId: updatePrivacySetting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivacySetting'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /privacy/check/following/{userId}:
+    get:
+      tags:
+        - privacy
+      summary: 检查是否可查看关注列表
+      operationId: canViewFollowing
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /privacy/check/followers/{userId}:
+    get:
+      tags:
+        - privacy
+      summary: 检查是否可查看粉丝
+      operationId: canViewFollowers
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /privacy/check/favorites/{userId}:
+    get:
+      tags:
+        - privacy
+      summary: 检查是否可查看收藏
+      operationId: canViewFavorites
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher:
+    post:
+      tags:
+        - voucher
+      summary: 新增普通券
+      operationId: addVoucher
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Voucher'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher/seckill:
+    post:
+      tags:
+        - voucher
+      summary: 新增秒杀券
+      operationId: addSeckillVoucher
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Voucher'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher/list/{shopId}:
+    get:
+      tags:
+        - voucher
+      summary: 查询店铺的券列表
+      operationId: listVoucherOfShop
+      parameters:
+        - in: path
+          name: shopId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher/my:
+    get:
+      tags:
+        - voucher
+      summary: 查询我的券列表
+      operationId: myVouchers
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: integer
+        - in: query
+          name: current
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher/{id}:
+    get:
+      tags:
+        - voucher
+      summary: 查询券详情
+      operationId: getVoucherById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher-order/seckill/{id}:
+    post:
+      tags:
+        - voucher-order
+      summary: 秒杀下单
+      operationId: seckillVoucher
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher-order/list:
+    get:
+      tags:
+        - voucher-order
+      summary: 查询我的订单列表
+      operationId: listMyOrders
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: integer
+        - in: query
+          name: current
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher-order/{id}:
+    get:
+      tags:
+        - voucher-order
+      summary: 查询订单详情
+      operationId: getOrderById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher-order/verify/{id}:
+    post:
+      tags:
+        - voucher-order
+      summary: 核销订单
+      operationId: verifyOrder
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher-order/cancel/{id}:
+    post:
+      tags:
+        - voucher-order
+      summary: 取消订单
+      operationId: cancelOrder
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher-order/pay/{id}:
+    post:
+      tags:
+        - voucher-order
+      summary: 支付订单（模拟）
+      operationId: payOrder
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  /voucher-order/refund/{id}:
+    post:
+      tags:
+        - voucher-order
+      summary: 申请退款
+      operationId: refundOrder
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Result:
+      type: object
+      properties:
+        success:
+          type: boolean
+        errorMsg:
+          type: string
+        data:
+          type: object
+        total:
+          type: integer
+      required:
+        - success
+    LoginFormDTO:
+      type: object
+      properties:
+        phone:
+          type: string
+        code:
+          type: string
+        password:
+          type: string
+      required: []
+    Shop:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        typeId:
+          type: integer
+        images:
+          type: string
+        area:
+          type: string
+        address:
+          type: string
+        x:
+          type: number
+        y:
+          type: number
+        avgPrice:
+          type: integer
+        sold:
+          type: integer
+        comments:
+          type: integer
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        phone:
+          type: string
+        nickName:
+          type: string
+        icon:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+    UserInfo:
+      type: object
+      properties:
+        userId:
+          type: string
+        city:
+          type: string
+        introduce:
+          type: string
+        fans:
+          type: integer
+        followee:
+          type: integer
+        gender:
+          type: boolean
+        birthday:
+          type: string
+          format: date
+        credits:
+          type: integer
+        level:
+          type: boolean
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+    Blog:
+      type: object
+      properties:
+        id:
+          type: string
+        shopId:
+          type: integer
+        userId:
+          type: integer
+        icon:
+          type: string
+        name:
+          type: string
+        isLike:
+          type: boolean
+        title:
+          type: string
+        images:
+          type: string
+        content:
+          type: string
+        liked:
+          type: integer
+        comments:
+          type: integer
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+    ShopType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        sort:
+          type: integer
+    Voucher:
+      type: object
+      properties:
+        id:
+          type: string
+        shopId:
+          type: integer
+        title:
+          type: string
+        subTitle:
+          type: string
+        rules:
+          type: string
+        payValue:
+          type: number
+        actualValue:
+          type: number
+        type:
+          type: integer
+        stock:
+          type: integer
+        beginTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+    VoucherOrder:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        voucherId:
+          type: string
+        payType:
+          type: integer
+        status:
+          type: integer
+        createTime:
+          type: string
+          format: date-time
+        payTime:
+          type: string
+          format: date-time
+        useTime:
+          type: string
+          format: date-time
+        refundTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+    PrivacySetting:
+      type: object
+      properties:
+        id:
+          type: string
+        canViewFollowing:
+          type: boolean
+        canViewFollowers:
+          type: boolean
+        canViewFavorites:
+          type: boolean
+    BlogComment:
+      type: object
+      properties:
+        id:
+          type: string
+        blogId:
+          type: string
+        userId:
+          type: string
+        content:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+    HistoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: integer
+        targetId:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+        
+  
