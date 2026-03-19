@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>店铺详情 - 周边优速通</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff6b35;
+      --primary-light: #ff8c61;
+      --primary-dark: #e55a2b;
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --text-tertiary: #999999;
+      --border: #f0f0f0;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+    }
+
+    .header-back-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .header-back-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .header-title {
+      flex: 1;
+      text-align: center;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .header-share {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .header-share:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Main Content */
+    .main-content {
+      padding-top: 56px;
+      padding-bottom: 80px;
+    }
+
+    /* Hero Section */
+    .hero-section {
+      position: relative;
+      background: var(--surface);
+    }
+
+    .shop-images-carousel {
+      width: 100%;
+      height: 280px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .shop-images-carousel img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-indicator {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
+    .shop-info-card {
+      padding: 20px 16px;
+      background: var(--surface);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      margin-top: -20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .shop-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .shop-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .shop-rate {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shop-rate .el-rate {
+      display: inline-flex;
+    }
+
+    .shop-rate span {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .shop-comments {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .shop-price {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .shop-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .shop-tag {
+      background: linear-gradient(135deg, #fff5f2 0%, #ffede8 100%);
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .shop-rank {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #fff9f0 0%, #fff5e6 100%);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+    }
+
+    .shop-rank img {
+      width: 24px;
+      height: 24px;
+    }
+
+    .shop-rank span {
+      flex: 1;
+      font-size: 14px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .shop-rank i {
+      color: var(--text-tertiary);
+    }
+
+    /* Action Buttons */
+    .action-bar {
+      display: flex;
+      gap: 12px;
+      padding: 0 16px 16px;
+      background: var(--surface);
+    }
+
+    .action-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 20px;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+    }
+
+    .action-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5);
+    }
+
+    .action-btn.secondary {
+      background: var(--bg);
+      color: var(--text-primary);
+    }
+
+    .action-btn.secondary:hover {
+      background: #f0f0f0;
+    }
+
+    /* Info Section */
+    .info-section {
+      background: var(--surface);
+      margin-top: 12px;
+      padding: 16px;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #fff5f2 0%, #ffede8 100%);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 15px;
+      color: var(--text-primary);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .info-arrow {
+      color: var(--text-tertiary);
+      font-size: 16px;
+    }
+
+    /* Voucher Section */
+    .section {
+      background: var(--surface);
+      margin-top: 12px;
+      padding: 20px 16px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title-icon {
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 2px;
+    }
+
+    .section-more {
+      color: var(--text-tertiary);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .voucher-card {
+      background: linear-gradient(135deg, #fff9f0 0%, #fff5e6 100%);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .voucher-card::before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background: var(--surface);
+      border-radius: 50%;
+    }
+
+    .voucher-card::after {
+      content: '';
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background: var(--surface);
+      border-radius: 50%;
+    }
+
+    .voucher-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .voucher-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .voucher-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .voucher-price-box {
+      text-align: right;
+    }
+
+    .voucher-price {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .voucher-price small {
+      font-size: 14px;
+    }
+
+    .voucher-original {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      text-decoration: line-through;
+    }
+
+    .voucher-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(0,0,0,0.1);
+    }
+
+    .voucher-stock {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .voucher-stock span {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .voucher-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .voucher-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+    }
+
+    .voucher-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .seckill-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: linear-gradient(135deg, #ff4757 0%, #ff6348 100%);
+      color: white;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 0 var(--radius-md) 0 var(--radius-md);
+    }
+
+    .seckill-time {
+      font-size: 12px;
+      color: var(--primary);
+      margin-top: 4px;
+    }
+
+    /* Comments Section */
+    .comment-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .comment-tag {
+      background: var(--bg);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .comment-tag:hover,
+    .comment-tag.active {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+    }
+
+    .comment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .comment-item {
+      display: flex;
+      gap: 12px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .comment-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .comment-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .comment-content {
+      flex: 1;
+    }
+
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .comment-user {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-level {
+      background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .comment-rate {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .comment-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .comment-images {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .comment-images img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+    }
+
+    .comment-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .comment-actions {
+      display: flex;
+      gap: 16px;
+    }
+
+    .comment-action {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .comment-action:hover {
+      color: var(--primary);
+    }
+
+    .view-all-comments {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+      transition: color 0.3s ease;
+    }
+
+    .view-all-comments:hover {
+      color: var(--primary);
+    }
+
+    /* Copyright */
+    .copyright {
+      text-align: center;
+      padding: 30px 16px;
+      color: var(--text-tertiary);
+      font-size: 12px;
+      background: var(--bg);
+    }
+
+    /* Bottom Action Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+      z-index: 1000;
+    }
+
+    .bottom-actions {
+      display: flex;
+      gap: 20px;
+    }
+
+    .bottom-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 11px;
+      transition: color 0.3s ease;
+    }
+
+    .bottom-action:hover {
+      color: var(--primary);
+    }
+
+    .bottom-action i {
+      font-size: 22px;
+    }
+
+    .bottom-btn {
+      flex: 1;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .bottom-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-back-btn" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </div>
+    <div class="header-title">店铺详情</div>
+    <div class="header-share">
+      <i class="el-icon-share"></i>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Hero Section -->
+    <div class="hero-section">
+      <div class="shop-images-carousel">
+        <img :src="shop.images && shop.images[0]" alt="店铺图片" v-if="shop.images && shop.images.length > 0">
+        <div class="image-indicator" v-if="shop.images">{{ shop.images.length }}张</div>
+      </div>
+      
+      <div class="shop-info-card">
+        <h1 class="shop-title">{{shop.name}}</h1>
+        
+        <div class="shop-meta">
+          <div class="shop-rate">
+            <el-rate disabled v-model="shop.score/10" text-color="#ff6b35"></el-rate>
+            <span>{{shop.score/10}}分</span>
+          </div>
+          <span class="shop-comments">{{shop.comments}}条评价</span>
+          <span class="shop-price">￥{{shop.avgPrice}}/人</span>
+        </div>
+
+        <div class="shop-tags">
+          <span class="shop-tag">口味: 4.9</span>
+          <span class="shop-tag">环境: 4.8</span>
+          <span class="shop-tag">服务: 4.7</span>
+        </div>
+
+        <div class="shop-rank">
+          <img src="/imgs/bd.png" alt="榜单">
+          <span>拱墅区好评榜第3名</span>
+          <i class="el-icon-arrow-right"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <button class="action-btn secondary" @click="goToMap">
+        <i class="el-icon-map-location"></i>
+        查看地图
+      </button>
+      <button class="action-btn primary" @click="callShop">
+        <i class="el-icon-phone"></i>
+        联系商家
+      </button>
+    </div>
+
+    <!-- Info Section -->
+    <div class="info-section">
+      <div class="info-item">
+        <div class="info-icon">
+          <i class="el-icon-location"></i>
+        </div>
+        <div class="info-content">
+          <div class="info-label">地址</div>
+          <div class="info-value">{{shop.address}}</div>
+        </div>
+        <i class="el-icon-arrow-right info-arrow"></i>
+      </div>
+      
+      <div class="info-item">
+        <div class="info-icon">
+          <i class="el-icon-time"></i>
+        </div>
+        <div class="info-content">
+          <div class="info-label">营业时间</div>
+          <div class="info-value">{{shop.openHours || '09:00 - 22:00'}}</div>
+        </div>
+        <i class="el-icon-arrow-right info-arrow"></i>
+      </div>
+    </div>
+
+    <!-- Voucher Section -->
+    <div class="section" v-if="vouchers && vouchers.length > 0">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="section-title-icon"></div>
+          优惠代金券
+        </div>
+        <div class="section-more">
+          全部优惠 <i class="el-icon-arrow-right"></i>
+        </div>
+      </div>
+
+      <div class="voucher-card" v-for="v in vouchers" :key="v.id" v-if="!isEnd(v)">
+        <div class="seckill-badge" v-if="v.type === 1">限时秒杀</div>
+        
+        <div class="voucher-header">
+          <div>
+            <div class="voucher-title">{{v.title}}</div>
+            <div class="voucher-subtitle">{{v.subTitle}}</div>
+            <div class="seckill-time" v-if="v.type === 1">
+              <i class="el-icon-time"></i> {{formatTime(v)}}
+            </div>
+          </div>
+          <div class="voucher-price-box">
+            <div class="voucher-price"><small>￥</small>{{util.formatPrice(v.payValue)}}</div>
+            <div class="voucher-original">￥{{util.formatPrice(v.actualValue)}}</div>
+          </div>
+        </div>
+
+        <div class="voucher-footer">
+          <div class="voucher-stock">
+            剩余 <span>{{v.stock}}</span> 张
+          </div>
+          <button 
+            class="voucher-btn" 
+            :disabled="isNotBegin(v) || v.stock < 1"
+            @click="seckill(v)"
+          >
+            {{isNotBegin(v) ? '即将开始' : (v.stock < 1 ? '已售罄' : '立即抢购')}}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="section-title-icon"></div>
+          网友评价 <span style="color: var(--text-tertiary); font-weight: 400;">(119)</span>
+        </div>
+        <div class="section-more">
+          <i class="el-icon-s-data"></i> 好评率 98%
+        </div>
+      </div>
+
+      <div class="comment-tags">
+        <span class="comment-tag active">全部</span>
+        <span class="comment-tag">味道赞(19)</span>
+        <span class="comment-tag">牛肉赞(16)</span>
+        <span class="comment-tag">菜品不错(11)</span>
+        <span class="comment-tag">回头客(4)</span>
+        <span class="comment-tag">分量足(4)</span>
+      </div>
+
+      <div class="comment-list">
+        <div class="comment-item" v-for="i in 3" :key="i">
+          <img src="https://p0.meituan.net/userheadpicbackend/57e44d6eba01aad0d8d711788f30a126549507.jpg%4048w_48h_1e_1c_1l%7Cwatermark%3D0" class="comment-avatar" alt="头像">
+          <div class="comment-content">
+            <div class="comment-header">
+              <span class="comment-user">
+                叶小乙
+                <span class="user-level">Lv5</span>
+              </span>
+            </div>
+            <div class="comment-rate">
+              <el-rate disabled v-model="4.5" text-color="#ff6b35"></el-rate>
+              <span style="color: var(--text-tertiary); font-size: 13px;">2024-01-15</span>
+            </div>
+            <div class="comment-text">
+              某平台上买的券，价格可以当工作餐吃，虽然价格便宜，但是这家店一点都没有偷工减料，味道真的很不错！环境也很干净，服务态度很好，下次还会再来！
+            </div>
+            <div class="comment-images">
+              <img src="https://qcloud.dpfile.com/pc/6T7MfXzx7USPIkSy7jzm40qZSmlHUF2jd-FZUL6WpjE9byagjLlrseWxnl1LcbuSGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
+              <img src="https://qcloud.dpfile.com/pc/sZ5q-zgglv4VXEWU71xCFjnLM_jUHq-ylq0GKivtrz3JksWQ1f7oBWZsxm1DWgcaGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
+              <img src="https://qcloud.dpfile.com/pc/xZy6W4NwuRFchlOi43DVLPFsx7KWWvPqifE1JTe_jreqdsBYA9CFkeSm2ZlF0OVmGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
+            </div>
+            <div class="comment-footer">
+              <span>浏览 641</span>
+              <div class="comment-actions">
+                <span class="comment-action">
+                  <i class="el-icon-thumb"></i> 12
+                </span>
+                <span class="comment-action">
+                  <i class="el-icon-chat-dot-round"></i> 5
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="view-all-comments">
+        查看全部119条评价 <i class="el-icon-arrow-right"></i>
+      </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="copyright">
+      copyright ©2024 hmdp.com
+    </div>
+  </div>
+
+  <!-- Bottom Action Bar -->
+  <div class="bottom-bar">
+    <div class="bottom-actions">
+      <div class="bottom-action">
+        <i class="el-icon-star-off"></i>
+        <span>收藏</span>
+      </div>
+      <div class="bottom-action">
+        <i class="el-icon-share"></i>
+        <span>分享</span>
+      </div>
+    </div>
+    <button class="bottom-btn" @click="goToMap">
+      <i class="el-icon-map-location"></i> 导航到店
+    </button>
+  </div>
+</div>
+
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script>
+  const app = new Vue({
+    el: "#app",
+    data: {
+      util,
+      shop: {},
+      vouchers: []
+    },
+    created() {
+      let shopId = util.getUrlParam("id");
+      this.queryShopById(shopId);
+      this.queryVoucher(shopId);
+    },
+    methods: {
+      goBack() {
+        history.back();
+      },
+      goToMap() {
+        if (this.shop.id) {
+          location.href = `map.html?targetId=${this.shop.id}&targetName=${encodeURIComponent(this.shop.name)}&targetAddress=${encodeURIComponent(this.shop.address)}&targetX=${this.shop.x}&targetY=${this.shop.y}`;
+        }
+      },
+      callShop() {
+        this.$message.info('拨打电话功能开发中...');
+      },
+      queryShopById(shopId) {
+        axios.get("/shop/" + shopId)
+        .then(({data}) => {
+          data.images = data.images.split(",")
+          this.shop = data
+        })
+        .catch(this.$message.error)
+      },
+      queryVoucher(shopId) {
+        axios.get("/voucher/list/" + shopId)
+        .then(({data}) => {
+          this.vouchers = data;
+        })
+        .catch(this.$message.error)
+      },
+      formatTime(v){
+        let b = new Date(v.beginTime);
+        let e = new Date(v.endTime);
+        return b.getMonth() + 1 + "月" + b.getDate() + "日 "
+          +  b.getHours() + ":" + this.formatMinutes(b.getMinutes())
+          + " ~ "
+          +  e.getHours() + ":" + this.formatMinutes(e.getMinutes());
+      },
+      formatMinutes(m){
+        if(m < 10) m = "0" + m
+        return m;
+      },
+      isNotBegin(v){
+        return new Date(v.beginTime).getTime() > new Date().getTime();
+      },
+      isEnd(v){
+        return new Date(v.endTime).getTime() < new Date().getTime();
+      },
+      seckill(v){
+        if(!token){
+          this.$message.error("请先登录")
+          setTimeout(() => {
+            location.href = "login.html"
+          }, 200);
+          return;
+        }
+        if(this.isNotBegin(v)){
+          this.$message.error("优惠券抢购尚未开始！")
+          return;
+        }
+        if(this.isEnd(v)){
+          this.$message.error("优惠券抢购已经结束！")
+          return;
+        }
+        if(v.stock < 1){
+          this.$message.error("库存不足，请刷新再试试！")
+          return;
+        }
+        let id = v.id;
+        axios.post("/voucher-order/seckill/" + id)
+        .then(({data}) => {
+          this.$message.success("抢购成功，订单id：" + data)
+        })
+        .catch(this.$message.error)
+      }
+    }
+  })
+</script>
+</body>
+</html>

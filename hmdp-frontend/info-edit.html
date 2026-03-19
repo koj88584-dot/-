@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>编辑资料</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <link href="./css/info.css" rel="stylesheet">
+  <style>
+    .edit-dialog .el-dialog__body {
+      padding: 20px;
+    }
+    .avatar-uploader {
+      text-align: center;
+      padding: 20px;
+    }
+    .avatar-preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin-bottom: 15px;
+    }
+    .upload-tip {
+      color: #999;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-back-btn" @click="goBack"><i class="el-icon-arrow-left"></i></div>
+    <div class="header-title">资料编辑&nbsp;&nbsp;&nbsp;</div>
+  </div>
+  <div class="edit-container">
+    <div class="info-box">
+      <div class="info-item" @click="showAvatarDialog = true">
+        <div class="info-label">头像</div>
+        <div class="info-btn">
+          <img width="35" height="35" style="border-radius: 50%; object-fit: cover;" :src="user.icon || '/imgs/icons/default-icon.png'" alt="">
+          <div><i class="el-icon-arrow-right"></i></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="info-item" @click="showNickNameDialog = true">
+        <div class="info-label">昵称</div>
+        <div class="info-btn">
+          <div>{{user.nickName}}</div>
+          <div><i class="el-icon-arrow-right"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 头像编辑对话框 -->
+  <el-dialog title="修改头像" :visible.sync="showAvatarDialog" width="80%">
+    <div class="avatar-uploader">
+      <img :src="tempAvatar || user.icon || '/imgs/icons/default-icon.png'" class="avatar-preview" alt="">
+      <el-input v-model="tempAvatar" placeholder="请输入头像图片URL"></el-input>
+      <div class="upload-tip">支持输入图片URL地址</div>
+    </div>
+    <span slot="footer">
+      <el-button @click="showAvatarDialog = false">取消</el-button>
+      <el-button type="primary" @click="saveAvatar">保存</el-button>
+    </span>
+  </el-dialog>
+
+  <!-- 昵称编辑对话框 -->
+  <el-dialog title="修改昵称" :visible.sync="showNickNameDialog" width="80%">
+    <el-input v-model="tempNickName" placeholder="请输入昵称" maxlength="20" show-word-limit></el-input>
+    <span slot="footer">
+      <el-button @click="showNickNameDialog = false">取消</el-button>
+      <el-button type="primary" @click="saveNickName">保存</el-button>
+    </span>
+  </el-dialog>
+</div>
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script>
+  const app = new Vue({
+    el: "#app",
+    data: {
+      user: {},
+      showAvatarDialog: false,
+      showNickNameDialog: false,
+      tempAvatar: '',
+      tempNickName: '',
+    },
+    created() {
+      this.checkLogin();
+    },
+    methods: {
+      checkLogin() {
+        axios.get("/user/me")
+          .then(({data}) => {
+            this.user = data;
+            this.tempNickName = data.nickName || '';
+            this.tempAvatar = data.icon || '';
+          })
+          .catch(err => {
+            this.$message.error('请先登录');
+            setTimeout(() => location.href = "login.html", 1000);
+          });
+      },
+      goBack() {
+        history.back();
+      },
+      saveAvatar() {
+        if (!this.tempAvatar.trim()) {
+          this.$message.error('请输入头像URL');
+          return;
+        }
+        axios.post('/user/upload-icon?url=' + encodeURIComponent(this.tempAvatar))
+          .then(() => {
+            this.user.icon = this.tempAvatar;
+            this.$message.success('头像修改成功');
+            this.showAvatarDialog = false;
+          })
+          .catch(err => {
+            this.$message.error(err || '修改失败');
+          });
+      },
+      saveNickName() {
+        if (!this.tempNickName.trim()) {
+          this.$message.error('请输入昵称');
+          return;
+        }
+        const updateData = {
+          id: this.user.id,
+          nickName: this.tempNickName.trim()
+        };
+        axios.put('/user/update', updateData)
+          .then(() => {
+            this.user.nickName = this.tempNickName.trim();
+            this.$message.success('昵称修改成功');
+            this.showNickNameDialog = false;
+          })
+          .catch(err => {
+            this.$message.error(err || '修改失败');
+          });
+      }
+    }
+  });
+</script>
+</body>
+</html>

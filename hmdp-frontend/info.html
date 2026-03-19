@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>个人中心 - 周边优速通</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff6b35;
+      --primary-light: #ff8c61;
+      --primary-dark: #e55a2b;
+      --secondary: #2d3436;
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --text-primary: #2d3436;
+      --text-secondary: #636e72;
+      --text-muted: #b2bec3;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 顶部导航 */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      color: #fff;
+    }
+
+    .header-back-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .header-back-btn:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateX(-2px);
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .header-action {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .header-action:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* 用户信息卡片 */
+    .profile-card {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      padding: 24px 20px 30px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+    }
+
+    .profile-card::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 200px;
+      height: 200px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+    }
+
+    .profile-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .avatar-wrapper {
+      position: relative;
+    }
+
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.3);
+      object-fit: cover;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .avatar-edit {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 28px;
+      height: 28px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .avatar-edit:hover {
+      transform: scale(1.1);
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .profile-location {
+      font-size: 14px;
+      opacity: 0.9;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .profile-bio {
+      margin-top: 12px;
+      font-size: 13px;
+      opacity: 0.85;
+      line-height: 1.5;
+      cursor: pointer;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.1);
+      border-radius: var(--radius-md);
+      transition: all 0.3s ease;
+    }
+
+    .profile-bio:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    /* 统计栏 */
+    .stats-bar {
+      display: flex;
+      justify-content: space-around;
+      padding: 20px;
+      background: var(--surface);
+      margin: -20px 16px 16px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      position: relative;
+      z-index: 10;
+    }
+
+    .stat-item {
+      text-align: center;
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+      background: rgba(255,107,53,0.05);
+      transform: translateY(-2px);
+    }
+
+    .stat-num {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* 功能入口网格 */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 20px 16px;
+      background: var(--surface);
+      margin: 0 16px 16px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .feature-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 12px 8px;
+      border-radius: var(--radius-md);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .feature-item:hover {
+      background: rgba(0,0,0,0.02);
+      transform: translateY(-4px);
+    }
+
+    .feature-item:active {
+      transform: translateY(-2px) scale(0.98);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .feature-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ff4d4f;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-weight: 600;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .feature-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* 功能图标颜色 */
+    .icon-fav { background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%); color: #fff; }
+    .icon-history { background: linear-gradient(135deg, #4ecdc4 0%, #7eddd6 100%); color: #fff; }
+    .icon-msg { background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%); color: #fff; }
+    .icon-coupon { background: linear-gradient(135deg, #fa8c16 0%, #ffc53d 100%); color: #fff; }
+    .icon-order { background: linear-gradient(135deg, #722ed1 0%, #b37feb 100%); color: #fff; }
+    .icon-map { background: linear-gradient(135deg, #13c2c2 0%, #5cdbd3 100%); color: #fff; }
+    .icon-setting { background: linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%); color: #fff; }
+    .icon-logout { background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%); color: #fff; }
+
+    /* 内容标签页 */
+    .content-section {
+      background: var(--surface);
+      margin: 0 16px 100px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .content-tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .tab-item {
+      flex: 1;
+      padding: 16px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      position: relative;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .tab-item:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-item.active {
+      color: var(--primary);
+    }
+
+    .tab-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 20%;
+      right: 20%;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .tab-content {
+      padding: 16px;
+      min-height: 200px;
+    }
+
+    /* 笔记列表 */
+    .blog-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .blog-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+
+    .blog-item:hover {
+      background: var(--surface);
+      border-color: rgba(255,107,53,0.2);
+      box-shadow: var(--shadow-sm);
+      transform: translateX(4px);
+    }
+
+    .blog-img {
+      width: 100px;
+      height: 100px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .blog-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .blog-item:hover .blog-img img {
+      transform: scale(1.05);
+    }
+
+    .blog-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+
+    .blog-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .blog-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .blog-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .blog-stat i {
+      font-size: 16px;
+    }
+
+    .blog-stat.liked i {
+      color: #ff6b6b;
+    }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-text {
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .empty-btn {
+      display: inline-block;
+      padding: 10px 24px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: var(--radius-xl);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .empty-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+    }
+
+    /* 底部导航 */
+    .bottom-nav {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-radius: var(--radius-xl);
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.12),
+        0 2px 8px rgba(0,0,0,0.08);
+      z-index: 1000;
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 8px 20px;
+      border-radius: var(--radius-md);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .nav-item.active {
+      color: var(--primary);
+    }
+
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      width: 20px;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .nav-icon {
+      font-size: 22px;
+      transition: transform 0.3s ease;
+    }
+
+    .nav-item:hover .nav-icon {
+      transform: translateY(-2px);
+    }
+
+    .nav-text {
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .nav-add {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 28px;
+      margin-top: -28px;
+      box-shadow:
+        0 8px 24px rgba(255, 107, 53, 0.4),
+        0 4px 8px rgba(255, 107, 53, 0.2);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 4px solid var(--bg);
+    }
+
+    .nav-add:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow:
+        0 12px 32px rgba(255, 107, 53, 0.5),
+        0 6px 12px rgba(255, 107, 53, 0.3);
+    }
+
+    /* 加载动画 */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* 页面加载动画 */
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.15);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,0,0,0.25);
+    }
+
+    /* 响应式优化 */
+    @media (max-width: 375px) {
+      .feature-grid {
+        gap: 8px;
+        padding: 16px 12px;
+      }
+
+      .feature-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+      }
+
+      .avatar {
+        width: 70px;
+        height: 70px;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- 在页面加载前检查登录状态 -->
+<script>
+  (function() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("请先登录！");
+      location.href = "login.html";
+    }
+  })();
+</script>
+
+<div id="app" v-show="pageReady" style="display: none;">
+  <!-- 顶部导航 -->
+  <header class="header">
+    <div class="header-back-btn" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </div>
+    <div class="header-title">个人中心</div>
+    <div class="header-action" @click="toEdit">
+      <i class="el-icon-setting"></i>
+    </div>
+  </header>
+
+  <!-- 用户信息卡片 -->
+  <div class="profile-card fade-in">
+    <div class="profile-main">
+      <div class="avatar-wrapper">
+        <img class="avatar" :src="user.icon || '/imgs/icons/default-icon.png'" alt="">
+        <div class="avatar-edit" @click="toEdit">
+          <i class="el-icon-camera"></i>
+        </div>
+      </div>
+      <div class="profile-info">
+        <div class="profile-name">
+          {{user.nickName || '用户'}}
+          <i class="el-icon-edit" style="font-size: 14px; opacity: 0.7;"></i>
+        </div>
+        <div class="profile-location">
+          <i class="el-icon-location-outline"></i>
+          <span>长沙</span>
+        </div>
+        <div class="profile-bio" @click="toEdit">
+          <span v-if="info.introduce">{{info.introduce}}</span>
+          <span v-else>添加个人简介，让大家更好的认识你 <i class="el-icon-arrow-right"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 统计栏 -->
+  <div class="stats-bar fade-in" style="animation-delay: 0.1s;">
+    <div class="stat-item" @click="toFollowList('follow')">
+      <div class="stat-num">{{followCount}}</div>
+      <div class="stat-label">关注</div>
+    </div>
+    <div class="stat-item" @click="toFollowList('follower')">
+      <div class="stat-num">{{followerCount}}</div>
+      <div class="stat-label">粉丝</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">{{blogs.length}}</div>
+      <div class="stat-label">笔记</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">{{blogs.reduce((sum, b) => sum + (b.liked || 0), 0)}}</div>
+      <div class="stat-label">获赞</div>
+    </div>
+  </div>
+
+  <!-- 功能入口 -->
+  <div class="feature-grid fade-in" style="animation-delay: 0.2s;">
+    <div class="feature-item" @click="toFavorites">
+      <div class="feature-icon icon-fav">
+        <i class="el-icon-star-on"></i>
+      </div>
+      <div class="feature-label">收藏夹</div>
+    </div>
+    <div class="feature-item" @click="toHistory">
+      <div class="feature-icon icon-history">
+        <i class="el-icon-time"></i>
+      </div>
+      <div class="feature-label">浏览历史</div>
+    </div>
+    <div class="feature-item" @click="toMessages">
+      <div class="feature-icon icon-msg" style="position: relative;">
+        <i class="el-icon-bell"></i>
+        <span class="feature-badge" v-if="unreadCount > 0">{{unreadCount > 99 ? '99+' : unreadCount}}</span>
+      </div>
+      <div class="feature-label">消息</div>
+    </div>
+    <div class="feature-item" @click="toVouchers">
+      <div class="feature-icon icon-coupon">
+        <i class="el-icon-tickets"></i>
+      </div>
+      <div class="feature-label">优惠券</div>
+    </div>
+    <div class="feature-item" @click="toOrders">
+      <div class="feature-icon icon-order">
+        <i class="el-icon-document"></i>
+      </div>
+      <div class="feature-label">我的订单</div>
+    </div>
+    <div class="feature-item" @click="toMap">
+      <div class="feature-icon icon-map">
+        <i class="el-icon-map-location"></i>
+      </div>
+      <div class="feature-label">附近地图</div>
+    </div>
+    <div class="feature-item" @click="toPrivacy">
+      <div class="feature-icon icon-setting">
+        <i class="el-icon-setting"></i>
+      </div>
+      <div class="feature-label">隐私设置</div>
+    </div>
+    <div class="feature-item" @click="logout">
+      <div class="feature-icon icon-logout">
+        <i class="el-icon-switch-button"></i>
+      </div>
+      <div class="feature-label">退出登录</div>
+    </div>
+  </div>
+
+  <!-- 内容区域 -->
+  <div class="content-section fade-in" style="animation-delay: 0.3s;">
+    <div class="content-tabs">
+      <div class="tab-item" :class="{ active: activeTab === 'notes' }" @click="activeTab = 'notes'">笔记</div>
+      <div class="tab-item" :class="{ active: activeTab === 'likes' }" @click="activeTab = 'likes'">喜欢</div>
+      <div class="tab-item" :class="{ active: activeTab === 'following' }" @click="activeTab = 'following'; queryBlogsOfFollow(true)">关注动态</div>
+    </div>
+
+    <div class="tab-content">
+      <!-- 笔记列表 -->
+      <div v-if="activeTab === 'notes'" class="blog-list">
+        <div class="blog-item" v-for="b in blogs" :key="b.id" @click="toBlogDetail(b)">
+          <div class="blog-img">
+            <img :src="b.images ? b.images.split(',')[0] : '/imgs/icons/default-icon.png'" alt="">
+          </div>
+          <div class="blog-info">
+            <div class="blog-title">{{b.title || '无标题'}}</div>
+            <div class="blog-meta">
+              <div class="blog-stat liked">
+                <i class="el-icon-star-on"></i>
+                <span>{{b.liked || 0}}</span>
+              </div>
+              <div class="blog-stat">
+                <i class="el-icon-chat-dot-round"></i>
+                <span>{{b.comments || 0}}</span>
+              </div>
+              <div class="blog-stat">
+                <i class="el-icon-view"></i>
+                <span>{{b.viewed || 0}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 空状态 -->
+        <div class="empty-state" v-if="blogs.length === 0">
+          <div class="empty-icon">📝</div>
+          <div class="empty-text">还没有发布笔记</div>
+          <div class="empty-btn" @click="publish">发布第一条笔记</div>
+        </div>
+      </div>
+
+      <!-- 喜欢列表 -->
+      <div v-if="activeTab === 'likes'" class="empty-state">
+        <div class="empty-icon">❤️</div>
+        <div class="empty-text">暂无喜欢的内容</div>
+      </div>
+
+      <!-- 关注动态 -->
+      <div v-if="activeTab === 'following'" class="blog-list">
+        <div class="blog-item" v-for="b in blogs2" :key="b.id" @click="toBlogDetail(b)">
+          <div class="blog-img">
+            <img :src="b.img || '/imgs/icons/default-icon.png'" alt="">
+          </div>
+          <div class="blog-info">
+            <div class="blog-title">{{b.title || '无标题'}}</div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+              <img :src="b.icon || '/imgs/icons/default-icon.png'" style="width: 20px; height: 20px; border-radius: 50%;">
+              <span style="font-size: 12px; color: var(--text-secondary);">{{b.name}}</span>
+            </div>
+            <div class="blog-meta">
+              <div class="blog-stat liked" @click.stop="addLike(b)">
+                <i :class="b.isLike ? 'el-icon-star-on' : 'el-icon-star-off'"></i>
+                <span>{{b.liked || 0}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" v-if="blogs2.length === 0">
+          <div class="empty-icon">👥</div>
+          <div class="empty-text">关注的人还没有发布内容</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="bottom-nav">
+    <div class="nav-item" @click="goHome">
+      <i class="el-icon-s-home nav-icon"></i>
+      <span class="nav-text">首页</span>
+    </div>
+    <div class="nav-item" @click="toMap">
+      <i class="el-icon-map-location nav-icon"></i>
+      <span class="nav-text">地图</span>
+    </div>
+    <div class="nav-add" @click="publish">
+      <i class="el-icon-plus"></i>
+    </div>
+    <div class="nav-item" @click="toMessages">
+      <i class="el-icon-chat-dot-round nav-icon"></i>
+      <span class="nav-text">消息</span>
+    </div>
+    <div class="nav-item active" @click="goProfile">
+      <i class="el-icon-user nav-icon"></i>
+      <span class="nav-text">我的</span>
+    </div>
+  </nav>
+</div>
+
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script>
+  new Vue({
+    el: "#app",
+    data: {
+      user: {},
+      info: {},
+      blogs: [],
+      blogs2: [],
+      activeTab: 'notes',
+      followCount: 0,
+      followerCount: 0,
+      unreadCount: 0,
+      pageReady: false,
+      params: {
+        minTime: 0,
+        offset: 0,
+      },
+    },
+    created() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        location.href = "login.html";
+        return;
+      }
+      this.queryUser();
+    },
+    methods: {
+      queryUser() {
+        axios.get("/user/me")
+          .then((response) => {
+            this.user = response.data;
+            this.pageReady = true;
+            this.queryUserInfo();
+            this.queryBlogs();
+            this.queryFollowStats(this.user.id);
+          })
+          .catch(() => {
+            location.href = "login.html";
+          });
+      },
+      queryUserInfo() {
+        axios.get("/user/info/" + this.user.id)
+          .then(({data}) => {
+            if (data) this.info = data;
+          })
+          .catch(err => this.$message.error(err));
+      },
+      queryBlogs() {
+        axios.get("/blog/of/me")
+          .then(({data}) => {
+            this.blogs = data || [];
+          })
+          .catch(this.$message.error);
+      },
+      queryBlogsOfFollow(clear) {
+        if (clear) {
+          this.params.offset = 0;
+          this.params.minTime = new Date().getTime() + 1;
+        }
+        let {minTime, offset: os} = this.params;
+        axios.get("/blog/of/follow", {
+            params: {offset: os, lastId: minTime || new Date().getTime() + 1}
+          })
+          .then(({data}) => {
+            if (!data) return;
+            let {list, ...params} = data;
+            list.forEach(b => b.img = b.images.split(",")[0]);
+            this.blogs2 = clear ? list : this.blogs2.concat(list);
+            this.params = params;
+          })
+          .catch(e => console.log(e));
+      },
+      queryFollowStats(userId) {
+        axios.get(`/follow/list/${userId}?current=1`)
+          .then(({data}) => {
+            this.followCount = data ? data.length : 0;
+          });
+        axios.get(`/follow/followers/${userId}?current=1`)
+          .then(({data}) => {
+            this.followerCount = data ? data.length : 0;
+          });
+        axios.get('/message/unread-count')
+          .then(({data}) => {
+            this.unreadCount = data?.data || data || 0;
+          })
+          .catch(() => {});
+      },
+      addLike(b) {
+        axios.put("/blog/like/" + b.id)
+          .then(() => {
+            b.isLike = !b.isLike;
+            b.liked = (b.liked || 0) + (b.isLike ? 1 : -1);
+          })
+          .catch(err => this.$message.error(err));
+      },
+      toFollowList(tab) {
+        location.href = `follow-list.html?tab=${tab}`;
+      },
+      toBlogDetail(b) {
+        location.href = `blog-detail.html?id=${b.id}`;
+      },
+      goBack() {
+        history.back();
+      },
+      goHome() {
+        location.href = 'index-new.html';
+      },
+      goProfile() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      toEdit() {
+        location.href = 'info-edit.html';
+      },
+      logout() {
+        this.$confirm('确定要退出登录吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.post("/user/logout")
+            .then(() => {
+              localStorage.removeItem("token");
+              this.$message.success('已退出登录');
+              location.href = "index-new.html";
+            })
+            .catch(this.$message.error);
+        }).catch(() => {});
+      },
+      publish() {
+        location.href = 'blog-edit.html';
+      },
+      toFavorites() {
+        location.href = 'favorites.html';
+      },
+      toHistory() {
+        location.href = 'history.html';
+      },
+      toMessages() {
+        location.href = 'messages.html';
+      },
+      toVouchers() {
+        location.href = 'vouchers.html';
+      },
+      toOrders() {
+        location.href = 'orders.html';
+      },
+      toMap() {
+        location.href = 'map.html';
+      },
+      toPrivacy() {
+        location.href = 'privacy.html';
+      }
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <title>我的收藏 - 周边优速通</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff6b35;
+      --primary-light: #ff8c61;
+      --primary-dark: #e55a2b;
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --text-tertiary: #999999;
+      --border: #f0f0f0;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+    }
+
+    .header-back-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .header-back-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .header-title {
+      flex: 1;
+      text-align: center;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .header-action {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .header-action:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Main Content */
+    .main-content {
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* Tab Bar */
+    .tab-bar {
+      background: var(--surface);
+      display: flex;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 56px;
+      z-index: 100;
+    }
+
+    .tab-item {
+      flex: 1;
+      padding: 16px 0;
+      text-align: center;
+      font-size: 15px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .tab-item.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tab-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 2px;
+    }
+
+    /* Content */
+    .content {
+      padding: 12px;
+    }
+
+    /* Favorite Card */
+    .favorite-card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .favorite-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .favorite-card-inner {
+      display: flex;
+      padding: 12px;
+      gap: 12px;
+    }
+
+    .favorite-image {
+      width: 100px;
+      height: 100px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .favorite-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .favorite-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+
+    .favorite-header {
+      margin-bottom: 8px;
+    }
+
+    .favorite-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .favorite-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .favorite-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .favorite-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .favorite-meta-item i {
+      color: var(--primary);
+      font-size: 14px;
+    }
+
+    .favorite-meta-item .score {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .favorite-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .favorite-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .favorite-btn.unfavorite {
+      background: linear-gradient(135deg, #fff5f2 0%, #ffede8 100%);
+      color: var(--primary);
+    }
+
+    .favorite-btn.unfavorite:hover {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+    }
+
+    .favorite-btn i {
+      font-size: 18px;
+    }
+
+    /* Loading State */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      color: var(--text-tertiary);
+    }
+
+    .loading-state i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      animation: rotate 1s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 20px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 140px;
+      height: 140px;
+      background: linear-gradient(135deg, #fff5f2 0%, #ffede8 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .empty-icon i {
+      font-size: 64px;
+      color: var(--primary-light);
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .empty-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .empty-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      border-radius: 24px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .empty-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+    }
+
+    /* Load More */
+    .load-more {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+
+    .load-more i {
+      margin-right: 8px;
+      animation: rotate 1s linear infinite;
+    }
+
+    .load-more-btn {
+      color: var(--primary);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 8px 20px;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .load-more-btn:hover {
+      background: rgba(255, 107, 53, 0.1);
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+      z-index: 1000;
+    }
+
+    .bottom-info {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .bottom-info span {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .bottom-action {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bottom-btn {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .bottom-btn.primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      border: none;
+    }
+
+    .bottom-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Type Badge */
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .type-badge.shop {
+      background: linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%);
+      color: #1890ff;
+    }
+
+    .type-badge.blog {
+      background: linear-gradient(135deg, #f6ffed 0%, #f0f5ff 100%);
+      color: #52c41a;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-back-btn" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </div>
+    <div class="header-title">我的收藏</div>
+    <div class="header-action" @click="goToSearch">
+      <i class="el-icon-search"></i>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <div 
+        class="tab-item" 
+        :class="{active: activeType === '0'}"
+        @click="switchTab('0')"
+      >
+        全部
+      </div>
+      <div 
+        class="tab-item" 
+        :class="{active: activeType === '1'}"
+        @click="switchTab('1')"
+      >
+        店铺
+      </div>
+      <div 
+        class="tab-item" 
+        :class="{active: activeType === '2'}"
+        @click="switchTab('2')"
+      >
+        博客
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Loading -->
+      <div class="loading-state" v-if="loading">
+        <i class="el-icon-loading"></i>
+        <span>加载中...</span>
+      </div>
+
+      <!-- Empty -->
+      <div class="empty-state" v-else-if="favorites.length === 0">
+        <div class="empty-icon">
+          <i class="el-icon-star-off"></i>
+        </div>
+        <div class="empty-title">暂无收藏</div>
+        <div class="empty-desc">收藏喜欢的店铺和博客，随时查看</div>
+        <button class="empty-btn" @click="goToExplore">去逛逛</button>
+      </div>
+
+      <!-- List -->
+      <template v-else>
+        <div class="favorite-card" v-for="item in favorites" :key="item.id" @click="openDetail(item)">
+          <div class="favorite-card-inner">
+            <div class="favorite-image">
+              <img :src="getThumb(item)" alt="">
+            </div>
+            <div class="favorite-info">
+              <div class="favorite-header">
+                <div class="favorite-title">
+                  <span class="type-badge" :class="item.name ? 'shop' : 'blog'">
+                    <i :class="item.name ? 'el-icon-shopping-bag' : 'el-icon-document'"></i>
+                    {{ item.name ? '店铺' : '博客' }}
+                  </span>
+                  {{ item.name || item.title }}
+                </div>
+                <div class="favorite-desc">{{ getDesc(item) }}</div>
+              </div>
+              <div class="favorite-meta">
+                <div class="favorite-meta-item" v-if="item.score">
+                  <i class="el-icon-star-on"></i>
+                  <span class="score">{{ item.score }}</span>
+                </div>
+                <div class="favorite-meta-item" v-if="item.avgPrice">
+                  <i class="el-icon-wallet"></i>
+                  <span>人均 ¥{{ item.avgPrice }}</span>
+                </div>
+                <div class="favorite-meta-item" v-if="item.liked !== undefined">
+                  <i class="el-icon-thumb"></i>
+                  <span>{{ item.liked }} 赞</span>
+                </div>
+              </div>
+            </div>
+            <div class="favorite-actions">
+              <div class="favorite-btn unfavorite" @click.stop="cancelFavorite(item)">
+                <i class="el-icon-star-on"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Load More -->
+        <div class="load-more" v-if="hasMore">
+          <div class="load-more-btn" @click="loadMore" v-if="!loadingMore">
+            <i class="el-icon-arrow-down"></i>
+            加载更多
+          </div>
+          <template v-else>
+            <i class="el-icon-loading"></i>
+            加载中...
+          </template>
+        </div>
+
+        <div class="load-more" v-else-if="favorites.length > 0">
+          <span>—— 已经到底了 ——</span>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="bottom-bar" v-if="favorites.length > 0">
+    <div class="bottom-info">
+      共收藏 <span>{{ favorites.length }}</span> 条内容
+    </div>
+    <div class="bottom-action">
+      <button class="bottom-btn" @click="goToExplore">
+        <i class="el-icon-discover"></i> 去发现
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      activeType: '0',
+      favorites: [],
+      loading: true,
+      loadingMore: false,
+      current: 1,
+      hasMore: true
+    },
+    created() {
+      this.loadFavorites();
+    },
+    methods: {
+      goBack() {
+        history.back();
+      },
+      goToSearch() {
+        location.href = 'search.html';
+      },
+      goToExplore() {
+        location.href = 'index-new.html';
+      },
+      switchTab(type) {
+        this.activeType = type;
+        this.current = 1;
+        this.favorites = [];
+        this.hasMore = true;
+        this.loadFavorites();
+      },
+      loadFavorites() {
+        this.loading = true;
+        const type = this.activeType === '0' ? null : parseInt(this.activeType);
+        
+        axios.get('/favorites/list', {
+          params: { type: type, current: this.current }
+        })
+        .then(({ data }) => {
+          const list = data?.data || data;
+          if (this.current === 1) {
+            this.favorites = Array.isArray(list) ? list : [];
+          } else {
+            this.favorites = this.favorites.concat(Array.isArray(list) ? list : []);
+          }
+          this.hasMore = Array.isArray(list) && list.length === 10;
+          this.loading = false;
+          this.loadingMore = false;
+        })
+        .catch(err => {
+          this.$message.error('加载收藏失败');
+          this.loading = false;
+          this.loadingMore = false;
+        });
+      },
+      loadMore() {
+        this.current++;
+        this.loadingMore = true;
+        this.loadFavorites();
+      },
+      getThumb(item) {
+        if (item.images) {
+          return item.images.split(',')[0];
+        }
+        return '/imgs/icons/default-icon.png';
+      },
+      getDesc(item) {
+        if (item.address) return item.address;
+        if (item.content) return item.content.substring(0, 60) + '...';
+        return '';
+      },
+      openDetail(item) {
+        if (item.name) {
+          location.href = 'shop-detail.html?id=' + item.id;
+        } else if (item.title) {
+          location.href = 'blog-detail.html?id=' + item.id;
+        }
+      },
+      cancelFavorite(item) {
+        const type = item.name ? 1 : 2;
+        this.$confirm('确定取消收藏吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.delete(`/favorites/${type}/${item.id}`)
+            .then(() => {
+              this.$message.success('已取消收藏');
+              this.favorites = this.favorites.filter(f => f.id !== item.id);
+            })
+            .catch(() => {
+              this.$message.error('操作失败');
+            });
+        });
+      }
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>浏览历史 - 周边优速通</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <style>
+    .history-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #eee; cursor: pointer; }
+    .history-thumb { width:60px; height:60px; object-fit:cover; border-radius:4px; }
+  </style>
+</head>
+<body>
+<div id="app" style="padding:20px; max-width:980px; margin:0 auto;">
+  <div class="header" style="display:flex; align-items:center; margin-bottom:10px;">
+    <div class="header-back-btn" onclick="history.back()"><i class="el-icon-arrow-left"></i></div>
+    <div style="flex:1; text-align:center; font-weight:600;">浏览历史</div>
+  </div>
+
+  <div style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:8px;">
+    <el-button type="danger" @click="clearHistory(null)">清空全部</el-button>
+  </div>
+
+  <div class="history-list">
+    <div class="history-item" v-for="h in history" :key="h.id" @click="openDetail(h)">
+      <img class="history-thumb" :src="(h.images && (h.images.split(',')[0] || h.images)) || '/imgs/icons/default-icon.png'" alt="">
+      <div style="flex:1;">
+        <div style="font-weight:600">{{ h.name || h.title }}</div>
+        <div style="color:#666; font-size:12px;" v-if="h.createTime">时间: {{ h.createTime }}</div>
+      </div>
+      <div>
+        <el-button type="text" @click.stop="deleteHistory(h.id)">删除</el-button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <script src="./js/vue.js"></script>
+  <script src="./js/axios.min.js"></script>
+  <script src="./js/element.js"></script>
+  <script src="./js/common.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        history: []
+      },
+      created() {
+        this.loadHistory();
+      },
+      methods: {
+        loadHistory() {
+          axios.get('/history/list')
+            .then(({ data }) => {
+              const d = data?.data ?? data;
+              this.history = Array.isArray(d) ? d : [];
+            })
+            .catch(() => { this.$message.error('加载历史失败'); });
+        },
+        openDetail(item) {
+          if (item.name) {
+            // 店铺
+            location.href = 'shop-detail.html?id=' + item.id;
+          } else if (item.title) {
+            location.href = 'blog-detail.html?id=' + item.id;
+          }
+        },
+        deleteHistory(id) {
+          axios.delete('/history/' + id)
+            .then(() => { this.loadHistory(); })
+            .catch(() => { this.$message.error('删除失败'); });
+        },
+        clearHistory(type) {
+          // type: null 清空全部，1/2 清空对应类型
+          const url = '/history/clear' + (type == null ? '' : ('?type=' + type));
+          axios.delete(url)
+            .then(() => { this.loadHistory(); })
+            .catch(() => { this.$message.error('清空失败'); });
+        }
+      }
+    })
+  </script>
+</body>
+</html>

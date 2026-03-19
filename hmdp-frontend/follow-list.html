@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>关注/粉丝</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link rel="stylesheet" href="./css/main.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f5f5f5;
+    }
+    .header {
+      background-color: #ff6633;
+      color: white;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .back-btn {
+      position: absolute;
+      left: 15px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .header-title {
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .tabs {
+      display: flex;
+      background-color: white;
+      border-bottom: 1px solid #eee;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 15px;
+      cursor: pointer;
+      position: relative;
+      color: #666;
+    }
+    .tab.active {
+      color: #ff6633;
+      font-weight: 500;
+    }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 30%;
+      right: 30%;
+      height: 2px;
+      background-color: #ff6633;
+    }
+    .user-list {
+      background-color: white;
+      min-height: calc(100vh - 110px);
+    }
+    .user-item {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin-right: 15px;
+      object-fit: cover;
+    }
+    .user-info {
+      flex: 1;
+    }
+    .user-name {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .user-phone {
+      font-size: 12px;
+      color: #999;
+    }
+    .follow-btn {
+      padding: 6px 15px;
+      border-radius: 15px;
+      border: 1px solid #ff6633;
+      background-color: white;
+      color: #ff6633;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .follow-btn.following {
+      background-color: #f5f5f5;
+      border-color: #ddd;
+      color: #999;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: #999;
+    }
+    .empty-state i {
+      font-size: 60px;
+      margin-bottom: 15px;
+      color: #ddd;
+    }
+    .loading-more {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 头部 -->
+    <div class="header">
+      <div class="back-btn" @click="goBack">
+        <i class="el-icon-arrow-left"></i>
+      </div>
+      <div class="header-title">{{targetUserId ? 'TA的' : '我的'}}关注</div>
+    </div>
+
+    <!-- 标签页 -->
+    <div class="tabs">
+      <div class="tab" :class="{active: activeTab === 'follow'}" @click="switchTab('follow')">
+        关注 {{followCount > 0 ? followCount : ''}}
+      </div>
+      <div class="tab" :class="{active: activeTab === 'follower'}" @click="switchTab('follower')">
+        粉丝 {{followerCount > 0 ? followerCount : ''}}
+      </div>
+    </div>
+
+    <!-- 用户列表 -->
+    <div class="user-list" v-infinite-scroll="loadMore" infinite-scroll-disabled="loading" infinite-scroll-distance="10">
+      <div v-for="user in userList" :key="user.id" class="user-item" @click="toUserPage(user.id)">
+        <img :src="user.icon || '/imgs/icons/default-icon.png'" class="user-avatar" alt="">
+        <div class="user-info">
+          <div class="user-name">{{user.nickName || '用户' + user.id}}</div>
+          <div class="user-phone">{{formatPhone(user.phone)}}</div>
+        </div>
+        <button 
+          v-if="!isSelf(user.id)" 
+          class="follow-btn" 
+          :class="{following: user.isFollow}"
+          @click.stop="toggleFollow(user)">
+          {{user.isFollow ? '已关注' : '关注'}}
+        </button>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-if="userList.length === 0 && !loading" class="empty-state">
+        <i class="el-icon-user"></i>
+        <div>{{activeTab === 'follow' ? '还没有关注任何人' : '还没有粉丝'}}</div>
+      </div>
+
+      <!-- 加载更多 -->
+      <div v-if="loading" class="loading-more">
+        <i class="el-icon-loading"></i> 加载中...
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/vue.js"></script>
+  <script src="./js/axios.min.js"></script>
+  <script src="./js/element.js"></script>
+  <script src="./js/common.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        activeTab: 'follow',
+        userList: [],
+        followCount: 0,
+        followerCount: 0,
+        current: 1,
+        loading: false,
+        hasMore: true,
+        targetUserId: null,
+        currentUserId: null
+      },
+      created() {
+        // 获取URL参数
+        const params = new URLSearchParams(window.location.search);
+        this.targetUserId = params.get('userId');
+        const tab = params.get('tab');
+        if (tab) {
+          this.activeTab = tab;
+        }
+        
+        // 获取当前用户ID
+        this.getCurrentUser();
+      },
+      methods: {
+        getCurrentUser() {
+          axios.get('/user/me')
+            .then(res => {
+              this.currentUserId = res.data.id;
+              this.loadData();
+            })
+            .catch(() => {
+              this.$message.error('请先登录');
+              setTimeout(() => {
+                location.href = 'login.html';
+              }, 1000);
+            });
+        },
+        loadData() {
+          this.current = 1;
+          this.userList = [];
+          this.hasMore = true;
+          this.loadMore();
+        },
+        loadMore() {
+          if (this.loading || !this.hasMore) return;
+          
+          this.loading = true;
+          const userId = this.targetUserId || this.currentUserId;
+          const url = this.activeTab === 'follow' 
+            ? `/follow/list/${userId}?current=${this.current}`
+            : `/follow/followers/${userId}?current=${this.current}`;
+          
+          axios.get(url)
+            .then(res => {
+              const list = res.data || [];
+              
+              // 检查关注状态
+              list.forEach(user => {
+                this.checkFollowStatus(user);
+              });
+              
+              this.userList = this.userList.concat(list);
+              this.hasMore = list.length === 10;
+              this.current++;
+              
+              // 更新数量
+              if (this.activeTab === 'follow') {
+                this.followCount = this.userList.length;
+              } else {
+                this.followerCount = this.userList.length;
+              }
+            })
+            .catch(err => {
+              this.$message.error(err || '加载失败');
+            })
+            .finally(() => {
+              this.loading = false;
+            });
+        },
+        checkFollowStatus(user) {
+          axios.get(`/follow/or/not/${user.id}`)
+            .then(res => {
+              this.$set(user, 'isFollow', res.data);
+            });
+        },
+        switchTab(tab) {
+          this.activeTab = tab;
+          this.loadData();
+        },
+        toggleFollow(user) {
+          const isFollow = !user.isFollow;
+          axios.put(`/follow/${user.id}/${isFollow}`)
+            .then(() => {
+              user.isFollow = isFollow;
+              this.$message.success(isFollow ? '关注成功' : '取消关注成功');
+            })
+            .catch(err => {
+              this.$message.error(err || '操作失败');
+            });
+        },
+        toUserPage(userId) {
+          if (userId === this.currentUserId) {
+            location.href = 'info.html';
+          } else {
+            location.href = `other-info.html?id=${userId}`;
+          }
+        },
+        isSelf(userId) {
+          return userId === this.currentUserId;
+        },
+        formatPhone(phone) {
+          if (!phone) return '';
+          return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+        },
+        goBack() {
+          history.back();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

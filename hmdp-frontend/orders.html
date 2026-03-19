@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>我的订单 - 周边优速通</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <style>
+    .orders-container { padding: 16px; max-width: 1000px; margin: 0 auto; }
+    .order-card { border: 1px solid #eee; border-radius: 8px; margin-bottom: 12px; background: #fff; overflow: hidden; }
+    .order-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f9f9f9; border-bottom: 1px solid #eee; }
+    .order-id { color: #999; font-size: 13px; }
+    .order-status { font-size: 13px; font-weight: 600; }
+    .order-body { display: flex; gap: 12px; padding: 16px; }
+    .order-img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; }
+    .order-info { flex: 1; }
+    .order-title { font-weight: 600; margin-bottom: 4px; }
+    .order-shop { color: #666; font-size: 13px; margin-bottom: 8px; }
+    .order-price { display: flex; align-items: baseline; gap: 8px; }
+    .price-current { color: #ff6633; font-size: 20px; font-weight: bold; }
+    .price-current span { font-size: 14px; }
+    .price-original { color: #999; font-size: 13px; text-decoration: line-through; }
+    .order-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid #eee; }
+    .order-time { color: #999; font-size: 12px; }
+    .order-actions { display: flex; gap: 8px; }
+    .empty-state { text-align: center; padding: 60px 0; color: #999; }
+    .empty-state i { font-size: 64px; color: #ddd; margin-bottom: 16px; }
+    .status-1 { color: #ff6633; }
+    .status-2 { color: #67c23a; }
+    .status-3 { color: #909399; }
+    .status-4 { color: #909399; }
+    .status-5 { color: #e6a23c; }
+    .status-6 { color: #909399; }
+  </style>
+</head>
+<body>
+<div id="app" class="orders-container">
+  <div class="header" style="display:flex; align-items:center; margin-bottom:16px;">
+    <div class="header-back-btn" onclick="history.back()"><i class="el-icon-arrow-left"></i></div>
+    <div style="flex:1; text-align:center; font-weight:600;">我的订单</div>
+  </div>
+
+  <!-- 状态筛选 -->
+  <el-tabs v-model="activeStatus" @tab-click="handleStatusChange">
+    <el-tab-pane label="全部" name="0"></el-tab-pane>
+    <el-tab-pane label="待支付" name="1"></el-tab-pane>
+    <el-tab-pane label="已支付" name="2"></el-tab-pane>
+    <el-tab-pane label="已核销" name="3"></el-tab-pane>
+    <el-tab-pane label="已取消" name="4"></el-tab-pane>
+  </el-tabs>
+
+  <!-- 订单列表 -->
+  <div v-if="loading" style="text-align:center; padding:40px 0;">
+    <i class="el-icon-loading" style="font-size:32px; color:#ff6633;"></i>
+  </div>
+
+  <div v-else-if="orders.length === 0" class="empty-state">
+    <i class="el-icon-document"></i>
+    <div>暂无订单</div>
+    <el-button type="primary" style="margin-top:16px;" @click="goToVouchers">去领取优惠券</el-button>
+  </div>
+
+  <div v-else>
+    <div v-for="order in orders" :key="order.id" class="order-card">
+      <div class="order-header">
+        <span class="order-id">订单号: {{ order.id }}</span>
+        <span :class="['order-status', 'status-' + order.status]">{{ getStatusText(order.status) }}</span>
+      </div>
+      <div class="order-body">
+        <img class="order-img" :src="order.voucherImages || '/imgs/icons/default-icon.png'" alt="">
+        <div class="order-info">
+          <div class="order-title">{{ order.voucherTitle || '优惠券' }}</div>
+          <div class="order-shop">{{ order.voucherSubTitle || '' }}</div>
+          <div class="order-price">
+            <span class="price-current"><span>¥</span>{{ (order.actualValue || 0) / 100 }}</span>
+            <span class="price-original">¥{{ (order.payValue || 0) / 100 }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="order-footer">
+        <span class="order-time">{{ formatTime(order.createTime) }}</span>
+        <div class="order-actions">
+          <el-button v-if="order.status === 1" type="primary" size="small" @click="payOrder(order.id)">立即支付</el-button>
+          <el-button v-if="order.status === 2" type="success" size="small" @click="useOrder(order.id)">去使用</el-button>
+          <el-button v-if="order.status === 1" size="small" @click="cancelOrder(order.id)">取消</el-button>
+          <el-button v-if="order.status === 2" type="text" size="small" @click="refundOrder(order.id)">申请退款</el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 加载更多 -->
+    <div v-if="hasMore" style="text-align:center; padding:20px 0;">
+      <el-button type="text" @click="loadMore" :loading="loadingMore">加载更多</el-button>
+    </div>
+  </div>
+</div>
+
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      activeStatus: '0',
+      orders: [],
+      loading: true,
+      loadingMore: false,
+      current: 1,
+      hasMore: true
+    },
+    created() {
+      this.loadOrders();
+    },
+    methods: {
+      loadOrders() {
+        this.loading = true;
+        const status = this.activeStatus === '0' ? null : parseInt(this.activeStatus);
+        
+        axios.get('/voucher-order/list', {
+          params: { status: status, current: this.current }
+        })
+        .then(({ data }) => {
+          const list = data?.data || data;
+          if (this.current === 1) {
+            this.orders = Array.isArray(list) ? list : [];
+          } else {
+            this.orders = this.orders.concat(Array.isArray(list) ? list : []);
+          }
+          this.hasMore = Array.isArray(list) && list.length === 10;
+          this.loading = false;
+          this.loadingMore = false;
+        })
+        .catch(() => {
+          this.loading = false;
+          this.loadingMore = false;
+        });
+      },
+      handleStatusChange() {
+        this.current = 1;
+        this.loadOrders();
+      },
+      loadMore() {
+        this.current++;
+        this.loadingMore = true;
+        this.loadOrders();
+      },
+      payOrder(id) {
+        this.$confirm('确认支付该订单？', '提示', {
+          confirmButtonText: '确认支付',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.post(`/voucher-order/pay/${id}`)
+            .then(() => {
+              this.$message.success('支付成功！');
+              this.loadOrders();
+            })
+            .catch(err => {
+              this.$message.error(err.response?.data?.errorMsg || '支付失败');
+            });
+        });
+      },
+      useOrder(id) {
+        this.$confirm('确定要核销这张优惠券吗？核销后将无法退款。', '提示', {
+          confirmButtonText: '确定核销',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.post(`/voucher-order/verify/${id}`)
+            .then(() => {
+              this.$message.success('核销成功！');
+              this.loadOrders();
+            })
+            .catch(err => {
+              this.$message.error(err.response?.data?.errorMsg || '核销失败');
+            });
+        });
+      },
+      cancelOrder(id) {
+        this.$confirm('确定要取消这个订单吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.post(`/voucher-order/cancel/${id}`)
+            .then(() => {
+              this.$message.success('取消成功！');
+              this.loadOrders();
+            })
+            .catch(err => {
+              this.$message.error(err.response?.data?.errorMsg || '取消失败');
+            });
+        });
+      },
+      refundOrder(id) {
+        this.$confirm('确定要申请退款吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.post(`/voucher-order/refund/${id}`)
+            .then(() => {
+              this.$message.success('退款申请已提交');
+              this.loadOrders();
+            })
+            .catch(err => {
+              this.$message.error(err.response?.data?.errorMsg || '退款失败');
+            });
+        });
+      },
+      getStatusText(status) {
+        const map = { 1: '待支付', 2: '已支付', 3: '已核销', 4: '已取消', 5: '退款中', 6: '已退款' };
+        return map[status] || '未知';
+      },
+      formatTime(timeStr) {
+        if (!timeStr) return '';
+        const date = new Date(timeStr);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      },
+      goToVouchers() {
+        location.href = 'vouchers.html';
+      }
+    }
+  });
+</script>
+</body>
+</html>

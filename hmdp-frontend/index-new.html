@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>周边优速通 - 发现身边好去处</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff6b35;
+      --primary-light: #ff8c61;
+      --primary-dark: #e55a2b;
+      --secondary: #2d3436;
+      --accent: #00b894;
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --text-primary: #2d3436;
+      --text-secondary: #636e72;
+      --text-muted: #b2bec3;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+    }
+
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body { 
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 顶部导航栏 - 玻璃拟态效果 */
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+
+    .header.scrolled {
+      box-shadow: var(--shadow-md);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .city-selector {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      background: rgba(0,0,0,0.03);
+      transition: all 0.2s ease;
+    }
+
+    .city-selector:hover { 
+      background: rgba(0,0,0,0.06);
+      transform: translateY(-1px);
+    }
+
+    .city-selector i {
+      transition: transform 0.3s ease;
+    }
+
+    .city-selector:hover i {
+      transform: rotate(180deg);
+    }
+
+    .search-box {
+      flex: 1;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 40px;
+      background: var(--bg);
+      border: 2px solid transparent;
+      border-radius: var(--radius-xl);
+      padding: 0 44px 0 16px;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .search-input:focus {
+      background: var(--surface);
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-btn {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+    }
+
+    .search-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-50%) scale(1.1);
+      box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+    }
+
+    .search-btn:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    /* 分类网格 - 新拟态设计 */
+    .category-section {
+      background: var(--surface);
+      padding: 20px 16px;
+      margin-bottom: 12px;
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px 12px;
+    }
+
+    .category-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 8px 4px;
+      border-radius: var(--radius-md);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .category-item:hover {
+      transform: translateY(-4px);
+    }
+
+    .category-item:active {
+      transform: translateY(-2px) scale(0.98);
+    }
+
+    .category-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 
+        8px 8px 16px rgba(0,0,0,0.08),
+        -8px -8px 16px rgba(255,255,255,0.8);
+    }
+
+    .category-item:hover .category-icon {
+      box-shadow: 
+        12px 12px 24px rgba(0,0,0,0.12),
+        -12px -12px 24px rgba(255,255,255,0.9);
+    }
+
+    .category-icon::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%);
+      border-radius: inherit;
+    }
+
+    .category-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .category-item:hover .category-name {
+      color: var(--text-primary);
+    }
+
+    /* 分类图标渐变 */
+    .cat-food { background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%); }
+    .cat-scenic { background: linear-gradient(135deg, #4ecdc4 0%, #7eddd6 100%); }
+    .cat-hotel { background: linear-gradient(135deg, #45b7d1 0%, #74c7e3 100%); }
+    .cat-entertain { background: linear-gradient(135deg, #f9ca24 0%, #f0c27b 100%); }
+    .cat-movie { background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); }
+    .cat-beauty { background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%); }
+    .cat-takeout { background: linear-gradient(135deg, #00b894 0%, #55efc4 100%); }
+    .cat-ktv { background: linear-gradient(135deg, #e17055 0%, #fab1a0 100%); }
+    .cat-fitness { background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%); }
+    .cat-massage { background: linear-gradient(135deg, #d63031 0%, #ff7675 100%); }
+
+    /* 内容区块标题 */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 16px 12px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 2px;
+    }
+
+    .section-more {
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .section-more:hover {
+      color: var(--primary);
+      background: rgba(255, 107, 53, 0.08);
+    }
+
+    /* 推荐笔记 - 瀑布流卡片 */
+    .content-section {
+      padding: 0 12px;
+    }
+
+    .waterfall {
+      column-count: 2;
+      column-gap: 12px;
+    }
+
+    .note-card {
+      break-inside: avoid;
+      margin-bottom: 12px;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+
+    .note-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.03) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .note-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .note-card:hover::before {
+      opacity: 1;
+    }
+
+    .note-image-wrapper {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .note-image {
+      width: 100%;
+      display: block;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .note-card:hover .note-image {
+      transform: scale(1.08);
+    }
+
+    .note-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    .note-content {
+      padding: 12px;
+    }
+
+    .note-title {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.5;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-weight: 500;
+    }
+
+    .note-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .author-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--surface);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .author-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .note-likes {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .note-likes i {
+      color: #ff6b6b;
+      font-size: 14px;
+    }
+
+    /* 附近店铺列表 */
+    .shop-section {
+      background: var(--surface);
+      margin-top: 12px;
+      padding: 0 16px 20px;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .shop-list-new {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .shop-card {
+      display: flex;
+      gap: 14px;
+      padding: 14px;
+      background: var(--bg);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shop-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .shop-card:hover {
+      background: var(--surface);
+      border-color: rgba(255, 107, 53, 0.2);
+      box-shadow: var(--shadow-md);
+      transform: translateX(4px);
+    }
+
+    .shop-card:hover::before {
+      opacity: 1;
+    }
+
+    .shop-image-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .shop-image {
+      width: 100px;
+      height: 100px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .shop-card:hover .shop-image {
+      transform: scale(1.05);
+    }
+
+    .shop-rank {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(255, 170, 0, 0.4);
+      border: 2px solid var(--surface);
+    }
+
+    .shop-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+
+    .shop-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .shop-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .shop-distance {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .shop-rating {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .rating-score {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .rating-stars {
+      color: #ffc107;
+      font-size: 12px;
+    }
+
+    .shop-price {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .shop-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .shop-tag {
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: rgba(0,0,0,0.04);
+      padding: 4px 10px;
+      border-radius: var(--radius-xl);
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .shop-tag:hover {
+      background: rgba(255, 107, 53, 0.1);
+      color: var(--primary);
+    }
+
+    .shop-location {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* 底部导航 - 悬浮设计 */
+    .bottom-nav {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-radius: var(--radius-xl);
+      box-shadow: 
+        0 8px 32px rgba(0,0,0,0.12),
+        0 2px 8px rgba(0,0,0,0.08);
+      z-index: 1000;
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 8px 20px;
+      border-radius: var(--radius-md);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .nav-item::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 0;
+      height: 0;
+      background: rgba(255, 107, 53, 0.1);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .nav-item:hover::before {
+      width: 50px;
+      height: 50px;
+    }
+
+    .nav-item.active { 
+      color: var(--primary);
+    }
+
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      width: 20px;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .nav-icon { 
+      font-size: 22px;
+      transition: transform 0.3s ease;
+    }
+
+    .nav-item:hover .nav-icon {
+      transform: translateY(-2px);
+    }
+
+    .nav-text { 
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .nav-add {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 28px;
+      margin-top: -28px;
+      box-shadow: 
+        0 8px 24px rgba(255, 107, 53, 0.4),
+        0 4px 8px rgba(255, 107, 53, 0.2);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 4px solid var(--bg);
+    }
+
+    .nav-add:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 
+        0 12px 32px rgba(255, 107, 53, 0.5),
+        0 6px 12px rgba(255, 107, 53, 0.3);
+    }
+
+    .nav-add:active {
+      transform: scale(0.95);
+    }
+
+    /* 内容区域底部留白 */
+    .content-wrapper {
+      padding-bottom: 100px;
+    }
+
+    /* 加载动画 */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.15);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,0,0,0.25);
+    }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    /* 响应式优化 */
+    @media (max-width: 375px) {
+      .category-grid {
+        gap: 12px 8px;
+      }
+      
+      .category-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
+      }
+      
+      .shop-image {
+        width: 88px;
+        height: 88px;
+      }
+    }
+
+    /* 页面加载动画 */
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部导航 -->
+    <header class="header" :class="{ scrolled: isScrolled }">
+      <div class="logo">
+        <div class="logo-icon">🐴</div>
+        <span>周边优速通</span>
+      </div>
+      <div class="city-selector" @click="selectCity">
+        <span>{{ currentCity }}</span>
+        <i class="el-icon-arrow-down"></i>
+      </div>
+      <div class="search-box">
+        <input 
+          class="search-input" 
+          v-model="searchKeyword" 
+          placeholder="搜索商户、地点"
+          @keyup.enter="search"
+          @focus="isSearchFocused = true"
+          @blur="isSearchFocused = false"
+        >
+        <button class="search-btn" @click="search">
+          <i class="el-icon-search"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="content-wrapper">
+      <!-- 分类网格 -->
+      <section class="category-section fade-in">
+        <div class="category-grid">
+          <div class="category-item" 
+               v-for="(cat, index) in categories" 
+               :key="cat.id" 
+               @click="goToCategory(cat)"
+               :class="'stagger-' + (index % 4 + 1)"
+               :style="{ animationDelay: (index * 0.05) + 's' }">
+            <div class="category-icon" :class="cat.class">
+              <span>{{ cat.icon }}</span>
+            </div>
+            <span class="category-name">{{ cat.name }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 推荐笔记 -->
+      <section class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">推荐笔记</h2>
+          <span class="section-more" @click="viewMoreNotes">
+            更多 <i class="el-icon-arrow-right"></i>
+          </span>
+        </div>
+        <div class="waterfall">
+          <div class="note-card fade-in" 
+               v-for="(note, index) in notes" 
+               :key="note.id" 
+               @click="viewNote(note)"
+               :style="{ animationDelay: (index * 0.1) + 's' }">
+            <div class="note-image-wrapper">
+              <img class="note-image" :src="note.image" :alt="note.title" loading="lazy">
+              <span class="note-badge" v-if="note.likes > 1000">热门</span>
+            </div>
+            <div class="note-content">
+              <h3 class="note-title">{{ note.title }}</h3>
+              <div class="note-author">
+                <img class="author-avatar" :src="note.authorAvatar" alt="" loading="lazy">
+                <span class="author-name">{{ note.authorName }}</span>
+                <span class="note-likes">
+                  <i class="el-icon-star-on"></i>
+                  {{ formatNumber(note.likes) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 附近好店 -->
+      <section class="shop-section">
+        <div class="section-header">
+          <h2 class="section-title">附近好店</h2>
+          <span class="section-more" @click="goMap">
+            地图 <i class="el-icon-map-location"></i>
+          </span>
+        </div>
+        <div class="shop-list-new">
+          <div class="shop-card fade-in" 
+               v-for="(shop, index) in nearbyShops" 
+               :key="shop.id" 
+               @click="goToShop(shop)"
+               :style="{ animationDelay: (index * 0.1) + 's' }">
+            <div class="shop-image-wrapper">
+              <img class="shop-image" :src="shop.image" :alt="shop.name" loading="lazy">
+              <span class="shop-rank" v-if="index < 3">{{ index + 1 }}</span>
+            </div>
+            <div class="shop-info">
+              <div class="shop-header">
+                <h3 class="shop-name">{{ shop.name }}</h3>
+                <span class="shop-distance">
+                  <i class="el-icon-location-outline"></i>
+                  {{ formatDistance(shop.distance) }}
+                </span>
+              </div>
+              <div class="shop-rating">
+                <span class="rating-score">{{ shop.score }}</span>
+                <span class="rating-stars">
+                  <i v-for="n in 5" :key="n" 
+                     class="el-icon-star-on" 
+                     :style="{ color: n <= Math.round(shop.score) ? '#ffc107' : '#e0e0e0' }"></i>
+                </span>
+                <span class="shop-price">人均¥{{ shop.avgPrice }}</span>
+              </div>
+              <div class="shop-tags">
+                <span class="shop-tag" v-for="tag in shop.tags" :key="tag">{{ tag }}</span>
+              </div>
+              <div class="shop-location">
+                <i class="el-icon-office-building"></i>
+                <span>{{ shop.address }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 空状态 -->
+          <div class="empty-state" v-if="nearbyShops.length === 0 && !isLoading">
+            <div class="empty-icon">🏪</div>
+            <p>暂无附近店铺</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 底部导航 -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" @click="goHome">
+        <i class="el-icon-s-home nav-icon"></i>
+        <span class="nav-text">首页</span>
+      </div>
+      <div class="nav-item" @click="goMap">
+        <i class="el-icon-map-location nav-icon"></i>
+        <span class="nav-text">地图</span>
+      </div>
+      <div class="nav-add" @click="publish">
+        <i class="el-icon-plus"></i>
+      </div>
+      <div class="nav-item" @click="goMessages">
+        <i class="el-icon-chat-dot-round nav-icon"></i>
+        <span class="nav-text">消息</span>
+      </div>
+      <div class="nav-item" @click="goProfile">
+        <i class="el-icon-user nav-icon"></i>
+        <span class="nav-text">我的</span>
+      </div>
+    </nav>
+  </div>
+
+  <script src="./js/vue.js"></script>
+  <script src="./js/axios.min.js"></script>
+  <script src="./js/element.js"></script>
+  <script src="./js/common.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        currentCity: '长沙',
+        searchKeyword: '',
+        isSearchFocused: false,
+        isScrolled: false,
+        isLoading: true,
+        categories: [
+          { id: 1, name: '美食', icon: '🍜', class: 'cat-food' },
+          { id: 2, name: '景点', icon: '🏞️', class: 'cat-scenic' },
+          { id: 3, name: '酒店', icon: '🏨', class: 'cat-hotel' },
+          { id: 4, name: '玩乐', icon: '🎮', class: 'cat-entertain' },
+          { id: 5, name: '电影', icon: '🎬', class: 'cat-movie' },
+          { id: 6, name: '丽人', icon: '💇', class: 'cat-beauty' },
+          { id: 7, name: '外卖', icon: '🛵', class: 'cat-takeout' },
+          { id: 8, name: 'KTV', icon: '🎤', class: 'cat-ktv' },
+          { id: 9, name: '健身', icon: '🏃', class: 'cat-fitness' },
+          { id: 10, name: '按摩', icon: '💆', class: 'cat-massage' },
+        ],
+        notes: [
+          {
+            id: 1,
+            title: '长沙必吃的臭豆腐，排队也要吃！',
+            image: '/imgs/shop/1.jpg',
+            authorAvatar: '/imgs/icons/default-icon.png',
+            authorName: '美食探店达人',
+            likes: 1234
+          },
+          {
+            id: 2,
+            title: '藏在巷子里的宝藏小店，人均30吃到撑',
+            image: '/imgs/shop/2.jpg',
+            authorAvatar: '/imgs/icons/default-icon.png',
+            authorName: '吃货小王',
+            likes: 892
+          },
+          {
+            id: 3,
+            title: '周末去哪儿？这家咖啡馆太治愈了',
+            image: '/imgs/shop/3.jpg',
+            authorAvatar: '/imgs/icons/default-icon.png',
+            authorName: '咖啡控',
+            likes: 567
+          },
+          {
+            id: 4,
+            title: '正宗湘菜馆，辣得过瘾！',
+            image: '/imgs/shop/4.jpg',
+            authorAvatar: '/imgs/icons/default-icon.png',
+            authorName: '辣味人生',
+            likes: 2341
+          },
+          {
+            id: 5,
+            title: '网红奶茶店打卡，颜值超高',
+            image: '/imgs/shop/5.jpg',
+            authorAvatar: '/imgs/icons/default-icon.png',
+            authorName: '奶茶妹妹',
+            likes: 1567
+          },
+          {
+            id: 6,
+            title: '深夜食堂，治愈系日料店',
+            image: '/imgs/shop/6.jpg',
+            authorAvatar: '/imgs/icons/default-icon.png',
+            authorName: '深夜食客',
+            likes: 789
+          }
+        ],
+        nearbyShops: []
+      },
+      mounted() {
+        this.loadNearbyShops();
+        this.handleScroll();
+        window.addEventListener('scroll', this.handleScroll);
+      },
+      beforeDestroy() {
+        window.removeEventListener('scroll', this.handleScroll);
+      },
+      methods: {
+        // 处理滚动
+        handleScroll() {
+          this.isScrolled = window.scrollY > 10;
+        },
+
+        // 加载附近店铺
+        async loadNearbyShops() {
+          this.isLoading = true;
+          try {
+            const res = await axios.get('/shop/of/type', {
+              params: { typeId: 1, current: 1 }
+            });
+            if (res.data && res.data.data) {
+              this.nearbyShops = res.data.data.slice(0, 5).map(shop => ({
+                ...shop,
+                score: (shop.score / 10).toFixed(1),
+                image: shop.images ? shop.images.split(',')[0] : '/imgs/icons/default-icon.png',
+                tags: ['口味赞', '环境好', '服务热情'].slice(0, Math.floor(Math.random() * 3) + 1)
+              }));
+            }
+          } catch (e) {
+            console.error('加载店铺失败:', e);
+            this.nearbyShops = [
+              { id: 1, name: '茶颜悦色', score: 4.8, avgPrice: 18, address: '五一广场店', distance: 500, image: '/imgs/shop/1.jpg', tags: ['网红店', '口味赞'] },
+              { id: 2, name: '文和友老长沙龙虾馆', score: 4.6, avgPrice: 128, address: '海信广场店', distance: 800, image: '/imgs/shop/2.jpg', tags: ['必吃榜', '排队王'] },
+              { id: 3, name: '费大厨辣椒炒肉', score: 4.7, avgPrice: 68, address: '万家丽店', distance: 1200, image: '/imgs/shop/3.jpg', tags: ['湘菜', '口味正宗'] },
+            ];
+          } finally {
+            this.isLoading = false;
+          }
+        },
+
+        // 选择城市
+        selectCity() {
+          this.$message.info('选择城市功能开发中');
+        },
+
+        // 搜索
+        search() {
+          if (this.searchKeyword.trim()) {
+            window.location.href = `/shop-list.html?keyword=${encodeURIComponent(this.searchKeyword.trim())}`;
+          } else {
+            this.$message.warning('请输入搜索关键词');
+          }
+        },
+
+        // 分类点击
+        goToCategory(cat) {
+          window.location.href = `/shop-list.html?type=${cat.id}`;
+        },
+
+        // 查看更多笔记
+        viewMoreNotes() {
+          this.$message.info('查看更多笔记功能开发中');
+        },
+
+        // 查看笔记
+        viewNote(note) {
+          this.$message.info(`查看笔记：${note.title}`);
+        },
+
+        // 进入店铺
+        goToShop(shop) {
+          window.location.href = `/shop-detail.html?id=${shop.id}`;
+        },
+
+        // 导航
+        goHome() {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+        goMap() {
+          window.location.href = '/map.html';
+        },
+        publish() {
+          this.$message.info('发布功能开发中');
+        },
+        goMessages() {
+          window.location.href = '/message.html';
+        },
+        goProfile() {
+          window.location.href = '/info.html';
+        },
+
+        // 格式化距离
+        formatDistance(distance) {
+          if (!distance) return '';
+          if (distance < 1000) return Math.round(distance) + 'm';
+          return (distance / 1000).toFixed(1) + 'km';
+        },
+
+        // 格式化数字
+        formatNumber(num) {
+          if (num >= 10000) {
+            return (num / 10000).toFixed(1) + 'w';
+          } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'k';
+          }
+          return num;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

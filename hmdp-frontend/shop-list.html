@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>店铺列表 - 周边优速通</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff6b35;
+      --primary-light: #ff8c61;
+      --primary-dark: #e55a2b;
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --text-tertiary: #999999;
+      --border: #f0f0f0;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+    }
+
+    .header-back-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .header-back-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .header-title {
+      flex: 1;
+      text-align: center;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .header-search {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .header-search:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Sort Bar */
+    .sort-bar {
+      position: fixed;
+      top: 56px;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 8px;
+      z-index: 999;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .sort-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 16px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .sort-item:hover,
+    .sort-item.active {
+      color: var(--primary);
+      background: rgba(255, 107, 53, 0.1);
+    }
+
+    .sort-item i {
+      font-size: 12px;
+    }
+
+    /* Main Content */
+    .main-content {
+      padding-top: 120px;
+      padding-bottom: 20px;
+      min-height: 100vh;
+    }
+
+    /* Shop List */
+    .shop-list {
+      padding: 0 12px;
+    }
+
+    .shop-card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .shop-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .shop-card-inner {
+      display: flex;
+      padding: 12px;
+      gap: 12px;
+    }
+
+    .shop-image {
+      width: 100px;
+      height: 100px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .shop-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .shop-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+
+    .shop-header {
+      margin-bottom: 8px;
+    }
+
+    .shop-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .shop-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .shop-rate {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .shop-rate .el-rate {
+      display: inline-flex;
+    }
+
+    .shop-rate-text {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .shop-comments {
+      color: var(--text-tertiary);
+      font-size: 12px;
+    }
+
+    .shop-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .shop-tag {
+      background: var(--bg);
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .shop-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .shop-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .shop-area i {
+      color: var(--primary);
+    }
+
+    .shop-distance {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, #fff5f2 0%, #ffede8 100%);
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .shop-price {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    /* Loading State */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--text-tertiary);
+    }
+
+    .loading-state i {
+      font-size: 40px;
+      margin-bottom: 16px;
+      animation: rotate 1s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, #fff5f2 0%, #ffede8 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .empty-icon i {
+      font-size: 48px;
+      color: var(--primary-light);
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .empty-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .empty-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 24px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .empty-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+    }
+
+    /* Load More */
+    .load-more {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+
+    .load-more i {
+      margin-right: 8px;
+      animation: rotate 1s linear infinite;
+    }
+
+    /* Scroll to Top */
+    .scroll-top {
+      position: fixed;
+      bottom: 30px;
+      right: 20px;
+      width: 48px;
+      height: 48px;
+      background: var(--surface);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 100;
+      color: var(--primary);
+      font-size: 20px;
+    }
+
+    .scroll-top:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Dropdown Custom */
+    .el-dropdown-menu {
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow);
+      border: none;
+      padding: 8px 0;
+    }
+
+    .el-dropdown-menu__item {
+      padding: 10px 20px;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .el-dropdown-menu__item:hover {
+      background: rgba(255, 107, 53, 0.1);
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-back-btn" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </div>
+    <div class="header-title">{{typeName || '店铺列表'}}</div>
+    <div class="header-search" @click="goToSearch">
+      <i class="el-icon-search"></i>
+    </div>
+  </div>
+
+  <!-- Sort Bar -->
+  <div class="sort-bar">
+    <el-dropdown trigger="click" @command="handleCommand">
+      <div class="sort-item">
+        <span>{{typeName || '分类'}}</span>
+        <i class="el-icon-arrow-down"></i>
+      </div>
+      <el-dropdown-menu slot="dropdown">
+        <el-dropdown-item v-for="t in types" :key="t.id" :command="t">
+          {{t.name}}
+        </el-dropdown-item>
+      </el-dropdown-menu>
+    </el-dropdown>
+
+    <div class="sort-item" :class="{active: params.sortBy === ''}" @click="sortAndQuery('')">
+      <i class="el-icon-location-outline"></i>
+      <span>距离</span>
+    </div>
+
+    <div class="sort-item" :class="{active: params.sortBy === 'comments'}" @click="sortAndQuery('comments')">
+      <i class="el-icon-fire"></i>
+      <span>人气</span>
+    </div>
+
+    <div class="sort-item" :class="{active: params.sortBy === 'score'}" @click="sortAndQuery('score')">
+      <i class="el-icon-star-off"></i>
+      <span>评分</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Loading State -->
+    <div class="loading-state" v-if="loading">
+      <i class="el-icon-loading"></i>
+      <span>正在加载店铺...</span>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" v-else-if="shops.length === 0">
+      <div class="empty-icon">
+        <i class="el-icon-shopping-bag"></i>
+      </div>
+      <div class="empty-title">暂无相关店铺</div>
+      <div class="empty-desc">该地区暂时没有此类店铺，换个分类试试吧</div>
+      <button class="empty-btn" @click="goBack">返回首页</button>
+    </div>
+
+    <!-- Shop List -->
+    <div class="shop-list" v-else @scroll="onScroll">
+      <div class="shop-card" v-for="s in shops" :key="s.id" @click="toDetail(s.id)">
+        <div class="shop-card-inner">
+          <div class="shop-image">
+            <img :src="s.images" alt="店铺图片">
+          </div>
+          <div class="shop-info">
+            <div class="shop-header">
+              <div class="shop-name">{{s.name}}</div>
+              <div class="shop-meta">
+                <div class="shop-rate">
+                  <el-rate disabled v-model="s.score/10" text-color="#ff6b35"></el-rate>
+                  <span class="shop-rate-text">{{s.score/10}}</span>
+                </div>
+                <span class="shop-comments">{{s.comments}}条评价</span>
+              </div>
+            </div>
+
+            <div class="shop-tags">
+              <span class="shop-tag">{{s.area}}</span>
+              <span class="shop-tag" v-if="s.typeName">{{s.typeName}}</span>
+            </div>
+
+            <div class="shop-footer">
+              <div class="shop-area">
+                <i class="el-icon-map-location"></i>
+                <span>{{s.address}}</span>
+              </div>
+              <div class="shop-distance" v-if="s.distance">
+                <i class="el-icon-location"></i>
+                <span>{{s.distance < 1000 ? s.distance.toFixed(0) + 'm' : (s.distance/1000).toFixed(1) + 'km'}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Load More -->
+      <div class="load-more" v-if="isLoadingMore">
+        <i class="el-icon-loading"></i>
+        <span>加载更多...</span>
+      </div>
+
+      <div class="load-more" v-else-if="!hasMore">
+        <span>—— 已经到底了 ——</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll to Top -->
+  <div class="scroll-top" v-show="showScrollTop" @click="scrollToTop">
+    <i class="el-icon-arrow-up"></i>
+  </div>
+</div>
+
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script>
+  const app = new Vue({
+    el: "#app",
+    data: {
+      util,
+      loading: true,
+      isLoadingMore: false,
+      hasMore: true,
+      showScrollTop: false,
+      types: [],
+      shops: [],
+      typeName: "",
+      params: {
+        typeId: 0,
+        current: 1,
+        sortBy: "",
+        x: 120.149993,
+        y: 30.334229
+      }
+    },
+    created() {
+      this.params.typeId = util.getUrlParam("type");
+      this.typeName = util.getUrlParam("name");
+      this.queryTypes();
+      this.queryShops();
+
+      // Listen to scroll
+      window.addEventListener('scroll', this.handleScroll);
+    },
+    destroyed() {
+      window.removeEventListener('scroll', this.handleScroll);
+    },
+    methods: {
+      queryTypes() {
+        axios.get("/shop-type/list")
+          .then(({data}) => {
+            this.types = data;
+          })
+          .catch(err => {
+            console.log(err);
+          })
+      },
+      queryShops() {
+        this.loading = true;
+        axios.get("/shop/of/type", {
+            params: this.params
+          })
+          .then(({data}) => {
+            this.loading = false;
+            if (!data || data.length === 0) {
+              this.hasMore = false;
+              return;
+            }
+            data.forEach(s => s.images = s.images.split(',')[0]);
+            this.shops = this.params.current === 1 ? data : this.shops.concat(data);
+            if (data.length < 10) {
+              this.hasMore = false;
+            }
+          })
+          .catch(err => {
+            this.loading = false;
+            console.log(err);
+            this.$message.error("加载失败，请重试");
+          })
+      },
+      handleCommand(t) {
+        location.href = "shop-list.html?type="+t.id+"&name="+t.name;
+      },
+      sortAndQuery(sortBy) {
+        this.params.sortBy = sortBy;
+        this.params.current = 1;
+        this.shops = [];
+        this.hasMore = true;
+        this.queryShops();
+      },
+      goBack() {
+        history.back();
+      },
+      goToSearch() {
+        location.href = "search.html";
+      },
+      toDetail(id) {
+        location.href = "shop-detail.html?id="+id
+      },
+      onScroll(e) {
+        let scrollTop = e.target.scrollTop;
+        let offsetHeight = e.target.offsetHeight;
+        let scrollHeight = e.target.scrollHeight;
+        if(scrollTop + offsetHeight + 100 > scrollHeight && !this.isLoadingMore && this.hasMore){
+          this.isLoadingMore = true;
+          this.params.current++;
+          axios.get("/shop/of/type", {
+              params: this.params
+            })
+            .then(({data}) => {
+              this.isLoadingMore = false;
+              if (!data || data.length === 0) {
+                this.hasMore = false;
+                return;
+              }
+              data.forEach(s => s.images = s.images.split(',')[0]);
+              this.shops = this.shops.concat(data);
+              if (data.length < 10) {
+                this.hasMore = false;
+              }
+            })
+            .catch(() => {
+              this.isLoadingMore = false;
+            });
+        }
+      },
+      handleScroll() {
+        this.showScrollTop = window.pageYOffset > 300;
+      },
+      scrollToTop() {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
+    }
+  })
+</script>
+</body>
+</html>

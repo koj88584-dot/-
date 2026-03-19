@@ -1,0 +1,24 @@
+{
+  "name": "hmdp-frontend",
+  "version": "1.0.0",
+  "description": "周边优速通前端项目 - 前后端分离",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -p 3000 -c-1",
+    "dev": "http-server -p 3000 -c-1 --cors",
+    "build": "echo '静态项目无需构建，直接部署即可'",
+    "test": "echo 'Error: no test specified' && exit 1"
+  },
+  "keywords": [
+    "hmdp",
+    "vue",
+    "element-ui",
+    "frontend"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {}
+}

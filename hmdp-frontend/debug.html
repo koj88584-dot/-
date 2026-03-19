@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>调试页面</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .info { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    button { padding: 10px 20px; margin: 5px; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h2>Token 调试页面</h2>
+  
+  <div class="info">
+    <h3>当前 localStorage Token:</h3>
+    <div id="currentToken">加载中...</div>
+  </div>
+  
+  <div class="info">
+    <h3>当前 sessionStorage Token:</h3>
+    <div id="sessionToken">加载中...</div>
+  </div>
+  
+  <div class="info">
+    <h3>操作:</h3>
+    <button onclick="setTestToken()">设置测试 Token (localStorage)</button>
+    <button onclick="clearToken()">清除 Token</button>
+    <button onclick="goLogin()">去登录</button>
+    <button onclick="goHome()">去首页</button>
+    <button onclick="goInfo()">去我的</button>
+  </div>
+  
+  <div class="info">
+    <h3>LocalStorage 所有内容:</h3>
+    <div id="allStorage">加载中...</div>
+  </div>
+
+  <script>
+    function showToken() {
+      const token = localStorage.getItem("token");
+      const sessionToken = sessionStorage.getItem("token");
+      document.getElementById("currentToken").innerHTML = token 
+        ? `<span class="success">${token}</span>` 
+        : `<span class="error">(无 token)</span>`;
+      document.getElementById("sessionToken").innerHTML = sessionToken 
+        ? `<span class="success">${sessionToken}</span>` 
+        : `<span class="error">(无 token)</span>`;
+    }
+    
+    function showAllStorage() {
+      let html = "";
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const value = localStorage.getItem(key);
+        html += `<p><b>${key}:</b> ${value}</p>`;
+      }
+      if (html === "") html = "(无数据)";
+      document.getElementById("allStorage").innerHTML = html;
+    }
+    
+    function setTestToken() {
+      localStorage.setItem("token", "test-token-12345");
+      showToken();
+      showAllStorage();
+      alert("测试 token 已设置到 localStorage");
+    }
+    
+    function clearToken() {
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
+      showToken();
+      showAllStorage();
+      alert("token 已清除");
+    }
+    
+    function goLogin() {
+      location.href = "login.html";
+    }
+    
+    function goHome() {
+      location.href = "index-new.html";
+    }
+    
+    function goInfo() {
+      location.href = "info.html";
+    }
+    
+    // 页面加载时显示
+    showToken();
+    showAllStorage();
+  </script>
+</body>
+</html>

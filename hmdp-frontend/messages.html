@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>消息中心 - 周边优速通</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <style>
+    .messages-container { padding: 16px; max-width: 1000px; margin: 0 auto; }
+    .message-item { display: flex; gap: 12px; padding: 16px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 12px; background: #fff; cursor: pointer; transition: all 0.3s; }
+    .message-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .message-item.unread { background: #fff8f0; border-color: #ffd8bf; }
+    .message-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .message-icon.type-1 { background: #fff2f0; color: #ff4d4f; }
+    .message-icon.type-2 { background: #f6ffed; color: #52c41a; }
+    .message-icon.type-3 { background: #e6f7ff; color: #1890ff; }
+    .message-icon.type-4 { background: #fff7e6; color: #fa8c16; }
+    .message-content { flex: 1; }
+    .message-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; display: flex; align-items: center; }
+    .message-title .unread-dot { width: 8px; height: 8px; background: #ff4d4f; border-radius: 50%; margin-left: 8px; }
+    .message-text { color: #666; font-size: 13px; line-height: 1.5; }
+    .message-time { color: #999; font-size: 12px; margin-top: 8px; }
+    .empty-state { text-align: center; padding: 60px 0; color: #999; }
+    .empty-state i { font-size: 64px; color: #ddd; margin-bottom: 16px; }
+    .badge { background: #ff4d4f; color: white; font-size: 12px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
+    /* 底部导航栏样式 */
+    .foot { width: 100%; height: 60px; display: flex; justify-content: center; align-items: center; box-shadow: 0 -1px 2px 1px rgba(0, 0, 0, 0.1); position: fixed; bottom: 0; background: #fff; z-index: 1000; }
+    .foot .add-btn { width: 38px; height: 38px; box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.1); border-radius: 18px; }
+    .foot-box { width: 20%; color: #82848a; text-align: center; cursor: pointer; }
+    .foot-view { font-size: 26px; }
+    .foot-text { font-size: 10px; margin-top: -4px; }
+    .foot-text, .foot-view { text-align: center; }
+    .active { color: #ff6633; }
+    /* 调整消息容器底部间距 */
+    .messages-container { padding-bottom: 76px; }
+  </style>
+</head>
+<body>
+<div id="app" class="messages-container">
+  <div class="header" style="display:flex; align-items:center; margin-bottom:16px;">
+    <div class="header-back-btn" onclick="history.back()"><i class="el-icon-arrow-left"></i></div>
+    <div style="flex:1; text-align:center; font-weight:600;">
+      消息中心
+      <span v-if="unreadCount > 0" class="badge">{{ unreadCount }}</span>
+    </div>
+  </div>
+
+  <!-- 操作栏 -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <el-radio-group v-model="filterType" size="small" @change="handleFilterChange">
+      <el-radio-button label="all">全部</el-radio-button>
+      <el-radio-button label="unread">未读</el-radio-button>
+      <el-radio-button label="read">已读</el-radio-button>
+    </el-radio-group>
+    <div>
+      <el-button type="text" size="small" @click="markAllAsRead" v-if="unreadCount > 0">
+        <i class="el-icon-check"></i> 全部已读
+      </el-button>
+      <el-button type="text" size="small" @click="clearAll" style="color:#999;">
+        <i class="el-icon-delete"></i> 清空
+      </el-button>
+    </div>
+  </div>
+
+  <!-- 消息列表 -->
+  <div v-if="loading" style="text-align:center; padding:40px 0;">
+    <i class="el-icon-loading" style="font-size:32px; color:#ff6633;"></i>
+  </div>
+
+  <div v-else-if="messages.length === 0" class="empty-state">
+    <i class="el-icon-bell"></i>
+    <div>暂无消息</div>
+    <div style="font-size:13px; margin-top:8px;">收藏的店铺有新动态时会通知您</div>
+  </div>
+
+  <div v-else>
+    <div v-for="msg in filteredMessages" :key="msg.id" 
+         :class="['message-item', { 'unread': msg.isRead === 0 }]"
+         @click="openMessage(msg)">
+      <div :class="['message-icon', 'type-' + msg.type]">
+        <i :class="getIcon(msg.type)"></i>
+      </div>
+      <div class="message-content">
+        <div class="message-title">
+          {{ msg.title }}
+          <span v-if="msg.isRead === 0" class="unread-dot"></span>
+        </div>
+        <div class="message-text">{{ msg.content }}</div>
+        <div class="message-time">{{ formatTime(msg.createTime) }}</div>
+      </div>
+      <div>
+        <el-button type="text" @click.stop="deleteMessage(msg.id)">
+          <i class="el-icon-close" style="color:#ccc;"></i>
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 加载更多 -->
+    <div v-if="hasMore" style="text-align:center; padding:20px 0;">
+      <el-button type="text" @click="loadMore" :loading="loadingMore">加载更多</el-button>
+    </div>
+  </div>
+  <foot-bar :active-btn="3"></foot-bar>
+</div>
+
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script src="./js/footer.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      messages: [],
+      loading: true,
+      loadingMore: false,
+      current: 1,
+      hasMore: true,
+      unreadCount: 0,
+      filterType: 'all'
+    },
+    computed: {
+      filteredMessages() {
+        if (this.filterType === 'unread') {
+          return this.messages.filter(m => m.isRead === 0);
+        } else if (this.filterType === 'read') {
+          return this.messages.filter(m => m.isRead === 1);
+        }
+        return this.messages;
+      }
+    },
+    created() {
+      this.loadMessages();
+      this.loadUnreadCount();
+    },
+    methods: {
+      loadMessages() {
+        this.loading = true;
+        axios.get('/message/list', { params: { current: this.current } })
+          .then(({ data }) => {
+            const list = data?.data || data;
+            if (this.current === 1) {
+              this.messages = Array.isArray(list) ? list : [];
+            } else {
+              this.messages = this.messages.concat(Array.isArray(list) ? list : []);
+            }
+            this.hasMore = Array.isArray(list) && list.length === 10;
+            this.loading = false;
+            this.loadingMore = false;
+          })
+          .catch(() => {
+            this.loading = false;
+            this.loadingMore = false;
+          });
+      },
+      loadUnreadCount() {
+        axios.get('/message/unread-count')
+          .then(({ data }) => {
+            this.unreadCount = data?.data || data || 0;
+          })
+          .catch(() => {});
+      },
+      handleFilterChange() {
+        // 筛选不需要重新加载
+      },
+      loadMore() {
+        this.current++;
+        this.loadingMore = true;
+        this.loadMessages();
+      },
+      openMessage(msg) {
+        if (msg.isRead === 0) {
+          axios.post('/message/read', null, { params: { messageId: msg.id } })
+            .then(() => {
+              msg.isRead = 1;
+              this.unreadCount = Math.max(0, this.unreadCount - 1);
+            });
+        }
+        // 如果有关联店铺，跳转到店铺详情
+        if (msg.shopId) {
+          location.href = 'shop-detail.html?id=' + msg.shopId;
+        }
+      },
+      markAllAsRead() {
+        axios.post('/message/read')
+          .then(() => {
+            this.messages.forEach(m => m.isRead = 1);
+            this.unreadCount = 0;
+            this.$message.success('已全部标记为已读');
+          })
+          .catch(() => {
+            this.$message.error('操作失败');
+          });
+      },
+      deleteMessage(id) {
+        this.$confirm('确定删除这条消息吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.delete('/message/' + id)
+            .then(() => {
+              const msg = this.messages.find(m => m.id === id);
+              if (msg && msg.isRead === 0) {
+                this.unreadCount = Math.max(0, this.unreadCount - 1);
+              }
+              this.messages = this.messages.filter(m => m.id !== id);
+              this.$message.success('已删除');
+            })
+            .catch(() => {
+              this.$message.error('删除失败');
+            });
+        });
+      },
+      clearAll() {
+        this.$confirm('确定清空所有消息吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.delete('/message/clear')
+            .then(() => {
+              this.messages = [];
+              this.unreadCount = 0;
+              this.$message.success('已清空');
+            })
+            .catch(() => {
+              this.$message.error('清空失败');
+            });
+        });
+      },
+      getIcon(type) {
+        const icons = {
+          1: 'el-icon-present', // 优惠活动
+          2: 'el-icon-goods', // 新品上架
+          3: 'el-icon-info', // 店铺公告
+          4: 'el-icon-price-tag' // 价格变动
+        };
+        return icons[type] || 'el-icon-bell';
+      },
+      formatTime(timeStr) {
+        if (!timeStr) return '';
+        const date = new Date(timeStr);
+        const now = new Date();
+        const diff = now - date;
+        
+        if (diff < 60000) return '刚刚';
+        if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+        if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+        if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
+        
+        return `${date.getMonth() + 1}月${date.getDate()}日`;
+      }
+    }
+  });
+</script>
+</body>
+</html>

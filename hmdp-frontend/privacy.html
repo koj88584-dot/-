@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>隐私设置 - 周边优速通</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <style>
+    .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+  </style>
+  
+</head>
+<body>
+<div id="app" style="padding: 20px; max-width: 800px; margin: 0 auto;">
+  <div class="header" style="display:flex; align-items:center; margin-bottom:10px;">
+    <div class="header-back-btn" onclick="history.back()"><i class="el-icon-arrow-left"></i></div>
+    <div style="flex:1; text-align:center; font-weight:600;">隐私设置</div>
+  </div>
+
+  <div v-if="loading" style="text-align:center; padding: 40px 0;">加载中...</div>
+  <div v-else>
+    <div class="setting-row" v-for="(item, key) in settingsList" :key="key">
+      <div>{{ item.label }}</div>
+      <el-switch v-model="settings[item.key]" :active-text="'开启'" :inactive-text="'关闭'"></el-switch>
+    </div>
+    <div style="text-align:right; margin-top:12px;">
+      <button class="el-button el-button--primary" @click="updateSettings">保存设置</button>
+    </div>
+  </div>
+  </div>
+
+  <script src="./js/vue.js"></script>
+  <script src="./js/axios.min.js"></script>
+  <script src="./js/element.js"></script>
+  <script src="./js/common.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        loading: true,
+        // 使用布尔来表示开关，后端会把布尔值转换成1/0
+        settings: {
+          showFollowing: true,
+          showFollowers: true,
+          showFavorites: true,
+          showHistory: false,
+          allowMessage: true,
+          allowRecommend: true,
+          showOnlineStatus: true
+        },
+        settingsList: [
+          { key: 'showFollowing', label: '显示关注列表' },
+          { key: 'showFollowers', label: '显示粉丝列表' },
+          { key: 'showFavorites', label: '显示收藏' },
+          { key: 'showHistory', label: '显示浏览历史' },
+          { key: 'allowMessage', label: '允许陌生人私信' },
+          { key: 'allowRecommend', label: '允许被推荐' },
+          { key: 'showOnlineStatus', label: '显示在线状态' }
+        ]
+      },
+      created() {
+        this.fetchSettings();
+      },
+      methods: {
+        fetchSettings() {
+          axios.get('/privacy')
+            .then(({ data }) => {
+              // 兼容兼容性：后端可能返回 Result 包裹的数据结构
+              const setting = data?.data ?? data;
+              if (setting) {
+                this.settings.showFollowing = !!setting.showFollowing;
+                this.settings.showFollowers = !!setting.showFollowers;
+                this.settings.showFavorites = !!setting.showFavorites;
+                this.settings.showHistory = !!setting.showHistory;
+                this.settings.allowMessage = !!setting.allowMessage;
+                this.settings.allowRecommend = !!setting.allowRecommend;
+                this.settings.showOnlineStatus = !!setting.showOnlineStatus;
+              }
+              this.loading = false;
+            })
+            .catch(() => { this.loading = false; this.$message.error('获取隐私设置失败，请先登录'); });
+        },
+        updateSettings() {
+          // 将布尔值转换为1/0发送给后端
+          const payload = {
+            showFollowing: this.settings.showFollowing ? 1 : 0,
+            showFollowers: this.settings.showFollowers ? 1 : 0,
+            showFavorites: this.settings.showFavorites ? 1 : 0,
+            showHistory: this.settings.showHistory ? 1 : 0,
+            allowMessage: this.settings.allowMessage ? 1 : 0,
+            allowRecommend: this.settings.allowRecommend ? 1 : 0,
+            showOnlineStatus: this.settings.showOnlineStatus ? 1 : 0
+          };
+          axios.put('/privacy', payload)
+            .then(() => {
+              this.$message.success('隐私设置已保存');
+            })
+            .catch(() => {
+              this.$message.error('保存失败，请重试');
+            });
+        }
+      }
+    });
+  </script>
+</body>
+</html>
