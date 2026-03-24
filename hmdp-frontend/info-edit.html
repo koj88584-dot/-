@@ -39,7 +39,7 @@
       <div class="info-item" @click="showAvatarDialog = true">
         <div class="info-label">头像</div>
         <div class="info-btn">
-          <img width="35" height="35" style="border-radius: 50%; object-fit: cover;" :src="user.icon || '/imgs/icons/default-icon.png'" alt="">
+          <img width="35" height="35" style="border-radius: 50%; object-fit: cover;" :src="getImageUrl(user.icon)" alt="">
           <div><i class="el-icon-arrow-right"></i></div>
         </div>
       </div>
@@ -57,13 +57,14 @@
   <!-- 头像编辑对话框 -->
   <el-dialog title="修改头像" :visible.sync="showAvatarDialog" width="80%">
     <div class="avatar-uploader">
-      <img :src="tempAvatar || user.icon || '/imgs/icons/default-icon.png'" class="avatar-preview" alt="">
-      <el-input v-model="tempAvatar" placeholder="请输入头像图片URL"></el-input>
-      <div class="upload-tip">支持输入图片URL地址</div>
+      <img :src="tempAvatar || user.icon || '/imgs/icons/default-icon.png'" class="avatar-preview" alt="" @click="triggerFileInput">
+      <input type="file" ref="fileInput" style="display: none;" accept="image/*" @change="handleFileChange">
+      <el-button type="primary" icon="el-icon-upload" @click="triggerFileInput">选择图片</el-button>
+      <div class="upload-tip">支持 jpg、png、gif 格式，文件不超过 5MB</div>
     </div>
     <span slot="footer">
       <el-button @click="showAvatarDialog = false">取消</el-button>
-      <el-button type="primary" @click="saveAvatar">保存</el-button>
+      <el-button type="primary" @click="saveAvatar" :loading="uploading">保存</el-button>
     </span>
   </el-dialog>
 
@@ -89,6 +90,8 @@
       showNickNameDialog: false,
       tempAvatar: '',
       tempNickName: '',
+      selectedFile: null,
+      uploading: false,
     },
     created() {
       this.checkLogin();
@@ -109,19 +112,78 @@
       goBack() {
         history.back();
       },
-      saveAvatar() {
-        if (!this.tempAvatar.trim()) {
-          this.$message.error('请输入头像URL');
+      triggerFileInput() {
+        this.$refs.fileInput.click();
+      },
+      handleFileChange(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // 验证文件类型
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+          this.$message.error('请上传 jpg、png 或 gif 格式的图片');
           return;
         }
-        axios.post('/user/upload-icon?url=' + encodeURIComponent(this.tempAvatar))
-          .then(() => {
-            this.user.icon = this.tempAvatar;
-            this.$message.success('头像修改成功');
-            this.showAvatarDialog = false;
+
+        // 验证文件大小 (5MB)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+          this.$message.error('图片大小不能超过 5MB');
+          return;
+        }
+
+        this.selectedFile = file;
+
+        // 预览图片
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.tempAvatar = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      },
+      saveAvatar() {
+        if (!this.selectedFile && !this.tempAvatar) {
+          this.$message.error('请选择图片');
+          return;
+        }
+
+        // 如果没有选择新文件，只是用原来的头像，直接关闭
+        if (!this.selectedFile) {
+          this.showAvatarDialog = false;
+          return;
+        }
+
+        this.uploading = true;
+        const formData = new FormData();
+        formData.append('file', this.selectedFile);
+
+        axios.post('/user/upload-icon', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+          .then((result) => {
+            // common.js 拦截器已经处理了 response，这里直接拿到 Result 对象
+            if (result && result.success) {
+              this.user.icon = result.data || this.tempAvatar;
+              this.tempAvatar = this.user.icon;
+              // 保存到本地存储，确保返回个人主页时能立即看到更新
+              localStorage.setItem('userIcon', this.user.icon);
+              this.$message.success('头像修改成功');
+              this.showAvatarDialog = false;
+              this.selectedFile = null;
+              // 清除文件输入，允许再次选择同一文件
+              this.$refs.fileInput.value = '';
+            } else {
+              this.$message.error(result?.errorMsg || '修改失败');
+            }
           })
           .catch(err => {
-            this.$message.error(err || '修改失败');
+            this.$message.error(err?.response?.data?.errorMsg || err?.message || '修改失败');
+          })
+          .finally(() => {
+            this.uploading = false;
           });
       },
       saveNickName() {
@@ -136,12 +198,25 @@
         axios.put('/user/update', updateData)
           .then(() => {
             this.user.nickName = this.tempNickName.trim();
+            // 保存到本地存储，确保返回个人主页时能立即看到更新
+            localStorage.setItem('userNickName', this.tempNickName.trim());
             this.$message.success('昵称修改成功');
             this.showNickNameDialog = false;
           })
           .catch(err => {
-            this.$message.error(err || '修改失败');
+            this.$message.error(err?.response?.data?.errorMsg || err?.message || '修改失败');
           });
+      },
+      getImageUrl(icon) {
+        if (!icon) {
+          return '/imgs/icons/default-icon.png';
+        }
+        // 如果已经是完整URL，直接返回
+        if (icon.startsWith('http')) {
+          return icon;
+        }
+        // 拼接完整URL
+        return util.commonURL + icon;
       }
     }
   });

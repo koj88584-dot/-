@@ -1,10 +1,12 @@
 package com.hmdp.config;
 import com.hmdp.interceptor.LoginInterceptor;
 import com.hmdp.interceptor.RefreshTokenInterceptor;
+import com.hmdp.utils.SystemConstants;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.Resource;
@@ -36,6 +38,7 @@ public class MvcConfig implements WebMvcConfigurer {
                         , "/search/**"
                         , "/blog-comments/list/**"
                         , "/map/**"
+                        , "/imgs/**"
                 )
                 .order(1);
         //Token续命拦截器 - 排除OPTIONS请求（CORS预检请求）
@@ -55,5 +58,13 @@ public class MvcConfig implements WebMvcConfigurer {
                 .exposedHeaders("*")
                 .allowCredentials(true)
                 .maxAge(3600);
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/imgs/**")
+                .addResourceLocations("file:" + System.getProperty("user.dir") + "/upload/imgs/");
+        registry.addResourceHandler("/upload/**")
+                .addResourceLocations("file:" + System.getProperty("user.dir") + "/upload/");
     }
 }

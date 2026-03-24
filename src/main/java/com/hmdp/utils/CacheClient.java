@@ -134,8 +134,8 @@ public class CacheClient {
         R r = BeanUtil.toBean(jsonObject, type);
         LocalDateTime expireTime = redisData.getExpireTime();
         //判断是否过期
-        if (expireTime.isAfter(LocalDateTime.now())) {
-            //未过期 直接返回
+        if (expireTime == null || expireTime.isAfter(LocalDateTime.now())) {
+            //未过期或没有过期时间 直接返回
             return r;
         }
         //已过期

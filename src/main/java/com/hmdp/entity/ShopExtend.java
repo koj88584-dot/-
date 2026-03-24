@@ -1,7 +1,6 @@
 package com.hmdp.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -9,11 +8,12 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * <p>
- * 
+ * 店铺扩展信息表
  * </p>
  *
  * @author 虎哥
@@ -22,8 +22,8 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("tb_shop")
-public class Shop implements Serializable {
+@TableName("tb_shop_extend")
+public class ShopExtend implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,64 +34,49 @@ public class Shop implements Serializable {
     private Long id;
 
     /**
-     * 商铺名称
+     * 店铺id（支持负数，高德地图店铺）
      */
-    private String name;
+    private Long shopId;
 
     /**
-     * 商铺类型的id
+     * 数据来源：amap-高德，local-本地
      */
-    private Long typeId;
+    private String source;
 
     /**
-     * 商铺图片，多个图片以','隔开
+     * 高德POI ID
      */
-    private String images;
+    private String amapPoiId;
 
     /**
-     * 商圈，例如陆家嘴
+     * 商圈
      */
-    private String area;
+    private String businessArea;
 
     /**
-     * 地址
+     * 是否有室内地图
      */
-    private String address;
+    private Boolean indoorMap;
 
     /**
-     * 经度
+     * 高德评分
      */
-    private Double x;
+    private BigDecimal rating;
 
     /**
-     * 维度
+     * 人均消费
      */
-    private Double y;
+    private BigDecimal cost;
 
     /**
-     * 均价，取整数
+     * 停车信息
      */
-    private Long avgPrice;
+    private String parking;
 
     /**
-     * 销量
+     * 是否有WiFi
      */
-    private Integer sold;
-
-    /**
-     * 评论数量
-     */
-    private Integer comments;
-
-    /**
-     * 评分，1~5分，乘10保存，避免小数
-     */
-    private Integer score;
-
-    /**
-     * 营业时间，例如 10:00-22:00
-     */
-    private String openHours;
+    private Boolean wifi;
 
     /**
      * 创建时间
@@ -102,11 +87,4 @@ public class Shop implements Serializable {
      * 更新时间
      */
     private LocalDateTime updateTime;
-
-
-    @TableField(exist = false)
-    private Double distance;
-
-    public void setPhone(String s) {
-    }
 }

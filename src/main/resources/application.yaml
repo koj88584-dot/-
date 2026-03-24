@@ -25,3 +25,5 @@ mybatis-plus:
 logging:
   level:
     com.hmdp: debug
+amap:
+  key: 3ca0a2f25ab8827c53379129c07ac77e

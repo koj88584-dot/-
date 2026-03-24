@@ -10,6 +10,7 @@ import com.hmdp.dto.Result;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Shop;
 import com.hmdp.mapper.ShopMapper;
+import com.hmdp.service.IAmapService;
 import com.hmdp.service.IBrowseHistoryService;
 import com.hmdp.service.IShopService;
 import com.hmdp.utils.CacheClient;
@@ -53,14 +54,8 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
     @Override
     public Result queryById(Long id) {
-        //缓存穿透
-//        Shop shop = queryWithPassThrough(id);
-//        Shop shop = cacheClient.queryWithPassThrough(CACHE_SHOP_KEY, id, Shop.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
-        //互斥锁解决缓存击穿
-//        Shop shop = queryWithMutex(id);
-        //逻辑过期解决缓存击穿
-//        Shop shop = queryWithLogicalExpire(id);
-        Shop shop = cacheClient.queryWithLogicalExpire(CACHE_SHOP_KEY, id, Shop.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
+        //正常设置5分钟TTL
+        Shop shop = cacheClient.queryWithPassThrough(CACHE_SHOP_KEY, id, Shop.class, this::getById, 5L, TimeUnit.MINUTES);
         if (shop == null) {
             return Result.fail("店铺不存在");
         }
@@ -221,6 +216,9 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         return Result.ok();
     }
 
+    @Resource
+    private IAmapService amapService;
+
     @Override
     public Result queryShopByType(Integer typeId, Integer current, Double x, Double y) {
         //判断是否需要坐标查询
@@ -231,6 +229,32 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
                     .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
             return Result.ok(page.getRecords());
         }
+        
+        // 首先尝试从Redis查询
+        List<Shop> shopList = queryFromRedis(typeId, current, x, y);
+        if (!shopList.isEmpty()) {
+            return Result.ok(shopList);
+        }
+        
+        // Redis中没有数据，调用高德地图服务
+        List<Shop> amapShops = amapService.searchNearbyShops(typeId, x, y, 5000);
+        
+        // 按照分页返回结果
+        int from = (current - 1) * SystemConstants.MAX_PAGE_SIZE;
+        int end = Math.min(from + SystemConstants.MAX_PAGE_SIZE, amapShops.size());
+        
+        if (from >= amapShops.size()) {
+            return Result.ok(Collections.emptyList());
+        }
+        
+        List<Shop> paginatedShops = amapShops.subList(from, end);
+        return Result.ok(paginatedShops);
+    }
+    
+    /**
+     * 从Redis查询店铺
+     */
+    private List<Shop> queryFromRedis(Integer typeId, Integer current, Double x, Double y) {
         //计算分页参数
         int from = (current - 1) * SystemConstants.MAX_PAGE_SIZE;
         int end = current * SystemConstants.MAX_PAGE_SIZE;
@@ -244,17 +268,17 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
                 );
         //解析出id
         if (results==null){
-            return Result.ok(Collections.emptyList());
+            return Collections.emptyList();
         }
         List<GeoResult<RedisGeoCommands.GeoLocation<String>>> content = results.getContent();
         if (content.size()<from){
             //没有下一页
-            return Result.ok();
+            return Collections.emptyList();
         }
         //截取
         List<Long> ids=new ArrayList<>(content.size());
         Map<String,Distance> distanceMap=new HashMap<>();
-        content.stream().skip(from).forEach(result->{
+        content.stream().skip(from).forEach(result->{  
             //店铺id
             String shopId = result.getContent().getName();
             ids.add(Long.valueOf(shopId));
@@ -265,7 +289,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
         //根据id查询shop
         if (ids.isEmpty()) {
-            return Result.ok(Collections.emptyList());
+            return Collections.emptyList();
         }
         String join = StrUtil.join(",", ids);
         List<Shop> shopList = lambdaQuery().in(Shop::getId, ids)
@@ -273,7 +297,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         for (Shop shop : shopList) {
             shop.setDistance(distanceMap.get(shop.getId().toString()).getValue());
         }
-        return Result.ok(shopList);
+        return shopList;
     }
 
 //    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);

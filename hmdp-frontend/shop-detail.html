@@ -913,9 +913,9 @@
   <!-- Bottom Action Bar -->
   <div class="bottom-bar">
     <div class="bottom-actions">
-      <div class="bottom-action">
-        <i class="el-icon-star-off"></i>
-        <span>收藏</span>
+      <div class="bottom-action" @click="toggleFavorite">
+        <i :class="isFavorite ? 'el-icon-star-on' : 'el-icon-star-off'"></i>
+        <span>{{isFavorite ? '已收藏' : '收藏'}}</span>
       </div>
       <div class="bottom-action">
         <i class="el-icon-share"></i>
@@ -938,12 +938,14 @@
     data: {
       util,
       shop: {},
-      vouchers: []
+      vouchers: [],
+      isFavorite: false
     },
     created() {
       let shopId = util.getUrlParam("id");
       this.queryShopById(shopId);
       this.queryVoucher(shopId);
+      this.checkFavorite(shopId);
     },
     methods: {
       goBack() {
@@ -971,6 +973,43 @@
           this.vouchers = data;
         })
         .catch(this.$message.error)
+      },
+      checkFavorite(shopId) {
+        if (!token) return;
+        axios.get(`/favorites/is/1/${shopId}`)
+        .then(({data}) => {
+          this.isFavorite = data;
+        })
+        .catch(() => {
+          this.isFavorite = false;
+        })
+      },
+      toggleFavorite() {
+        if (!token) {
+          this.$message.error("请先登录")
+          setTimeout(() => {
+            location.href = "login.html"
+          }, 200);
+          return;
+        }
+        if (!this.shop.id) return;
+        if (this.isFavorite) {
+          // 取消收藏
+          axios.delete(`/favorites/1/${this.shop.id}`)
+          .then(() => {
+            this.isFavorite = false;
+            this.$message.success("已取消收藏");
+          })
+          .catch(this.$message.error)
+        } else {
+          // 添加收藏
+          axios.post(`/favorites/1/${this.shop.id}`)
+          .then(() => {
+            this.isFavorite = true;
+            this.$message.success("收藏成功");
+          })
+          .catch(this.$message.error)
+        }
       },
       formatTime(v){
         let b = new Date(v.beginTime);

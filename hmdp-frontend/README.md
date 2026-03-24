@@ -31,41 +31,8 @@ npm install
 npm run dev
 ```
 
-## 生产环境
-
-### 方式1：使用 Nginx（推荐）
-
-将项目文件夹复制到 Nginx 的 html 目录：
-
-```bash
-# Windows
-xcopy /E /I hmdp-frontend "C:\nginx\html\hmdp"
-
-# 或 Linux/Mac
-cp -r hmdp-frontend /usr/share/nginx/html/hmdp
-```
-
-Nginx 配置：
-
-```nginx
-server {
-    listen 8080;
-    server_name localhost;
-    
-    location / {
-        root html/hmdp;
-        index index.html;
-    }
-    
-    location /api {
-        proxy_pass http://127.0.0.1:8081;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-### 方式2：使用 http-server
+## 
+### 使用 http-server
 
 ```bash
 npm install -g http-server

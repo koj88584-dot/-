@@ -1,7 +1,6 @@
 package com.hmdp.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -13,7 +12,7 @@ import java.time.LocalDateTime;
 
 /**
  * <p>
- * 
+ * 店铺评价表
  * </p>
  *
  * @author 虎哥
@@ -22,8 +21,8 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("tb_shop")
-public class Shop implements Serializable {
+@TableName("tb_shop_comment")
+public class ShopComment implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,64 +33,54 @@ public class Shop implements Serializable {
     private Long id;
 
     /**
-     * 商铺名称
+     * 店铺id（支持负数，高德地图店铺）
      */
-    private String name;
+    private Long shopId;
 
     /**
-     * 商铺类型的id
+     * 用户id
      */
-    private Long typeId;
+    private Long userId;
 
     /**
-     * 商铺图片，多个图片以','隔开
-     */
-    private String images;
-
-    /**
-     * 商圈，例如陆家嘴
-     */
-    private String area;
-
-    /**
-     * 地址
-     */
-    private String address;
-
-    /**
-     * 经度
-     */
-    private Double x;
-
-    /**
-     * 维度
-     */
-    private Double y;
-
-    /**
-     * 均价，取整数
-     */
-    private Long avgPrice;
-
-    /**
-     * 销量
-     */
-    private Integer sold;
-
-    /**
-     * 评论数量
-     */
-    private Integer comments;
-
-    /**
-     * 评分，1~5分，乘10保存，避免小数
+     * 评分，1~5分，乘10保存
      */
     private Integer score;
 
     /**
-     * 营业时间，例如 10:00-22:00
+     * 口味评分
      */
-    private String openHours;
+    private Integer tasteScore;
+
+    /**
+     * 环境评分
+     */
+    private Integer envScore;
+
+    /**
+     * 服务评分
+     */
+    private Integer serviceScore;
+
+    /**
+     * 评价内容
+     */
+    private String content;
+
+    /**
+     * 评价图片，多张以","隔开
+     */
+    private String images;
+
+    /**
+     * 点赞数
+     */
+    private Integer liked;
+
+    /**
+     * 状态：0正常，1隐藏
+     */
+    private Integer status;
 
     /**
      * 创建时间
@@ -103,10 +92,10 @@ public class Shop implements Serializable {
      */
     private LocalDateTime updateTime;
 
-
-    @TableField(exist = false)
-    private Double distance;
-
-    public void setPhone(String s) {
-    }
+    /**
+     * 用户信息（非数据库字段）
+     */
+    private String userName;
+    private String userIcon;
+    private String userLevel;
 }

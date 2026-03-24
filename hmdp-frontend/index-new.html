@@ -111,12 +111,21 @@
       transform: translateY(-1px);
     }
 
-    .city-selector i {
-      transition: transform 0.3s ease;
+    .city-selector .el-dropdown-link {
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
-    .city-selector:hover i {
-      transform: rotate(180deg);
+    .city-dropdown-menu {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .city-dropdown-menu .el-dropdown-menu__item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .search-box {
@@ -181,7 +190,7 @@
     .category-section {
       background: var(--surface);
       padding: 20px 16px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       border-radius: 0 0 var(--radius-lg) var(--radius-lg);
       box-shadow: var(--shadow-sm);
     }
@@ -190,6 +199,28 @@
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 16px 12px;
+    }
+
+    /* 响应式分类网格 */
+    @media (min-width: 768px) {
+      .category-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 18px 14px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .category-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 20px 16px;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .category-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 20px 16px;
+      }
     }
 
     .category-item {
@@ -437,7 +468,7 @@
     /* 附近店铺列表 */
     .shop-section {
       background: var(--surface);
-      margin-top: 12px;
+      margin-top: 16px;
       padding: 0 16px 20px;
       border-radius: var(--radius-lg) var(--radius-lg) 0 0;
       box-shadow: var(--shadow-sm);
@@ -447,6 +478,27 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+    }
+
+    /* 响应式店铺列表 */
+    @media (min-width: 768px) {
+      .shop-section {
+        padding: 0 20px 24px;
+      }
+      
+      .shop-list-new {
+        gap: 18px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .shop-section {
+        padding: 0 24px 28px;
+      }
+      
+      .shop-list-new {
+        gap: 20px;
+      }
     }
 
     .shop-card {
@@ -771,6 +823,10 @@
 
     /* 响应式优化 */
     @media (max-width: 375px) {
+      .container {
+        padding: 0 10px;
+      }
+      
       .category-grid {
         gap: 12px 8px;
       }
@@ -784,6 +840,85 @@
       .shop-image {
         width: 88px;
         height: 88px;
+      }
+      
+      /* 瀑布流响应式 */
+      .waterfall {
+        column-count: 2;
+        column-gap: 10px;
+      }
+      
+      .note-card {
+        margin-bottom: 10px;
+      }
+      
+      .content-section {
+        padding: 0;
+      }
+    }
+
+    /* 瀑布流响应式布局 - 平板和桌面端 */
+    @media (min-width: 768px) {
+      .container {
+        padding: 0 16px;
+      }
+      
+      .waterfall {
+        column-count: 3;
+        column-gap: 14px;
+      }
+      
+      .note-card {
+        margin-bottom: 14px;
+      }
+      
+      .content-section {
+        padding: 0;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .container {
+        padding: 0 20px;
+      }
+      
+      .waterfall {
+        column-count: 4;
+        column-gap: 16px;
+      }
+      
+      .note-card {
+        margin-bottom: 16px;
+      }
+      
+      .content-section {
+        padding: 0;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .waterfall {
+        column-count: 5;
+        column-gap: 18px;
+      }
+      
+      .note-card {
+        margin-bottom: 18px;
+      }
+    }
+
+    @media (min-width: 1440px) {
+      .container {
+        max-width: 1300px;
+      }
+      
+      .waterfall {
+        column-count: 6;
+        column-gap: 20px;
+      }
+      
+      .note-card {
+        margin-bottom: 20px;
       }
     }
 
@@ -807,6 +942,32 @@
     .stagger-2 { animation-delay: 0.2s; }
     .stagger-3 { animation-delay: 0.3s; }
     .stagger-4 { animation-delay: 0.4s; }
+
+    /* 居中容器 */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* 内容区调整 */
+    .content-wrapper {
+      padding-bottom: 100px;
+    }
+
+    /* 分类区域调整 */
+    .category-section {
+      margin-bottom: 16px;
+    }
+
+    /* 卡片密度调整 */
+    .waterfall {
+      column-gap: 12px;
+    }
+
+    .note-card {
+      margin-bottom: 12px;
+    }
   </style>
 </head>
 <body>
@@ -817,10 +978,22 @@
         <div class="logo-icon">🐴</div>
         <span>周边优速通</span>
       </div>
-      <div class="city-selector" @click="selectCity">
-        <span>{{ currentCity }}</span>
-        <i class="el-icon-arrow-down"></i>
-      </div>
+      <el-dropdown class="city-selector" trigger="click" @command="handleCityCommand">
+        <span class="el-dropdown-link">
+          {{ currentCity }}<i class="el-icon-arrow-down el-icon--right"></i>
+        </span>
+        <el-dropdown-menu slot="dropdown" class="city-dropdown-menu">
+          <el-dropdown-item command="current" divided>
+            <i class="el-icon-location-information"></i> 当前定位
+          </el-dropdown-item>
+          <el-dropdown-item v-for="city in hotCities" :key="city" :command="city">
+            {{ city }}
+          </el-dropdown-item>
+          <el-dropdown-item command="more" divided>
+            <i class="el-icon-search"></i> 更多城市...
+          </el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
       <div class="search-box">
         <input 
           class="search-input" 
@@ -831,14 +1004,15 @@
           @blur="isSearchFocused = false"
         >
         <button class="search-btn" @click="search">
-          <i class="el-icon-search"></i>
+          搜索
         </button>
       </div>
     </header>
 
-    <div class="content-wrapper">
-      <!-- 分类网格 -->
-      <section class="category-section fade-in">
+    <div class="container">
+      <div class="content-wrapper">
+        <!-- 分类网格 -->
+        <section class="category-section fade-in">
         <div class="category-grid">
           <div class="category-item" 
                v-for="(cat, index) in categories" 
@@ -890,10 +1064,18 @@
       <!-- 附近好店 -->
       <section class="shop-section">
         <div class="section-header">
-          <h2 class="section-title">附近好店</h2>
-          <span class="section-more" @click="goMap">
-            地图 <i class="el-icon-map-location"></i>
-          </span>
+          <h2 class="section-title">
+            附近好店
+            <i v-if="isLocating" class="el-icon-loading" style="font-size: 14px; margin-left: 8px; color: #999;"></i>
+          </h2>
+          <div style="display: flex; gap: 12px;">
+            <span class="section-more" @click="refreshNearbyShops" style="cursor: pointer;">
+              <i class="el-icon-refresh"></i> 刷新
+            </span>
+            <span class="section-more" @click="goMap">
+              地图 <i class="el-icon-map-location"></i>
+            </span>
+          </div>
         </div>
         <div class="shop-list-new">
           <div class="shop-card fade-in" 
@@ -908,9 +1090,9 @@
             <div class="shop-info">
               <div class="shop-header">
                 <h3 class="shop-name">{{ shop.name }}</h3>
-                <span class="shop-distance">
+                <span class="shop-distance" v-if="shop.distanceText">
                   <i class="el-icon-location-outline"></i>
-                  {{ formatDistance(shop.distance) }}
+                  {{ shop.distanceText }}
                 </span>
               </div>
               <div class="shop-rating">
@@ -939,6 +1121,7 @@
           </div>
         </div>
       </section>
+      </div>
     </div>
 
     <!-- 底部导航 -->
@@ -963,6 +1146,60 @@
         <span class="nav-text">我的</span>
       </div>
     </nav>
+
+    <!-- 城市选择对话框 -->
+    <el-dialog
+      title="选择城市"
+      :visible.sync="showCityDialog"
+      width="90%"
+      :modal-append-to-body="true"
+      custom-class="city-dialog">
+      <div class="city-search">
+        <el-input
+          v-model="citySearchKeyword"
+          placeholder="输入城市名搜索"
+          prefix-icon="el-icon-search"
+          @keyup.enter="searchCity">
+        </el-input>
+      </div>
+
+      <div class="city-section">
+        <h4 class="city-section-title">当前定位</h4>
+        <div class="city-current" @click="useCurrentLocation">
+          <i class="el-icon-location-information"></i>
+          <span>{{ currentCity }}</span>
+          <small style="color: #999; margin-left: 8px;">点击使用当前位置</small>
+        </div>
+      </div>
+
+      <div class="city-section">
+        <h4 class="city-section-title">热门城市</h4>
+        <div class="city-grid">
+          <div
+            v-for="city in hotCities"
+            :key="city"
+            class="city-item"
+            :class="{ active: city === currentCity }"
+            @click="selectCityByName(city)">
+            {{ city }}
+          </div>
+        </div>
+      </div>
+
+      <div class="city-section" v-if="cityList.length > 0">
+        <h4 class="city-section-title">搜索结果</h4>
+        <div class="city-list">
+          <div
+            v-for="city in cityList"
+            :key="city.name"
+            class="city-list-item"
+            @click="selectCityByLocation(city)">
+            <div class="city-name">{{ city.name }}</div>
+            <div class="city-address">{{ city.address }}</div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 
   <script src="./js/vue.js"></script>
@@ -978,120 +1215,454 @@
         isSearchFocused: false,
         isScrolled: false,
         isLoading: true,
+        showCityDialog: false,  // 显示城市选择对话框
+        citySearchKeyword: '',  // 城市搜索关键词
+        hotCities: ['北京', '上海', '广州', '深圳', '杭州', '南京', '成都', '武汉', '西安', '重庆', '长沙', '天津'],
+        cityList: [],
         categories: [
           { id: 1, name: '美食', icon: '🍜', class: 'cat-food' },
-          { id: 2, name: '景点', icon: '🏞️', class: 'cat-scenic' },
-          { id: 3, name: '酒店', icon: '🏨', class: 'cat-hotel' },
-          { id: 4, name: '玩乐', icon: '🎮', class: 'cat-entertain' },
-          { id: 5, name: '电影', icon: '🎬', class: 'cat-movie' },
-          { id: 6, name: '丽人', icon: '💇', class: 'cat-beauty' },
-          { id: 7, name: '外卖', icon: '🛵', class: 'cat-takeout' },
-          { id: 8, name: 'KTV', icon: '🎤', class: 'cat-ktv' },
-          { id: 9, name: '健身', icon: '🏃', class: 'cat-fitness' },
-          { id: 10, name: '按摩', icon: '💆', class: 'cat-massage' },
+          { id: 2, name: 'KTV', icon: '🎤', class: 'cat-ktv' },
+          { id: 3, name: '丽人·美发', icon: '💇', class: 'cat-beauty' },
+          { id: 4, name: '健身运动', icon: '🏃', class: 'cat-fitness' },
+          { id: 5, name: '按摩·足疗', icon: '💆', class: 'cat-massage' },
+          { id: 6, name: '美容SPA', icon: '✨', class: 'cat-spa' },
+          { id: 7, name: '亲子游乐', icon: '👶', class: 'cat-kids' },
+          { id: 8, name: '酒吧', icon: '🍺', class: 'cat-bar' },
+          { id: 9, name: '轰趴馆', icon: '🎉', class: 'cat-party' },
+          { id: 10, name: '美睫·美甲', icon: '💅', class: 'cat-nail' },
         ],
-        notes: [
-          {
-            id: 1,
-            title: '长沙必吃的臭豆腐，排队也要吃！',
-            image: '/imgs/shop/1.jpg',
-            authorAvatar: '/imgs/icons/default-icon.png',
-            authorName: '美食探店达人',
-            likes: 1234
-          },
-          {
-            id: 2,
-            title: '藏在巷子里的宝藏小店，人均30吃到撑',
-            image: '/imgs/shop/2.jpg',
-            authorAvatar: '/imgs/icons/default-icon.png',
-            authorName: '吃货小王',
-            likes: 892
-          },
-          {
-            id: 3,
-            title: '周末去哪儿？这家咖啡馆太治愈了',
-            image: '/imgs/shop/3.jpg',
-            authorAvatar: '/imgs/icons/default-icon.png',
-            authorName: '咖啡控',
-            likes: 567
-          },
-          {
-            id: 4,
-            title: '正宗湘菜馆，辣得过瘾！',
-            image: '/imgs/shop/4.jpg',
-            authorAvatar: '/imgs/icons/default-icon.png',
-            authorName: '辣味人生',
-            likes: 2341
-          },
-          {
-            id: 5,
-            title: '网红奶茶店打卡，颜值超高',
-            image: '/imgs/shop/5.jpg',
-            authorAvatar: '/imgs/icons/default-icon.png',
-            authorName: '奶茶妹妹',
-            likes: 1567
-          },
-          {
-            id: 6,
-            title: '深夜食堂，治愈系日料店',
-            image: '/imgs/shop/6.jpg',
-            authorAvatar: '/imgs/icons/default-icon.png',
-            authorName: '深夜食客',
-            likes: 789
-          }
-        ],
-        nearbyShops: []
+        notes: [],  // 推荐笔记，从后端获取
+        nearbyShops: [],
+        currentLocation: null,  // 当前坐标
+        isLocating: false       // 是否正在定位
       },
       mounted() {
-        this.loadNearbyShops();
+        // 优先尝试获取当前定位
+        this.autoLocateAndLoad();
+        // 加载推荐笔记
+        this.loadHotNotes();
         this.handleScroll();
         window.addEventListener('scroll', this.handleScroll);
       },
       beforeDestroy() {
         window.removeEventListener('scroll', this.handleScroll);
       },
+
       methods: {
+        // 自动定位并加载
+        async autoLocateAndLoad() {
+          // 先恢复保存的城市名称（用于显示）
+          const savedCity = localStorage.getItem('currentCity');
+          if (savedCity) {
+            try {
+              const parsed = JSON.parse(savedCity);
+              if (parsed && parsed.name) {
+                this.currentCity = parsed.name;
+                localStorage.setItem('currentCity', parsed.name);
+              } else if (typeof parsed === 'object') {
+                this.currentCity = '定位中...';
+              } else {
+                this.currentCity = savedCity;
+              }
+            } catch (e) {
+              this.currentCity = savedCity;
+            }
+          } else {
+            this.currentCity = '定位中...';
+          }
+
+          // 尝试获取当前位置
+          if (navigator.geolocation) {
+            this.isLocating = true;
+            navigator.geolocation.getCurrentPosition(
+              async (position) => {
+                // 获取到位置
+                this.currentLocation = {
+                  x: position.coords.longitude,
+                  y: position.coords.latitude,
+                  accuracy: position.coords.accuracy
+                };
+
+                // 保存位置
+                localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
+
+                // 获取城市名称
+                await this.getCityByLocation(position.coords.longitude, position.coords.latitude);
+
+                this.isLocating = false;
+
+                // 加载附近店铺
+                this.loadNearbyShops();
+              },
+              (error) => {
+                // 定位失败，使用保存的位置或默认位置
+                console.log('自动定位失败，使用保存的位置:', error);
+                this.isLocating = false;
+                this.getCurrentLocation(); // 使用保存的位置或默认位置
+              },
+              {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5分钟缓存
+              }
+            );
+          } else {
+            // 浏览器不支持定位
+            this.getCurrentLocation();
+          }
+        },
+
         // 处理滚动
         handleScroll() {
           this.isScrolled = window.scrollY > 10;
         },
 
-        // 加载附近店铺
-        async loadNearbyShops() {
-          this.isLoading = true;
+        // 加载热门笔记
+        async loadHotNotes() {
           try {
-            const res = await axios.get('/shop/of/type', {
-              params: { typeId: 1, current: 1 }
+            const res = await axios.get('/blog/hot', {
+              params: { current: 1 }
             });
-            if (res.data && res.data.data) {
-              this.nearbyShops = res.data.data.slice(0, 5).map(shop => ({
-                ...shop,
-                score: (shop.score / 10).toFixed(1),
-                image: shop.images ? shop.images.split(',')[0] : '/imgs/icons/default-icon.png',
-                tags: ['口味赞', '环境好', '服务热情'].slice(0, Math.floor(Math.random() * 3) + 1)
+            // common.js 拦截器返回的是 Result 对象，数据在 res.data 中
+            const result = res.data;
+            if (result && Array.isArray(result)) {
+              this.notes = result.map(blog => ({
+                id: blog.id,
+                title: blog.title,
+                image: blog.images ? blog.images.split(',')[0] : '/imgs/icons/default-icon.png',
+                authorAvatar: blog.icon || '/imgs/icons/default-icon.png',
+                authorName: blog.name || '匿名用户',
+                likes: blog.liked || 0
               }));
             }
           } catch (e) {
+            console.error('加载推荐笔记失败:', e);
+            this.notes = [];
+          }
+        },
+
+        // 获取当前位置
+        getCurrentLocation(forceRefresh = false) {
+          this.isLocating = true;
+
+          // 如果不是强制刷新，先尝试从本地存储获取上次的位置
+          if (!forceRefresh) {
+            const savedLocation = localStorage.getItem('userLocation');
+            if (savedLocation) {
+              try {
+                this.currentLocation = JSON.parse(savedLocation);
+                console.log('使用保存的位置:', this.currentLocation);
+                this.loadNearbyShops();
+                this.isLocating = false;
+                return;
+              } catch (e) {
+                console.log('解析保存位置失败');
+              }
+            }
+          }
+
+          // 使用浏览器 Geolocation API 获取当前位置
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                this.currentLocation = {
+                  x: position.coords.longitude,  // 经度
+                  y: position.coords.latitude,   // 纬度
+                  accuracy: position.coords.accuracy
+                };
+                console.log('获取到当前位置:', this.currentLocation);
+
+                // 通过高德API反查城市名称
+                this.getCityByLocation(position.coords.longitude, position.coords.latitude);
+
+                // 保存到本地存储
+                localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
+
+                this.isLocating = false;
+                this.loadNearbyShops();
+              },
+              (error) => {
+                console.error('获取位置失败:', error);
+                this.$message.warning('无法获取您的位置，使用默认位置');
+
+                // 使用默认坐标（长沙市中心）
+                this.currentLocation = {
+                  x: 112.938814,  // 长沙经度
+                  y: 28.228209    // 长沙纬度
+                };
+
+                this.isLocating = false;
+                this.loadNearbyShops();
+              },
+              {
+                enableHighAccuracy: true,  // 高精度
+                timeout: 10000,            // 10秒超时
+                maximumAge: 600000         // 缓存10分钟
+              }
+            );
+          } else {
+            this.$message.warning('您的浏览器不支持定位，使用默认位置');
+            this.currentLocation = {
+              x: 112.938814,
+              y: 28.228209
+            };
+            this.isLocating = false;
+            this.loadNearbyShops();
+          }
+        },
+
+        // 根据坐标获取城市名称
+        async getCityByLocation(lng, lat) {
+          try {
+            const url = `https://restapi.amap.com/v3/geocode/regeo?key=3ca0a2f25ab8827c53379129c07ac77e&location=${lng},${lat}&extensions=all`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.status === '1' && data.regeocode) {
+              const addressComponent = data.regeocode.addressComponent;
+              const city = addressComponent.city || addressComponent.province || '未知城市';
+              this.currentCity = city.replace(/市$/, ''); // 去掉"市"后缀
+              localStorage.setItem('currentCity', this.currentCity);
+              console.log('当前城市:', this.currentCity);
+            }
+          } catch (e) {
+            console.error('获取城市名称失败:', e);
+          }
+        },
+
+        // 刷新附近店铺（重新获取位置）
+        refreshNearbyShops() {
+          this.$message.info('正在刷新位置...');
+          // 清除保存的位置，强制重新获取
+          localStorage.removeItem('userLocation');
+          this.getCurrentLocation(true);
+        },
+
+        // 加载附近店铺
+        async loadNearbyShops() {
+          this.isLoading = true;
+
+          try {
+            // 如果没有坐标，先获取
+            if (!this.currentLocation) {
+              this.getCurrentLocation();
+              return;
+            }
+
+            const { x, y } = this.currentLocation;
+            console.log('加载附近店铺，坐标:', x, y);
+
+            // 并行请求多种类型的店铺
+            const requests = [1, 2, 3, 4, 5].map(typeId =>
+              axios.get('/shop/of/type', {
+                params: { typeId, current: 1, x, y }
+              }).catch(() => ({ data: [] }))
+            );
+
+            const responses = await Promise.all(requests);
+            let allShops = [];
+
+            responses.forEach(res => {
+              // common.js 拦截器返回的是 Result 对象，数据在 res.data 中
+              const result = res.data;
+              if (result && Array.isArray(result)) {
+                // 为每个店铺添加距离信息
+                const shopsWithDistance = result.map(shop => {
+                  if (shop.x && shop.y) {
+                    shop.distance = this.calculateDistance(x, y, shop.x, shop.y);
+                  }
+                  return shop;
+                });
+                allShops = allShops.concat(shopsWithDistance);
+              }
+            });
+
+            // 按距离排序并取前20个
+            allShops.sort((a, b) => (a.distance || 999999) - (b.distance || 999999));
+
+            if (allShops.length > 0) {
+              this.nearbyShops = allShops.slice(0, 20).map(shop => ({
+                ...shop,
+                score: shop.score ? (shop.score / 10).toFixed(1) : '4.0',
+                image: shop.images ? shop.images.split(',')[0] : '/imgs/icons/default-icon.png',
+                tags: this.getShopTags(shop.typeId),
+                distanceText: shop.distance ? this.formatDistance(shop.distance) : ''
+              }));
+            } else {
+              this.nearbyShops = [];
+            }
+          } catch (e) {
             console.error('加载店铺失败:', e);
-            this.nearbyShops = [
-              { id: 1, name: '茶颜悦色', score: 4.8, avgPrice: 18, address: '五一广场店', distance: 500, image: '/imgs/shop/1.jpg', tags: ['网红店', '口味赞'] },
-              { id: 2, name: '文和友老长沙龙虾馆', score: 4.6, avgPrice: 128, address: '海信广场店', distance: 800, image: '/imgs/shop/2.jpg', tags: ['必吃榜', '排队王'] },
-              { id: 3, name: '费大厨辣椒炒肉', score: 4.7, avgPrice: 68, address: '万家丽店', distance: 1200, image: '/imgs/shop/3.jpg', tags: ['湘菜', '口味正宗'] },
-            ];
+            this.nearbyShops = [];
           } finally {
             this.isLoading = false;
           }
         },
 
-        // 选择城市
+        // 计算两点之间的距离（米）
+        calculateDistance(lng1, lat1, lng2, lat2) {
+          const R = 6371000; // 地球半径（米）
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLng = (lng2 - lng1) * Math.PI / 180;
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return Math.round(R * c);
+        },
+
+        // 格式化距离显示
+        formatDistance(distance) {
+          if (distance < 1000) {
+            return distance + 'm';
+          } else {
+            return (distance / 1000).toFixed(1) + 'km';
+          }
+        },
+        
+        // 根据店铺类型获取标签
+        getShopTags(typeId) {
+          const tagMap = {
+            1: ['口味赞', '环境好', '服务热情'],
+            2: ['音响好', '曲库全', '装修棒'],
+            3: ['技术好', '服务佳', '环境舒适'],
+            4: ['设备新', '教练专业', '环境好'],
+            5: ['手法好', '环境舒适', '服务热情'],
+            6: ['产品好', '技术专业', '环境优雅'],
+            7: ['好玩', '安全', '适合亲子'],
+            8: ['氛围好', '酒水全', '音乐棒'],
+            9: ['场地大', '设施全', '适合聚会'],
+            10: ['技术好', '产品优质', '服务细致']
+          };
+          const tags = tagMap[typeId] || ['推荐'];
+          return tags.slice(0, Math.floor(Math.random() * 3) + 1);
+        },
+
+        // 处理城市下拉菜单命令
+        handleCityCommand(command) {
+          if (command === 'current') {
+            // 重新定位（强制刷新）
+            this.$message.info('正在重新定位...');
+            // 清除保存的位置，强制重新获取
+            localStorage.removeItem('userLocation');
+            this.getCurrentLocation(true);
+          } else if (command === 'more') {
+            // 打开更多城市对话框
+            this.selectCity();
+          } else {
+            // 选择热门城市
+            this.selectCityByName(command);
+          }
+        },
+
+        // 选择城市（打开完整对话框）
         selectCity() {
-          this.$message.info('选择城市功能开发中');
+          this.showCityDialog = true;
+          this.citySearchKeyword = '';
+          this.cityList = [];
+        },
+
+        // 使用当前定位
+        useCurrentLocation() {
+          this.showCityDialog = false;
+          this.$message.info('正在重新定位...');
+          this.getCurrentLocation();
+        },
+
+        // 根据城市名选择（使用预设坐标）
+        selectCityByName(cityName) {
+          // 预设城市坐标
+          const cityCoords = {
+            '北京': { x: 116.407526, y: 39.90403 },
+            '上海': { x: 121.473701, y: 31.230416 },
+            '广州': { x: 113.264435, y: 23.129163 },
+            '深圳': { x: 114.057868, y: 22.543099 },
+            '杭州': { x: 120.15507, y: 30.274084 },
+            '南京': { x: 118.796877, y: 32.060255 },
+            '成都': { x: 104.066541, y: 30.572269 },
+            '武汉': { x: 114.305393, y: 30.593099 },
+            '西安': { x: 108.93977, y: 34.341574 },
+            '重庆': { x: 106.551556, y: 29.563009 },
+            '长沙': { x: 112.938814, y: 28.228209 },
+            '天津': { x: 117.200983, y: 39.084158 }
+          };
+
+          const coords = cityCoords[cityName];
+          if (coords) {
+            this.currentCity = cityName;
+            this.currentLocation = { ...coords, city: cityName };
+
+            // 保存到本地存储
+            localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
+            localStorage.setItem('currentCity', cityName);
+
+            this.showCityDialog = false;
+            this.$message.success(`已切换到${cityName}`);
+
+            // 刷新附近店铺
+            this.loadNearbyShops();
+          }
+        },
+
+        // 根据搜索结果选择位置
+        selectCityByLocation(city) {
+          this.currentCity = city.name;
+          this.currentLocation = {
+            x: city.x,
+            y: city.y,
+            city: city.name
+          };
+
+          // 保存到本地存储
+          localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
+          localStorage.setItem('currentCity', city.name);
+
+          this.showCityDialog = false;
+          this.$message.success(`已切换到${city.name}`);
+
+          // 刷新附近店铺
+          this.loadNearbyShops();
+        },
+
+        // 搜索城市/地点
+        async searchCity() {
+          if (!this.citySearchKeyword.trim()) {
+            this.cityList = [];
+            return;
+          }
+
+          try {
+            // 使用高德地图API搜索地点
+            const keyword = this.citySearchKeyword.trim();
+            const url = `https://restapi.amap.com/v3/place/text?key=3ca0a2f25ab8827c53379129c07ac77e&keywords=${encodeURIComponent(keyword)}&citylimit=true&offset=10&page=1&extensions=all`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.status === '1' && data.pois && data.pois.length > 0) {
+              this.cityList = data.pois.map(poi => {
+                const location = poi.location.split(',');
+                return {
+                  name: poi.name,
+                  address: poi.address || poi.adname || '',
+                  x: parseFloat(location[0]),
+                  y: parseFloat(location[1])
+                };
+              });
+            } else {
+              this.cityList = [];
+              this.$message.warning('未找到相关地点');
+            }
+          } catch (e) {
+            console.error('搜索地点失败:', e);
+            this.$message.error('搜索失败，请重试');
+          }
         },
 
         // 搜索
         search() {
           if (this.searchKeyword.trim()) {
-            window.location.href = `/shop-list.html?keyword=${encodeURIComponent(this.searchKeyword.trim())}`;
+            window.location.href = `/search.html?keyword=${encodeURIComponent(this.searchKeyword.trim())}`;
           } else {
             this.$message.warning('请输入搜索关键词');
           }
@@ -1109,7 +1680,7 @@
 
         // 查看笔记
         viewNote(note) {
-          this.$message.info(`查看笔记：${note.title}`);
+          window.location.href = `/blog-detail.html?id=${note.id}`;
         },
 
         // 进入店铺
@@ -1122,16 +1693,16 @@
           window.scrollTo({ top: 0, behavior: 'smooth' });
         },
         goMap() {
-          window.location.href = '/map.html';
+          window.location.href = 'map.html';
         },
         publish() {
           this.$message.info('发布功能开发中');
         },
         goMessages() {
-          window.location.href = '/message.html';
+          window.location.href = 'messages.html';
         },
         goProfile() {
-          window.location.href = '/info.html';
+          window.location.href = 'info.html';
         },
 
         // 格式化距离
@@ -1153,5 +1724,81 @@
       }
     });
   </script>
+
+  <style>
+    .city-dialog .el-dialog__body {
+      padding: 20px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    .city-search {
+      margin-bottom: 20px;
+    }
+    .city-section {
+      margin-bottom: 20px;
+    }
+    .city-section-title {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 12px;
+      font-weight: normal;
+    }
+    .city-current {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .city-current:hover {
+      background: #e8f4f8;
+    }
+    .city-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .city-item {
+      padding: 10px;
+      text-align: center;
+      background: #f5f5f5;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    .city-item:hover {
+      background: #e8f4f8;
+      color: var(--primary);
+    }
+    .city-item.active {
+      background: var(--primary);
+      color: white;
+    }
+    .city-list {
+      border-top: 1px solid #eee;
+    }
+    .city-list-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+    .city-list-item:hover {
+      background: #f9f9f9;
+    }
+    .city-name {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .city-address {
+      font-size: 12px;
+      color: #999;
+    }
+  </style>
 </body>
 </html>

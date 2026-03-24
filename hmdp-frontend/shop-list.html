@@ -417,6 +417,76 @@
       background: rgba(255, 107, 53, 0.1);
       color: var(--primary);
     }
+
+    /* 响应式设计 */
+    @media (max-width: 375px) {
+      .header-title {
+        font-size: 16px;
+      }
+      
+      .sort-bar {
+        padding: 0 4px;
+      }
+      
+      .sort-item {
+        padding: 6px 12px;
+        font-size: 13px;
+      }
+      
+      .shop-card-inner {
+        gap: 10px;
+        padding: 10px;
+      }
+      
+      .shop-image {
+        width: 88px;
+        height: 88px;
+      }
+      
+      .shop-name {
+        font-size: 15px;
+      }
+      
+      .shop-meta {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      
+      .shop-tags {
+        gap: 4px;
+      }
+      
+      .shop-tag {
+        font-size: 10px;
+        padding: 2px 6px;
+      }
+      
+      .shop-area {
+        font-size: 11px;
+        gap: 6px;
+      }
+      
+      .shop-distance {
+        font-size: 11px;
+        padding: 3px 8px;
+      }
+    }
+
+    @media (max-width: 320px) {
+      .sort-item {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+      
+      .shop-image {
+        width: 80px;
+        height: 80px;
+      }
+      
+      .shop-name {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -426,7 +496,10 @@
     <div class="header-back-btn" @click="goBack">
       <i class="el-icon-arrow-left"></i>
     </div>
-    <div class="header-title">{{typeName || '店铺列表'}}</div>
+    <div class="header-title">
+      {{typeName || '店铺列表'}}
+      <i v-if="isLocating" class="el-icon-loading" style="font-size: 14px; margin-left: 8px;"></i>
+    </div>
     <div class="header-search" @click="goToSearch">
       <i class="el-icon-search"></i>
     </div>
@@ -556,15 +629,16 @@
         typeId: 0,
         current: 1,
         sortBy: "",
-        x: 120.149993,
-        y: 30.334229
-      }
+        x: 112.938814,
+        y: 28.228209
+      },
+      isLocating: false
     },
     created() {
       this.params.typeId = util.getUrlParam("type");
       this.typeName = util.getUrlParam("name");
       this.queryTypes();
-      this.queryShops();
+      this.getCurrentLocation();
 
       // Listen to scroll
       window.addEventListener('scroll', this.handleScroll);
@@ -573,6 +647,59 @@
       window.removeEventListener('scroll', this.handleScroll);
     },
     methods: {
+      getCurrentLocation() {
+        this.isLocating = true;
+        
+        // Try to get location from local storage first
+        const savedLocation = localStorage.getItem('userLocation');
+        if (savedLocation) {
+          try {
+            const location = JSON.parse(savedLocation);
+            this.params.x = location.x;
+            this.params.y = location.y;
+            this.queryShops();
+            this.isLocating = false;
+            return;
+          } catch (e) {
+            console.log('Failed to parse saved location');
+          }
+        }
+
+        // Use browser geolocation
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              this.params.x = position.coords.longitude;
+              this.params.y = position.coords.latitude;
+              
+              // Save location to local storage
+              localStorage.setItem('userLocation', JSON.stringify({
+                x: this.params.x,
+                y: this.params.y
+              }));
+              
+              this.queryShops();
+              this.isLocating = false;
+            },
+            (error) => {
+              console.error('Geolocation error:', error);
+              // Use default location
+              this.queryShops();
+              this.isLocating = false;
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 600000
+            }
+          );
+        } else {
+          // Browser doesn't support geolocation
+          this.queryShops();
+          this.isLocating = false;
+        }
+      },
+      
       queryTypes() {
         axios.get("/shop-type/list")
           .then(({data}) => {
@@ -587,8 +714,10 @@
         axios.get("/shop/of/type", {
             params: this.params
           })
-          .then(({data}) => {
+          .then((response) => {
             this.loading = false;
+            console.log('响应数据:', response);
+            const data = response.data;
             if (!data || data.length === 0) {
               this.hasMore = false;
               return;
@@ -634,8 +763,9 @@
           axios.get("/shop/of/type", {
               params: this.params
             })
-            .then(({data}) => {
+            .then((response) => {
               this.isLoadingMore = false;
+              const data = response.data;
               if (!data || data.length === 0) {
                 this.hasMore = false;
                 return;

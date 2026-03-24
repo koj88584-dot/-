@@ -678,7 +678,7 @@
   <div class="profile-card fade-in">
     <div class="profile-main">
       <div class="avatar-wrapper">
-        <img class="avatar" :src="user.icon || '/imgs/icons/default-icon.png'" alt="">
+        <img class="avatar" :src="getImageUrl(user.icon)" alt="">
         <div class="avatar-edit" @click="toEdit">
           <i class="el-icon-camera"></i>
         </div>
@@ -786,7 +786,7 @@
       <div v-if="activeTab === 'notes'" class="blog-list">
         <div class="blog-item" v-for="b in blogs" :key="b.id" @click="toBlogDetail(b)">
           <div class="blog-img">
-            <img :src="b.images ? b.images.split(',')[0] : '/imgs/icons/default-icon.png'" alt="">
+            <img :src="getImageUrl(b.images ? b.images.split(',')[0] : '/imgs/icons/default-icon.png')" alt="">
           </div>
           <div class="blog-info">
             <div class="blog-title">{{b.title || '无标题'}}</div>
@@ -825,12 +825,12 @@
       <div v-if="activeTab === 'following'" class="blog-list">
         <div class="blog-item" v-for="b in blogs2" :key="b.id" @click="toBlogDetail(b)">
           <div class="blog-img">
-            <img :src="b.img || '/imgs/icons/default-icon.png'" alt="">
+            <img :src="getImageUrl(b.img || '/imgs/icons/default-icon.png')" alt="">
           </div>
           <div class="blog-info">
             <div class="blog-title">{{b.title || '无标题'}}</div>
             <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-              <img :src="b.icon || '/imgs/icons/default-icon.png'" style="width: 20px; height: 20px; border-radius: 50%;">
+              <img :src="getImageUrl(b.icon || '/imgs/icons/default-icon.png')" style="width: 20px; height: 20px; border-radius: 50%;">
               <span style="font-size: 12px; color: var(--text-secondary);">{{b.name}}</span>
             </div>
             <div class="blog-meta">
@@ -907,12 +907,24 @@
     methods: {
       queryUser() {
         axios.get("/user/me")
-          .then((response) => {
-            this.user = response.data;
+          .then((result) => {
+            // common.js 拦截器返回的是整个 Result 对象，需要取 data 部分
+            this.user = result.data;
+            // 检查本地存储是否有更新的昵称和头像
+            const savedNickName = localStorage.getItem('userNickName');
+            const savedIcon = localStorage.getItem('userIcon');
+            if (savedNickName) {
+              this.user.nickName = savedNickName;
+            }
+            if (savedIcon) {
+              this.user.icon = savedIcon;
+            }
             this.pageReady = true;
             this.queryUserInfo();
             this.queryBlogs();
-            this.queryFollowStats(this.user.id);
+            if (this.user.id) {
+              this.queryFollowStats(this.user.id);
+            }
           })
           .catch(() => {
             location.href = "login.html";
@@ -920,15 +932,15 @@
       },
       queryUserInfo() {
         axios.get("/user/info/" + this.user.id)
-          .then(({data}) => {
-            if (data) this.info = data;
+          .then((result) => {
+            if (result.data) this.info = result.data;
           })
           .catch(err => this.$message.error(err));
       },
       queryBlogs() {
         axios.get("/blog/of/me")
-          .then(({data}) => {
-            this.blogs = data || [];
+          .then((result) => {
+            this.blogs = result.data || [];
           })
           .catch(this.$message.error);
       },
@@ -941,9 +953,9 @@
         axios.get("/blog/of/follow", {
             params: {offset: os, lastId: minTime || new Date().getTime() + 1}
           })
-          .then(({data}) => {
-            if (!data) return;
-            let {list, ...params} = data;
+          .then((result) => {
+            if (!result.data) return;
+            let {list, ...params} = result.data;
             list.forEach(b => b.img = b.images.split(",")[0]);
             this.blogs2 = clear ? list : this.blogs2.concat(list);
             this.params = params;
@@ -952,16 +964,16 @@
       },
       queryFollowStats(userId) {
         axios.get(`/follow/list/${userId}?current=1`)
-          .then(({data}) => {
-            this.followCount = data ? data.length : 0;
+          .then((result) => {
+            this.followCount = result.data ? result.data.length : 0;
           });
         axios.get(`/follow/followers/${userId}?current=1`)
-          .then(({data}) => {
-            this.followerCount = data ? data.length : 0;
+          .then((result) => {
+            this.followerCount = result.data ? result.data.length : 0;
           });
         axios.get('/message/unread-count')
-          .then(({data}) => {
-            this.unreadCount = data?.data || data || 0;
+          .then((result) => {
+            this.unreadCount = result.data || 0;
           })
           .catch(() => {});
       },
@@ -981,6 +993,17 @@
       },
       goBack() {
         history.back();
+      },
+      getImageUrl(icon) {
+        if (!icon) {
+          return '/imgs/icons/default-icon.png';
+        }
+        // 如果已经是完整URL，直接返回
+        if (icon.startsWith('http')) {
+          return icon;
+        }
+        // 拼接完整URL
+        return util.commonURL + icon;
       },
       goHome() {
         location.href = 'index-new.html';
