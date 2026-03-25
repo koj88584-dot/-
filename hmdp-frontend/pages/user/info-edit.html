@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <title>编辑资料</title>
-  <link rel="stylesheet" href="./css/element.css">
-  <link href="./css/main.css" rel="stylesheet">
-  <link href="./css/info.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <link href="/css/info.css" rel="stylesheet">
   <style>
     .edit-dialog .el-dialog__body {
       padding: 20px;
@@ -77,10 +77,10 @@
     </span>
   </el-dialog>
 </div>
-<script src="./js/vue.js"></script>
-<script src="./js/axios.min.js"></script>
-<script src="./js/element.js"></script>
-<script src="./js/common.js"></script>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
 <script>
   const app = new Vue({
     el: "#app",
@@ -106,7 +106,7 @@
           })
           .catch(err => {
             this.$message.error('请先登录');
-            setTimeout(() => location.href = "login.html", 1000);
+            setTimeout(() => location.href = "../auth/login.html", 1000);
           });
       },
       goBack() {
@@ -155,18 +155,29 @@
         }
 
         this.uploading = true;
+        
+        // 先上传文件到服务器获取 URL
         const formData = new FormData();
         formData.append('file', this.selectedFile);
-
-        axios.post('/user/upload-icon', formData, {
+        
+        axios.post('/upload/blog', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         })
-          .then((result) => {
+          .then((uploadResult) => {
+            // 上传成功后，调用 upload-icon 接口更新用户头像
+            if (uploadResult && uploadResult.success) {
+              const imageUrl = uploadResult.data;
+              return axios.post('/user/upload-icon?url=' + encodeURIComponent(imageUrl));
+            } else {
+              throw new Error(uploadResult?.errorMsg || '文件上传失败');
+            }
+          })
+          .then((updateResult) => {
             // common.js 拦截器已经处理了 response，这里直接拿到 Result 对象
-            if (result && result.success) {
-              this.user.icon = result.data || this.tempAvatar;
+            if (updateResult && updateResult.success) {
+              this.user.icon = updateResult.data;
               this.tempAvatar = this.user.icon;
               // 保存到本地存储，确保返回个人主页时能立即看到更新
               localStorage.setItem('userIcon', this.user.icon);
@@ -176,7 +187,7 @@
               // 清除文件输入，允许再次选择同一文件
               this.$refs.fileInput.value = '';
             } else {
-              this.$message.error(result?.errorMsg || '修改失败');
+              this.$message.error(updateResult?.errorMsg || '修改失败');
             }
           })
           .catch(err => {
@@ -215,8 +226,8 @@
         if (icon.startsWith('http')) {
           return icon;
         }
-        // 拼接完整URL
-        return util.commonURL + icon;
+        // 拼接完整URL，添加 /imgs 前缀
+        return util.commonURL + '/imgs' + icon;
       }
     }
   });

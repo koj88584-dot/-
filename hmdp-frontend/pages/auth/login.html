@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <title>周边优速通</title>
   <!-- 引入样式 -->
-  <link rel="stylesheet" href="./css/element.css">
-  <link href="./css/main.css" rel="stylesheet">
-  <link href="./css/login.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <link href="/css/login.css" rel="stylesheet">
 
   <style type="text/css">
 
@@ -40,7 +40,7 @@
         </el-input>
         <div style="text-align: center; color: #8c939d;margin: 5px 0">未注册的手机号码验证后自动创建账户</div>
         <el-button @click="login" style="width: 100%; background-color:#f63; color: #fff;">登录</el-button>
-        <div style="text-align: right; color:#333333; margin: 5px 0"><a href="/login2.html">密码登录</a></div>
+        <div style="text-align: right; color:#333333; margin: 5px 0"><a href="./login2.html">密码登录</a></div>
       </div>
       <div class="login-radio">
         <div>
@@ -57,12 +57,12 @@
     </div>
   </div>
 </div>
-<script src="./js/vue.js"></script>
-<script src="./js/axios.min.js"></script>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
 <!-- 引入组件库 -->
-<script src="./js/element.js"></script>
-<script src="./js/common.js"></script>
-<script src="./js/footer.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/footer.js"></script>
 <script>
 
   const app = new Vue({
@@ -96,7 +96,7 @@
               console.log("保存后立即读取:", localStorage.getItem("token"));
             }
             // 跳转到首页
-            location.href = "index-new.html"
+            location.href = "/pages/index-new.html"
         })
         .catch(err => this.$message.error(err))
       },

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <title>店铺列表 - 周边优速通</title>
   <!-- 引入样式 -->
-  <link rel="stylesheet" href="./css/element.css">
-  <link href="./css/main.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/element.css">
+  <link href="../../css/main.css" rel="stylesheet">
   <style>
     :root {
       --primary: #ff6b35;
@@ -609,10 +609,10 @@
   </div>
 </div>
 
-<script src="./js/vue.js"></script>
-<script src="./js/axios.min.js"></script>
-<script src="./js/element.js"></script>
-<script src="./js/common.js"></script>
+<script src="../../js/vue.js"></script>
+<script src="../../js/axios.min.js"></script>
+<script src="../../js/element.js"></script>
+<script src="../../js/common.js"></script>
 <script>
   const app = new Vue({
     el: "#app",
@@ -735,7 +735,7 @@
           })
       },
       handleCommand(t) {
-        location.href = "shop-list.html?type="+t.id+"&name="+t.name;
+        location.href = "./shop-list.html?type="+t.id+"&name="+t.name;
       },
       sortAndQuery(sortBy) {
         this.params.sortBy = sortBy;
@@ -748,10 +748,10 @@
         history.back();
       },
       goToSearch() {
-        location.href = "search.html";
+        location.href = "../misc/search.html";
       },
       toDetail(id) {
-        location.href = "shop-detail.html?id="+id
+        location.href = "./shop-detail.html?id="+id
       },
       onScroll(e) {
         let scrollTop = e.target.scrollTop;

@@ -56,8 +56,8 @@ axios.interceptors.response.use(function (response) {
       console.error('收到401未授权错误，即将跳转到登录页');
       // 未登录，跳转
       setTimeout(() => {
-        location.href = "login.html"
-      }, 200);
+              location.href = "/pages/auth/login.html"
+            }, 200);
       return Promise.reject("请先登录");
     }
   } else if (error.request) {

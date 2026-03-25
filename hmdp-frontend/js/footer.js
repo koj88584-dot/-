@@ -30,15 +30,15 @@ Vue.component("footBar", {
   methods: {
     toPage(i) {
       if (i === 0) {
-        location.href = "blog-edit.html"
+        location.href = "./blog/blog-edit.html"
       } else if (i === 1) {
-        location.href = "index-new.html"
+        location.href = "./index-new.html"
       } else if (i === 2) {
-        location.href = "map.html"
+        location.href = "./map/map.html"
       } else if (i === 3) {
-        location.href = "messages.html"
+        location.href = "./misc/messages.html"
       } else if (i === 4) {
-        location.href = "info.html"
+        location.href = "./user/info.html"
       }
     }
   }

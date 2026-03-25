@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <title>周边优速通</title>
   <!-- 引入样式 -->
-  <link rel="stylesheet" href="./css/element.css">
-  <link href="./css/main.css" rel="stylesheet">
-  <link href="./css/blog-edit.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/element.css">
+  <link href="../../css/main.css" rel="stylesheet">
+  <link href="../../css/blog-edit.css" rel="stylesheet">
 
   <style type="text/css">
 
@@ -23,7 +23,7 @@
     if (!token) {
       console.error("错误：token不存在，即将跳转到登录页");
       alert("请先登录！");
-      location.href = "login.html";
+      location.href = "../auth/login.html";
     }
   })();
 </script>
@@ -83,12 +83,12 @@
     </div>
   </transition>
 </div>
-<script src="./js/vue.js"></script>
-<script src="./js/axios.min.js"></script>
+<script src="../../js/vue.js"></script>
+<script src="../../js/axios.min.js"></script>
 <!-- 引入组件库 -->
-<script src="./js/element.js"></script>
-<script src="./js/common.js"></script>
-<script src="./js/footer.js"></script>
+<script src="../../js/element.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/footer.js"></script>
 <script>
 
   const app = new Vue({
@@ -124,7 +124,7 @@
         data.images = this.fileList.join(",");
         data.shopId = this.selectedShop.id;
         axios.post("/blog", data)
-          .then(resp => location.href = "info.html")
+          .then(resp => location.href = "../user/info.html")
           .catch(this.$message.error)
       },
       openFileDialog() {
@@ -162,7 +162,7 @@
           })
           .catch(err => {
             this.$message.error(err);
-            setTimeout(() => location.href = "login.html", 200)
+            setTimeout(() => location.href = "../auth/login.html", 200)
           })
       },
       goBack() {

@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>周边优速通 - 发现身边好去处</title>
-  <link rel="stylesheet" href="./css/element.css">
-  <link href="./css/main.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -974,10 +974,6 @@
   <div id="app">
     <!-- 顶部导航 -->
     <header class="header" :class="{ scrolled: isScrolled }">
-      <div class="logo">
-        <div class="logo-icon">🐴</div>
-        <span>周边优速通</span>
-      </div>
       <el-dropdown class="city-selector" trigger="click" @command="handleCityCommand">
         <span class="el-dropdown-link">
           {{ currentCity }}<i class="el-icon-arrow-down el-icon--right"></i>
@@ -1202,10 +1198,10 @@
     </el-dialog>
   </div>
 
-  <script src="./js/vue.js"></script>
-  <script src="./js/axios.min.js"></script>
-  <script src="./js/element.js"></script>
-  <script src="./js/common.js"></script>
+  <script src="/js/vue.js"></script>
+  <script src="/js/axios.min.js"></script>
+  <script src="/js/element.js"></script>
+  <script src="/js/common.js"></script>
   <script>
     new Vue({
       el: '#app',
@@ -1330,7 +1326,7 @@
                 id: blog.id,
                 title: blog.title,
                 image: blog.images ? blog.images.split(',')[0] : '/imgs/icons/default-icon.png',
-                authorAvatar: blog.icon || '/imgs/icons/default-icon.png',
+                authorAvatar: blog.icon ? blog.icon : '/imgs/icons/default-icon.png',
                 authorName: blog.name || '匿名用户',
                 likes: blog.liked || 0
               }));
@@ -1662,7 +1658,7 @@
         // 搜索
         search() {
           if (this.searchKeyword.trim()) {
-            window.location.href = `/search.html?keyword=${encodeURIComponent(this.searchKeyword.trim())}`;
+            window.location.href = `misc/search.html?keyword=${encodeURIComponent(this.searchKeyword.trim())}`;
           } else {
             this.$message.warning('请输入搜索关键词');
           }
@@ -1670,7 +1666,7 @@
 
         // 分类点击
         goToCategory(cat) {
-          window.location.href = `/shop-list.html?type=${cat.id}`;
+          window.location.href = `shop/shop-list.html?type=${cat.id}`;
         },
 
         // 查看更多笔记
@@ -1680,12 +1676,12 @@
 
         // 查看笔记
         viewNote(note) {
-          window.location.href = `/blog-detail.html?id=${note.id}`;
+          window.location.href = `blog/blog-detail.html?id=${note.id}`;
         },
 
         // 进入店铺
         goToShop(shop) {
-          window.location.href = `/shop-detail.html?id=${shop.id}`;
+          window.location.href = `shop/shop-detail.html?id=${shop.id}`;
         },
 
         // 导航
@@ -1693,16 +1689,16 @@
           window.scrollTo({ top: 0, behavior: 'smooth' });
         },
         goMap() {
-          window.location.href = 'map.html';
+          window.location.href = 'map/map.html';
         },
         publish() {
-          this.$message.info('发布功能开发中');
+          window.location.href = 'blog/blog-edit.html';
         },
         goMessages() {
-          window.location.href = 'messages.html';
+          window.location.href = 'misc/messages.html';
         },
         goProfile() {
-          window.location.href = 'info.html';
+          window.location.href = 'user/info.html';
         },
 
         // 格式化距离

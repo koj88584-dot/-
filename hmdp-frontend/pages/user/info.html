@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>个人中心 - 周边优速通</title>
-  <link rel="stylesheet" href="./css/element.css">
-  <link href="./css/main.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -657,9 +657,9 @@
     const token = localStorage.getItem("token");
     if (!token) {
       alert("请先登录！");
-      location.href = "login.html";
+      location.href = "../auth/login.html";
     }
-  })();
+  }());
 </script>
 
 <div id="app" v-show="pageReady" style="display: none;">
@@ -874,10 +874,10 @@
   </nav>
 </div>
 
-<script src="./js/vue.js"></script>
-<script src="./js/axios.min.js"></script>
-<script src="./js/element.js"></script>
-<script src="./js/common.js"></script>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
 <script>
   new Vue({
     el: "#app",
@@ -899,7 +899,7 @@
     created() {
       const token = localStorage.getItem("token");
       if (!token) {
-        location.href = "login.html";
+        location.href = "../auth/login.html";
         return;
       }
       this.queryUser();
@@ -927,7 +927,7 @@
             }
           })
           .catch(() => {
-            location.href = "login.html";
+            location.href = "../auth/login.html";
           });
       },
       queryUserInfo() {
@@ -986,10 +986,10 @@
           .catch(err => this.$message.error(err));
       },
       toFollowList(tab) {
-        location.href = `follow-list.html?tab=${tab}`;
+        location.href = `../misc/follow-list.html?tab=${tab}`;
       },
       toBlogDetail(b) {
-        location.href = `blog-detail.html?id=${b.id}`;
+        location.href = `../blog/blog-detail.html?id=${b.id}`;
       },
       goBack() {
         history.back();
@@ -1002,11 +1002,11 @@
         if (icon.startsWith('http')) {
           return icon;
         }
-        // 拼接完整URL
-        return util.commonURL + icon;
+        // 拼接完整URL，添加 /imgs 前缀
+        return util.commonURL + '/imgs' + icon;
       },
       goHome() {
-        location.href = 'index-new.html';
+        location.href = '../index-new.html';
       },
       goProfile() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1024,34 +1024,34 @@
             .then(() => {
               localStorage.removeItem("token");
               this.$message.success('已退出登录');
-              location.href = "index-new.html";
+              location.href = "../index-new.html";
             })
             .catch(this.$message.error);
         }).catch(() => {});
       },
       publish() {
-        location.href = 'blog-edit.html';
+        location.href = '../blog/blog-edit.html';
       },
       toFavorites() {
-        location.href = 'favorites.html';
+        location.href = '../misc/favorites.html';
       },
       toHistory() {
-        location.href = 'history.html';
+        location.href = '../misc/history.html';
       },
       toMessages() {
-        location.href = 'messages.html';
+        location.href = '../misc/messages.html';
       },
       toVouchers() {
-        location.href = 'vouchers.html';
+        location.href = '../misc/vouchers.html';
       },
       toOrders() {
-        location.href = 'orders.html';
+        location.href = '../order/orders.html';
       },
       toMap() {
-        location.href = 'map.html';
+        location.href = '../map/map.html';
       },
       toPrivacy() {
-        location.href = 'privacy.html';
+        location.href = '../misc/privacy.html';
       }
     }
   });
