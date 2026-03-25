@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <title>店铺列表 - 周边优速通</title>
   <!-- 引入样式 -->
-  <link rel="stylesheet" href="../../css/element.css">
-  <link href="../../css/main.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
   <style>
     :root {
       --primary: #ff6b35;
@@ -554,7 +554,7 @@
     </div>
 
     <!-- Shop List -->
-    <div class="shop-list" v-else @scroll="onScroll">
+    <div class="shop-list" v-else>
       <div class="shop-card" v-for="s in shops" :key="s.id" @click="toDetail(s.id)">
         <div class="shop-card-inner">
           <div class="shop-image">
@@ -609,10 +609,10 @@
   </div>
 </div>
 
-<script src="../../js/vue.js"></script>
-<script src="../../js/axios.min.js"></script>
-<script src="../../js/element.js"></script>
-<script src="../../js/common.js"></script>
+  <script src="/js/vue.js"></script>
+  <script src="/js/axios.min.js"></script>
+  <script src="/js/element.js"></script>
+  <script src="/js/common.js"></script>
 <script>
   const app = new Vue({
     el: "#app",
@@ -647,6 +647,31 @@
       window.removeEventListener('scroll', this.handleScroll);
     },
     methods: {
+      normalizeShops(data) {
+        const shopList = Array.isArray(data) ? data : [];
+        return shopList.map(shop => {
+          if (shop.images) {
+            shop.images = shop.images.split(',')[0];
+          }
+          return shop;
+        });
+      },
+      isNearPageBottom() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        const clientHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 0;
+        const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
+        return scrollTop + clientHeight + 120 >= scrollHeight;
+      },
+      ensureViewportFilled() {
+        if (this.loading || this.isLoadingMore || !this.hasMore) {
+          return;
+        }
+        this.$nextTick(() => {
+          if (this.isNearPageBottom()) {
+            this.loadMoreShops();
+          }
+        });
+      },
       getCurrentLocation() {
         this.isLocating = true;
         
@@ -703,7 +728,7 @@
       queryTypes() {
         axios.get("/shop-type/list")
           .then(({data}) => {
-            this.types = data;
+            this.types = Array.isArray(data) ? data : (data || []);
           })
           .catch(err => {
             console.log(err);
@@ -711,28 +736,54 @@
       },
       queryShops() {
         this.loading = true;
+        this.hasMore = true;
         axios.get("/shop/of/type", {
             params: this.params
           })
           .then((response) => {
             this.loading = false;
             console.log('响应数据:', response);
-            const data = response.data;
+            const data = this.normalizeShops(response.data);
             if (!data || data.length === 0) {
+              this.shops = [];
               this.hasMore = false;
               return;
             }
-            data.forEach(s => s.images = s.images.split(',')[0]);
-            this.shops = this.params.current === 1 ? data : this.shops.concat(data);
-            if (data.length < 10) {
-              this.hasMore = false;
-            }
+            this.shops = data;
+            this.ensureViewportFilled();
           })
           .catch(err => {
             this.loading = false;
             console.log(err);
             this.$message.error("加载失败，请重试");
           })
+      },
+      loadMoreShops() {
+        if (this.loading || this.isLoadingMore || !this.hasMore) {
+          return;
+        }
+        this.isLoadingMore = true;
+        const nextCurrent = this.params.current + 1;
+        axios.get("/shop/of/type", {
+            params: Object.assign({}, this.params, { current: nextCurrent })
+          })
+          .then((response) => {
+            const data = this.normalizeShops(response.data);
+            if (!data || data.length === 0) {
+              this.hasMore = false;
+              return;
+            }
+            this.params.current = nextCurrent;
+            this.shops = this.shops.concat(data);
+            this.ensureViewportFilled();
+          })
+          .catch(err => {
+            console.log(err);
+            this.$message.error("加载更多失败，请稍后重试");
+          })
+          .finally(() => {
+            this.isLoadingMore = false;
+          });
       },
       handleCommand(t) {
         location.href = "./shop-list.html?type="+t.id+"&name="+t.name;
@@ -753,36 +804,11 @@
       toDetail(id) {
         location.href = "./shop-detail.html?id="+id
       },
-      onScroll(e) {
-        let scrollTop = e.target.scrollTop;
-        let offsetHeight = e.target.offsetHeight;
-        let scrollHeight = e.target.scrollHeight;
-        if(scrollTop + offsetHeight + 100 > scrollHeight && !this.isLoadingMore && this.hasMore){
-          this.isLoadingMore = true;
-          this.params.current++;
-          axios.get("/shop/of/type", {
-              params: this.params
-            })
-            .then((response) => {
-              this.isLoadingMore = false;
-              const data = response.data;
-              if (!data || data.length === 0) {
-                this.hasMore = false;
-                return;
-              }
-              data.forEach(s => s.images = s.images.split(',')[0]);
-              this.shops = this.shops.concat(data);
-              if (data.length < 10) {
-                this.hasMore = false;
-              }
-            })
-            .catch(() => {
-              this.isLoadingMore = false;
-            });
-        }
-      },
       handleScroll() {
         this.showScrollTop = window.pageYOffset > 300;
+        if (this.isNearPageBottom()) {
+          this.loadMoreShops();
+        }
       },
       scrollToTop() {
         window.scrollTo({

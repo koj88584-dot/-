@@ -37,6 +37,11 @@ public class MvcConfig implements WebMvcConfigurer {
                         , "/voucher/**"
                         , "/search/**"
                         , "/blog-comments/list/**"
+                        , "/css/**"
+                        , "/js/**"
+                        , "/pages/**"
+                        , "/pages/css/**"
+                        , "/pages/js/**"
                         , "/map/**"
                         , "/imgs/**"
                 )
@@ -62,6 +67,22 @@ public class MvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        String frontendBasePath = System.getProperty("user.dir") + "/hmdp-frontend/";
+
+        // 前端页面（/pages/**）
+        registry.addResourceHandler("/pages/**")
+                .addResourceLocations("file:" + frontendBasePath + "pages/");
+
+        // 前端资源（兼容相对路径与绝对路径）
+        registry.addResourceHandler("/css/**")
+                .addResourceLocations("file:" + frontendBasePath + "css/");
+        registry.addResourceHandler("/js/**")
+                .addResourceLocations("file:" + frontendBasePath + "js/");
+        registry.addResourceHandler("/pages/css/**")
+                .addResourceLocations("file:" + frontendBasePath + "css/");
+        registry.addResourceHandler("/pages/js/**")
+                .addResourceLocations("file:" + frontendBasePath + "js/");
+
         registry.addResourceHandler("/imgs/**")
                 .addResourceLocations("file:" + System.getProperty("user.dir") + "/src/main/resources/static/imgs/");
         registry.addResourceHandler("/upload/**")
