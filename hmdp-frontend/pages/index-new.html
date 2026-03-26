@@ -189,10 +189,175 @@
     /* 分类网格 - 新拟态设计 */
     .category-section {
       background: var(--surface);
-      padding: 20px 16px;
+      padding: 20px 12px;
       margin-bottom: 16px;
       border-radius: 0 0 var(--radius-lg) var(--radius-lg);
       box-shadow: var(--shadow-sm);
+    }
+
+    .assistant-showcase {
+      margin-bottom: 14px;
+    }
+
+    .assistant-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+      gap: 18px;
+      align-items: stretch;
+      padding: 20px;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.24), transparent 35%),
+        linear-gradient(135deg, #102542 0%, #0f3a61 48%, #ff7a45 100%);
+      color: #fff;
+      box-shadow: 0 18px 40px rgba(16, 37, 66, 0.22);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .assistant-shell::after {
+      content: '';
+      position: absolute;
+      right: -40px;
+      top: -44px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .assistant-copy,
+    .assistant-preview {
+      position: relative;
+      z-index: 1;
+    }
+
+    .assistant-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .assistant-copy h2 {
+      margin-top: 14px;
+      font-size: 26px;
+      line-height: 1.3;
+      letter-spacing: -0.4px;
+    }
+
+    .assistant-copy p {
+      margin-top: 10px;
+      max-width: 560px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .assistant-shortcuts {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .assistant-shortcuts button,
+    .assistant-preview button {
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    }
+
+    .assistant-shortcuts button {
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 13px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .assistant-shortcuts button:hover,
+    .assistant-preview button:hover {
+      transform: translateY(-2px);
+    }
+
+    .assistant-preview {
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+
+    .assistant-preview-card {
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .assistant-preview-card small {
+      display: block;
+      color: rgba(255, 255, 255, 0.66);
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .assistant-bubble {
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .assistant-bubble + .assistant-bubble {
+      margin-top: 10px;
+    }
+
+    .assistant-bubble-user {
+      background: rgba(255, 255, 255, 0.14);
+      border-top-left-radius: 6px;
+    }
+
+    .assistant-bubble-bot {
+      background: rgba(13, 22, 40, 0.26);
+      border-top-right-radius: 6px;
+    }
+
+    .assistant-enter {
+      padding: 13px 18px;
+      background: #fff;
+      color: #0f3659;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(6, 18, 34, 0.18);
+    }
+
+    @media (max-width: 768px) {
+      .assistant-shell {
+        grid-template-columns: 1fr;
+        padding: 18px;
+        gap: 14px;
+      }
+
+      .assistant-copy h2 {
+        font-size: 22px;
+      }
+
+      .assistant-shortcuts {
+        gap: 8px;
+      }
+
+      .assistant-shortcuts button {
+        width: calc(50% - 4px);
+      }
     }
 
     .category-grid {
@@ -303,7 +468,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 20px 16px 12px;
+      padding: 20px 0 12px;
     }
 
     .section-title {
@@ -469,7 +634,7 @@
     .shop-section {
       background: var(--surface);
       margin-top: 16px;
-      padding: 0 16px 20px;
+      padding: 0 12px 20px;
       border-radius: var(--radius-lg) var(--radius-lg) 0 0;
       box-shadow: var(--shadow-sm);
     }
@@ -483,7 +648,7 @@
     /* 响应式店铺列表 */
     @media (min-width: 768px) {
       .shop-section {
-        padding: 0 20px 24px;
+        padding: 0 12px 24px;
       }
       
       .shop-list-new {
@@ -493,7 +658,7 @@
 
     @media (min-width: 1024px) {
       .shop-section {
-        padding: 0 24px 28px;
+        padding: 0 12px 28px;
       }
       
       .shop-list-new {
@@ -1025,6 +1190,33 @@
       </section>
 
       <!-- 推荐笔记 -->
+      <section class="assistant-showcase fade-in">
+        <div class="assistant-shell">
+          <div class="assistant-copy">
+            <span class="assistant-eyebrow">
+              <i class="el-icon-magic-stick"></i>
+              AI 智能助手
+            </span>
+            <h2>问问 DeepSeek，帮你找店、领券、下单、发笔记</h2>
+            <p>不知道下一步去哪，直接说需求就行。助手会根据你的问题给出建议，并把你带到对应页面继续操作。</p>
+            <div class="assistant-shortcuts">
+              <button @click="openAssistantWithPrompt('帮我找附近评分高的火锅', '首页推荐')">附近火锅</button>
+              <button @click="openAssistantWithPrompt('怎么领优惠券更划算', '首页推荐')">领券攻略</button>
+              <button @click="openAssistantWithPrompt('我想发布一篇探店笔记', '首页推荐')">发布笔记</button>
+              <button @click="openAssistantWithPrompt('我的订单在哪里查看', '首页推荐')">订单流转</button>
+            </div>
+          </div>
+          <div class="assistant-preview">
+            <div class="assistant-preview-card">
+              <small>示例对话</small>
+              <div class="assistant-bubble assistant-bubble-user">今晚想吃点热闹的，附近有没有评分高的火锅？</div>
+              <div class="assistant-bubble assistant-bubble-bot">你可以先看附近火锅，再结合优惠券页一起领券下单。我也可以直接把你带去搜索页继续找。</div>
+            </div>
+            <button class="assistant-enter" @click="goAssistant('首页')">打开智能助手</button>
+          </div>
+        </div>
+      </section>
+
       <section class="content-section">
         <div class="section-header">
           <h2 class="section-title">推荐笔记</h2>
@@ -1039,13 +1231,13 @@
                @click="viewNote(note)"
                :style="{ animationDelay: (index * 0.1) + 's' }">
             <div class="note-image-wrapper">
-              <img class="note-image" :src="note.image" :alt="note.title" loading="lazy">
+              <img class="note-image" :src="resolveImageUrl(note.image)" :alt="note.title" loading="lazy" @error="handleImageError($event, 'note')">
               <span class="note-badge" v-if="note.likes > 1000">热门</span>
             </div>
             <div class="note-content">
               <h3 class="note-title">{{ note.title }}</h3>
               <div class="note-author">
-                <img class="author-avatar" :src="note.authorAvatar" alt="" loading="lazy">
+                  <img class="author-avatar" :src="resolveImageUrl(note.authorAvatar)" alt="" loading="lazy" @error="handleImageError($event, 'avatar')">
                 <span class="author-name">{{ note.authorName }}</span>
                 <span class="note-likes">
                   <i class="el-icon-star-on"></i>
@@ -1230,6 +1422,8 @@
         notes: [],  // 推荐笔记，从后端获取
         nearbyShops: [],
         currentLocation: null,  // 当前坐标
+        noteFallbackImage: '/imgs/blogs/14/2/c760152a-7a31-4afa-8767-c9144701dcd5.jpg',
+        avatarFallbackImage: '/imgs/icons/default-icon.png',
         isLocating: false       // 是否正在定位
       },
       mounted() {
@@ -1325,8 +1519,8 @@
               this.notes = result.map(blog => ({
                 id: blog.id,
                 title: blog.title,
-                image: blog.images ? blog.images.split(',')[0] : '/imgs/icons/default-icon.png',
-                authorAvatar: blog.icon ? blog.icon : '/imgs/icons/default-icon.png',
+                image: this.extractFirstImage(blog.images),
+                authorAvatar: blog.icon || '/imgs/icons/default-icon.png',
                 authorName: blog.name || '匿名用户',
                 likes: blog.liked || 0
               }));
@@ -1480,7 +1674,7 @@
               this.nearbyShops = allShops.slice(0, 20).map(shop => ({
                 ...shop,
                 score: shop.score ? (shop.score / 10).toFixed(1) : '4.0',
-                image: shop.images ? shop.images.split(',')[0] : '/imgs/icons/default-icon.png',
+                image: this.resolveImageUrl(shop.images ? shop.images.split(',')[0] : ''),
                 tags: this.getShopTags(shop.typeId),
                 distanceText: shop.distance ? this.formatDistance(shop.distance) : ''
               }));
@@ -1694,6 +1888,13 @@
         publish() {
           window.location.href = 'blog/blog-edit.html';
         },
+        goAssistant(scene = '首页') {
+          window.location.href = `misc/assistant.html?scene=${encodeURIComponent(scene)}`;
+        },
+        openAssistantWithPrompt(prompt, scene = '首页推荐') {
+          const query = `scene=${encodeURIComponent(scene)}&prompt=${encodeURIComponent(prompt)}`;
+          window.location.href = `misc/assistant.html?${query}`;
+        },
         goMessages() {
           window.location.href = 'misc/messages.html';
         },
@@ -1716,6 +1917,61 @@
             return (num / 1000).toFixed(1) + 'k';
           }
           return num;
+        },
+
+        extractFirstImage(images) {
+          if (!images) {
+            return this.noteFallbackImage;
+          }
+          const first = String(images).split(',').find(item => item && item.trim());
+          return first || this.noteFallbackImage;
+        },
+
+        normalizeImagePath(path) {
+          if (!path) {
+            return '';
+          }
+          const value = String(path).trim().replace(/^['"]+|['"]+$/g, '');
+          if (!value) {
+            return '';
+          }
+          if (value.startsWith('http') || value.startsWith('data:')) {
+            return value;
+          }
+          if (value.startsWith(util.commonURL)) {
+            return value;
+          }
+          if (value.startsWith('/blogs/')) {
+            return '/imgs' + value;
+          }
+          if (value.startsWith('blogs/')) {
+            return '/imgs/' + value;
+          }
+          if (value.startsWith('/icons/')) {
+            return '/imgs' + value;
+          }
+          if (value.startsWith('icons/')) {
+            return '/imgs/' + value;
+          }
+          return value.startsWith('/') ? value : '/' + value;
+        },
+
+        resolveImageUrl(path) {
+          const normalized = this.normalizeImagePath(path);
+          if (!normalized) {
+            return this.noteFallbackImage;
+          }
+          if (normalized.startsWith('http') || normalized.startsWith('data:')) {
+            return normalized;
+          }
+          return util.commonURL + normalized;
+        },
+
+        handleImageError(event, type) {
+          if (!event || !event.target) {
+            return;
+          }
+          event.target.src = type === 'avatar' ? this.avatarFallbackImage : this.noteFallbackImage;
         }
       }
     });

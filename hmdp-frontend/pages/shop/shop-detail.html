@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <title>店铺详情 - 周边优速通</title>
-  <!-- 引入样式 -->
+  <!-- 寮曞叆鏍峰紡 -->
   <link rel="stylesheet" href="/css/element.css">
   <link href="/css/main.css" rel="stylesheet">
   <style>
@@ -710,6 +710,33 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
     }
+
+    @media (max-width: 768px) {
+      .shop-images-carousel {
+        height: 220px;
+      }
+
+      .shop-info-card {
+        padding: 18px 14px;
+      }
+
+      .shop-title {
+        font-size: 21px;
+      }
+
+      .action-bar,
+      .bottom-bar,
+      .voucher-header,
+      .voucher-footer,
+      .comment-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .bottom-actions {
+        justify-content: space-around;
+      }
+    }
   </style>
 </head>
 <body>
@@ -730,8 +757,8 @@
     <!-- Hero Section -->
     <div class="hero-section">
       <div class="shop-images-carousel">
-        <img :src="shop.images && shop.images[0]" alt="店铺图片" v-if="shop.images && shop.images.length > 0">
-        <div class="image-indicator" v-if="shop.images">{{ shop.images.length }}张</div>
+        <img :src="shop.images && shop.images[0]" alt="店铺图片" v-if="shop.images && shop.images.length > 0" @error="handleImageError">
+        <div class="image-indicator" v-if="shop.images && shop.images.length">{{ shop.images.length }} 张</div>
       </div>
       
       <div class="shop-info-card">
@@ -739,22 +766,22 @@
         
         <div class="shop-meta">
           <div class="shop-rate">
-            <el-rate disabled v-model="shop.score/10" text-color="#ff6b35"></el-rate>
-            <span>{{shop.score/10}}分</span>
+            <el-rate disabled :value="(shop.score || 0) / 10" text-color="#ff6b35"></el-rate>
+            <span>{{(shop.score || 0) / 10}} 分</span>
           </div>
-          <span class="shop-comments">{{shop.comments}}条评价</span>
-          <span class="shop-price">￥{{shop.avgPrice}}/人</span>
+          <span class="shop-comments">{{shop.comments || 0}} 条评价</span>
+          <span class="shop-price">¥{{shop.avgPrice || 0}}/人</span>
         </div>
 
         <div class="shop-tags">
-          <span class="shop-tag">口味: 4.9</span>
-          <span class="shop-tag">环境: 4.8</span>
-          <span class="shop-tag">服务: 4.7</span>
+          <span class="shop-tag">口味 4.9</span>
+          <span class="shop-tag">环境 4.8</span>
+          <span class="shop-tag">服务 4.7</span>
         </div>
 
         <div class="shop-rank">
           <img src="/imgs/bd.png" alt="榜单">
-          <span>拱墅区好评榜第3名</span>
+          <span>本区域热门店铺推荐</span>
           <i class="el-icon-arrow-right"></i>
         </div>
       </div>
@@ -802,7 +829,7 @@
       <div class="section-header">
         <div class="section-title">
           <div class="section-title-icon"></div>
-          优惠代金券
+          优惠券
         </div>
         <div class="section-more">
           全部优惠 <i class="el-icon-arrow-right"></i>
@@ -821,8 +848,8 @@
             </div>
           </div>
           <div class="voucher-price-box">
-            <div class="voucher-price"><small>￥</small>{{util.formatPrice(v.payValue)}}</div>
-            <div class="voucher-original">￥{{util.formatPrice(v.actualValue)}}</div>
+            <div class="voucher-price"><small>¥</small>{{util.formatPrice(v.payValue)}}</div>
+            <div class="voucher-original">¥{{util.formatPrice(v.actualValue)}}</div>
           </div>
         </div>
 
@@ -835,7 +862,7 @@
             :disabled="isNotBegin(v) || v.stock < 1"
             @click="seckill(v)"
           >
-            {{isNotBegin(v) ? '即将开始' : (v.stock < 1 ? '已售罄' : '立即抢购')}}
+            {{isNotBegin(v) ? '即将开始' : (v.stock < 1 ? '已抢完' : '立即抢购')}}
           </button>
         </div>
       </div>
@@ -855,8 +882,8 @@
 
       <div class="comment-tags">
         <span class="comment-tag active">全部</span>
-        <span class="comment-tag">味道赞(19)</span>
-        <span class="comment-tag">牛肉赞(16)</span>
+        <span class="comment-tag">口味赞(19)</span>
+        <span class="comment-tag">食材新鲜(16)</span>
         <span class="comment-tag">菜品不错(11)</span>
         <span class="comment-tag">回头客(4)</span>
         <span class="comment-tag">分量足(4)</span>
@@ -868,16 +895,16 @@
           <div class="comment-content">
             <div class="comment-header">
               <span class="comment-user">
-                叶小乙
+                叶小七
                 <span class="user-level">Lv5</span>
               </span>
             </div>
             <div class="comment-rate">
-              <el-rate disabled v-model="4.5" text-color="#ff6b35"></el-rate>
+              <el-rate disabled :value="4.5" text-color="#ff6b35"></el-rate>
               <span style="color: var(--text-tertiary); font-size: 13px;">2024-01-15</span>
             </div>
             <div class="comment-text">
-              某平台上买的券，价格可以当工作餐吃，虽然价格便宜，但是这家店一点都没有偷工减料，味道真的很不错！环境也很干净，服务态度很好，下次还会再来！
+              团购来的，价格很合适。虽然优惠力度大，但店里一点也没有偷工减料，味道很稳，环境也舒服，服务态度也很好，下次还会再来。
             </div>
             <div class="comment-images">
               <img src="https://qcloud.dpfile.com/pc/6T7MfXzx7USPIkSy7jzm40qZSmlHUF2jd-FZUL6WpjE9byagjLlrseWxnl1LcbuSGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
@@ -900,13 +927,13 @@
       </div>
 
       <div class="view-all-comments">
-        查看全部119条评价 <i class="el-icon-arrow-right"></i>
+        查看全部 119 条评价 <i class="el-icon-arrow-right"></i>
       </div>
     </div>
 
     <!-- Copyright -->
     <div class="copyright">
-      copyright ©2024 hmdp.com
+      copyright 漏2024 hmdp.com
     </div>
   </div>
 
@@ -939,7 +966,8 @@
       util,
       shop: {},
       vouchers: [],
-      isFavorite: false
+      isFavorite: false,
+      fallbackImage: '/imgs/blogs/14/2/c760152a-7a31-4afa-8767-c9144701dcd5.jpg'
     },
     created() {
       let shopId = util.getUrlParam("id");
@@ -962,20 +990,20 @@
       queryShopById(shopId) {
         axios.get("/shop/" + shopId)
         .then(({data}) => {
-          data.images = data.images.split(",")
+          data.images = (data.images ? data.images.split(",") : []).map(img => this.resolveImageUrl(img))
           this.shop = data
         })
-        .catch(this.$message.error)
+        .catch(err => this.$message.error(this.getErrorMessage(err)))
       },
       queryVoucher(shopId) {
         axios.get("/voucher/list/" + shopId)
         .then(({data}) => {
           this.vouchers = data;
         })
-        .catch(this.$message.error)
+        .catch(err => this.$message.error(this.getErrorMessage(err)))
       },
       checkFavorite(shopId) {
-        if (!token) return;
+        if (!this.hasToken()) return;
         axios.get(`/favorites/is/1/${shopId}`)
         .then(({data}) => {
           this.isFavorite = data;
@@ -985,7 +1013,7 @@
         })
       },
       toggleFavorite() {
-        if (!token) {
+        if (!this.hasToken()) {
           this.$message.error("请先登录")
           setTimeout(() => {
             location.href = "../auth/login.html"
@@ -994,30 +1022,28 @@
         }
         if (!this.shop.id) return;
         if (this.isFavorite) {
-          // 取消收藏
           axios.delete(`/favorites/1/${this.shop.id}`)
           .then(() => {
             this.isFavorite = false;
             this.$message.success("已取消收藏");
           })
-          .catch(this.$message.error)
+          .catch(err => this.$message.error(this.getErrorMessage(err)))
         } else {
-          // 添加收藏
           axios.post(`/favorites/1/${this.shop.id}`)
           .then(() => {
             this.isFavorite = true;
             this.$message.success("收藏成功");
           })
-          .catch(this.$message.error)
+          .catch(err => this.$message.error(this.getErrorMessage(err)))
         }
       },
       formatTime(v){
         let b = new Date(v.beginTime);
         let e = new Date(v.endTime);
-        return b.getMonth() + 1 + "月" + b.getDate() + "日 "
-          +  b.getHours() + ":" + this.formatMinutes(b.getMinutes())
+        return b.getMonth() + 1 + "月" + b.getDate() + "日"
+          + b.getHours() + ":" + this.formatMinutes(b.getMinutes())
           + " ~ "
-          +  e.getHours() + ":" + this.formatMinutes(e.getMinutes());
+          + e.getHours() + ":" + this.formatMinutes(e.getMinutes());
       },
       formatMinutes(m){
         if(m < 10) m = "0" + m
@@ -1027,26 +1053,38 @@
         return new Date(v.beginTime).getTime() > new Date().getTime();
       },
       isEnd(v){
+        if (!v.endTime) return false;
         return new Date(v.endTime).getTime() < new Date().getTime();
       },
       seckill(v){
-        if(!token){
+        if(!this.hasToken()){
           this.$message.error("请先登录")
           setTimeout(() => {
             location.href = "../auth/login.html"
           }, 200);
           return;
         }
+        if(v.type !== 1){
+          axios.post("/voucher-order/receive/" + v.id)
+          .then(() => {
+            this.$message.success("领取成功");
+            if (typeof v.stock === "number" && v.stock > 0) {
+              v.stock--;
+            }
+          })
+          .catch(err => this.$message.error(this.getErrorMessage(err)))
+          return;
+        }
         if(this.isNotBegin(v)){
-          this.$message.error("优惠券抢购尚未开始！")
+          this.$message.error("优惠券抢购尚未开始")
           return;
         }
         if(this.isEnd(v)){
-          this.$message.error("优惠券抢购已经结束！")
+          this.$message.error("优惠券抢购已经结束")
           return;
         }
         if(v.stock < 1){
-          this.$message.error("库存不足，请刷新再试试！")
+          this.$message.error("库存不足，请刷新后重试")
           return;
         }
         let id = v.id;
@@ -1054,7 +1092,33 @@
         .then(({data}) => {
           this.$message.success("抢购成功，订单id：" + data)
         })
-        .catch(this.$message.error)
+        .catch(err => this.$message.error(this.getErrorMessage(err)))
+      },
+      hasToken() {
+        return !!localStorage.getItem("token");
+      },
+      resolveImageUrl(path) {
+        if (!path) {
+          return this.fallbackImage;
+        }
+        if (path.startsWith("http") || path.startsWith("data:")) {
+          return path;
+        }
+        if (path.startsWith(util.commonURL)) {
+          return path;
+        }
+        return util.commonURL + (path.startsWith("/") ? path : "/" + path);
+      },
+      handleImageError(event) {
+        if (event && event.target) {
+          event.target.src = this.fallbackImage;
+        }
+      },
+      getErrorMessage(err) {
+        if (typeof err === "string") {
+          return err;
+        }
+        return err?.response?.data?.errorMsg || err?.message || "操作失败";
       }
     }
   })

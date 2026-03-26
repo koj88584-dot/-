@@ -10,6 +10,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.Resource;
+import java.nio.file.Paths;
 
 /**
  * mvc配置
@@ -29,6 +30,7 @@ public class MvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/user/code"
                         , "/user/login"
                         , "/auth/login"
+                        , "/assistant/**"
                         , "/blog/hot"
                         , "/blog/{id}"
                         , "/shop/**"
@@ -37,6 +39,7 @@ public class MvcConfig implements WebMvcConfigurer {
                         , "/voucher/**"
                         , "/search/**"
                         , "/blog-comments/list/**"
+                        , "/blog-comments/replies/**"
                         , "/css/**"
                         , "/js/**"
                         , "/pages/**"
@@ -68,6 +71,9 @@ public class MvcConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String frontendBasePath = System.getProperty("user.dir") + "/hmdp-frontend/";
+        String uploadImagePath = Paths.get(SystemConstants.IMAGE_UPLOAD_DIR).toUri().toString();
+        String staticImagePath = Paths.get(System.getProperty("user.dir"), "src", "main", "resources", "static", "imgs").toUri().toString();
+        String staticUploadPath = Paths.get(System.getProperty("user.dir"), "src", "main", "resources", "static", "upload").toUri().toString();
 
         // 前端页面（/pages/**）
         registry.addResourceHandler("/pages/**")
@@ -84,8 +90,8 @@ public class MvcConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:" + frontendBasePath + "js/");
 
         registry.addResourceHandler("/imgs/**")
-                .addResourceLocations("file:" + System.getProperty("user.dir") + "/src/main/resources/static/imgs/");
+                .addResourceLocations(uploadImagePath, staticImagePath);
         registry.addResourceHandler("/upload/**")
-                .addResourceLocations("file:" + System.getProperty("user.dir") + "/src/main/resources/static/upload/");
+                .addResourceLocations(staticUploadPath);
     }
 }

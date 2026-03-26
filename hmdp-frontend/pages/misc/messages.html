@@ -1,54 +1,295 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>消息中心 - 周边优速通</title>
+  <title>消息中心</title>
   <link rel="stylesheet" href="/css/element.css">
   <link href="/css/main.css" rel="stylesheet">
   <style>
-    .messages-container { padding: 16px; max-width: 1000px; margin: 0 auto; }
-    .message-item { display: flex; gap: 12px; padding: 16px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 12px; background: #fff; cursor: pointer; transition: all 0.3s; }
-    .message-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .message-item.unread { background: #fff8f0; border-color: #ffd8bf; }
-    .message-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(255, 122, 69, 0.12), transparent 30%),
+        linear-gradient(180deg, #fafcff 0%, #f5f7fb 100%);
+      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .messages-container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 18px 16px 96px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .header-back-btn {
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .header-title {
+      flex: 1;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      margin-left: 8px;
+      border-radius: 999px;
+      background: #ff5f45;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+    .assistant-panel {
+      margin-bottom: 18px;
+      padding: 20px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #102542 0%, #12436d 50%, #ff7a45 100%);
+      color: #fff;
+      box-shadow: 0 20px 44px rgba(16, 37, 66, 0.18);
+      overflow: hidden;
+      position: relative;
+    }
+    .assistant-panel::after {
+      content: '';
+      position: absolute;
+      right: -32px;
+      top: -32px;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .assistant-panel-head,
+    .assistant-panel-tags {
+      position: relative;
+      z-index: 1;
+    }
+    .assistant-panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .assistant-panel-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .assistant-panel-desc {
+      max-width: 560px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .assistant-panel-btn {
+      border: none;
+      border-radius: 999px;
+      background: #fff;
+      color: #153052;
+      font-weight: 700;
+      padding: 10px 18px;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .assistant-panel-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .assistant-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .message-item {
+      display: flex;
+      gap: 14px;
+      padding: 16px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .message-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    }
+    .message-item.unread {
+      background: linear-gradient(135deg, rgba(255, 244, 236, 0.98) 0%, rgba(255, 255, 255, 0.98) 100%);
+      border-color: rgba(255, 189, 145, 0.6);
+    }
+    .message-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
     .message-icon.type-1 { background: #fff2f0; color: #ff4d4f; }
     .message-icon.type-2 { background: #f6ffed; color: #52c41a; }
     .message-icon.type-3 { background: #e6f7ff; color: #1890ff; }
     .message-icon.type-4 { background: #fff7e6; color: #fa8c16; }
-    .message-content { flex: 1; }
-    .message-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; display: flex; align-items: center; }
-    .message-title .unread-dot { width: 8px; height: 8px; background: #ff4d4f; border-radius: 50%; margin-left: 8px; }
-    .message-text { color: #666; font-size: 13px; line-height: 1.5; }
-    .message-time { color: #999; font-size: 12px; margin-top: 8px; }
-    .empty-state { text-align: center; padding: 60px 0; color: #999; }
-    .empty-state i { font-size: 64px; color: #ddd; margin-bottom: 16px; }
-    .badge { background: #ff4d4f; color: white; font-size: 12px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
-    /* 底部导航栏样式 */
-    .foot { width: 100%; height: 60px; display: flex; justify-content: center; align-items: center; box-shadow: 0 -1px 2px 1px rgba(0, 0, 0, 0.1); position: fixed; bottom: 0; background: #fff; z-index: 1000; }
-    .foot .add-btn { width: 38px; height: 38px; box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.1); border-radius: 18px; }
-    .foot-box { width: 20%; color: #82848a; text-align: center; cursor: pointer; }
+    .message-content { flex: 1; min-width: 0; }
+    .message-title {
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .unread-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff4d4f;
+      margin-left: 8px;
+    }
+    .message-text {
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .message-time {
+      color: #9ca3af;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .empty-state {
+      padding: 90px 20px;
+      text-align: center;
+      color: #9ca3af;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+    }
+    .empty-state i {
+      display: block;
+      font-size: 60px;
+      color: #d0d7e2;
+      margin-bottom: 12px;
+    }
+    .foot {
+      width: 100%;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 -1px 2px 1px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      bottom: 0;
+      background: #fff;
+      z-index: 1000;
+    }
+    .foot .add-btn {
+      width: 38px;
+      height: 38px;
+      box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.1);
+      border-radius: 18px;
+    }
+    .foot-box {
+      width: 20%;
+      color: #82848a;
+      text-align: center;
+      cursor: pointer;
+    }
     .foot-view { font-size: 26px; }
     .foot-text { font-size: 10px; margin-top: -4px; }
     .foot-text, .foot-view { text-align: center; }
     .active { color: #ff6633; }
-    /* 调整消息容器底部间距 */
-    .messages-container { padding-bottom: 76px; }
+
+    @media (max-width: 768px) {
+      .messages-container { padding: 14px 12px 96px; }
+      .header-title { font-size: 20px; }
+      .assistant-panel-head,
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .message-item { padding: 14px; }
+    }
   </style>
 </head>
 <body>
 <div id="app" class="messages-container">
-  <div class="header" style="display:flex; align-items:center; margin-bottom:16px;">
-    <div class="header-back-btn" onclick="history.back()"><i class="el-icon-arrow-left"></i></div>
-    <div style="flex:1; text-align:center; font-weight:600;">
+  <div class="header">
+    <button class="header-back-btn" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </button>
+    <div class="header-title">
       消息中心
       <span v-if="unreadCount > 0" class="badge">{{ unreadCount }}</span>
     </div>
+    <div style="width:42px;"></div>
   </div>
 
-  <!-- 操作栏 -->
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <el-radio-group v-model="filterType" size="small" @change="handleFilterChange">
+  <div class="assistant-panel">
+    <div class="assistant-panel-head">
+      <div>
+        <div class="assistant-panel-title">智能助手</div>
+        <div class="assistant-panel-desc">可以直接问“帮我找附近火锅”“怎么领券”“订单在哪看”，助手会给你建议并带你进入对应页面。</div>
+      </div>
+      <button class="assistant-panel-btn" @click="goAssistant()">去问问</button>
+    </div>
+    <div class="assistant-panel-tags">
+      <span class="assistant-chip" @click="goAssistantWithPrompt('帮我找附近评分高的咖啡店')">
+        <i class="el-icon-magic-stick"></i> 附近咖啡
+      </span>
+      <span class="assistant-chip" @click="goAssistantWithPrompt('我想发布一篇探店笔记')">
+        <i class="el-icon-edit-outline"></i> 发布笔记
+      </span>
+      <span class="assistant-chip" @click="goAssistantWithPrompt('优惠券领取后怎么使用')">
+        <i class="el-icon-present"></i> 优惠券用法
+      </span>
+      <span class="assistant-chip" @click="goAssistantWithPrompt('我的订单在哪里查看')">
+        <i class="el-icon-document"></i> 订单入口
+      </span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <el-radio-group v-model="filterType" size="small">
       <el-radio-button label="all">全部</el-radio-button>
       <el-radio-button label="unread">未读</el-radio-button>
       <el-radio-button label="read">已读</el-radio-button>
@@ -63,27 +304,24 @@
     </div>
   </div>
 
-  <!-- 消息列表 -->
   <div v-if="loading" style="text-align:center; padding:40px 0;">
     <i class="el-icon-loading" style="font-size:32px; color:#ff6633;"></i>
   </div>
 
-  <div v-else-if="messages.length === 0" class="empty-state">
+  <div v-else-if="filteredMessages.length === 0" class="empty-state">
     <i class="el-icon-bell"></i>
     <div>暂无消息</div>
-    <div style="font-size:13px; margin-top:8px;">收藏的店铺有新动态时会通知您</div>
+    <div style="font-size:13px; margin-top:8px;">收藏的店铺有新动态或活动时，会第一时间通知你。</div>
   </div>
 
   <div v-else>
-    <div v-for="msg in filteredMessages" :key="msg.id" 
-         :class="['message-item', { 'unread': msg.isRead === 0 }]"
-         @click="openMessage(msg)">
+    <div v-for="msg in filteredMessages" :key="msg.id" :class="['message-item', { unread: msg.isRead === 0 }]" @click="openMessage(msg)">
       <div :class="['message-icon', 'type-' + msg.type]">
         <i :class="getIcon(msg.type)"></i>
       </div>
       <div class="message-content">
         <div class="message-title">
-          {{ msg.title }}
+          {{ msg.title || '系统消息' }}
           <span v-if="msg.isRead === 0" class="unread-dot"></span>
         </div>
         <div class="message-text">{{ msg.content }}</div>
@@ -91,16 +329,16 @@
       </div>
       <div>
         <el-button type="text" @click.stop="deleteMessage(msg.id)">
-          <i class="el-icon-close" style="color:#ccc;"></i>
+          <i class="el-icon-close" style="color:#cbd5e1;"></i>
         </el-button>
       </div>
     </div>
 
-    <!-- 加载更多 -->
     <div v-if="hasMore" style="text-align:center; padding:20px 0;">
       <el-button type="text" @click="loadMore" :loading="loadingMore">加载更多</el-button>
     </div>
   </div>
+
   <foot-bar :active-btn="3"></foot-bar>
 </div>
 
@@ -124,9 +362,10 @@
     computed: {
       filteredMessages() {
         if (this.filterType === 'unread') {
-          return this.messages.filter(m => m.isRead === 0);
-        } else if (this.filterType === 'read') {
-          return this.messages.filter(m => m.isRead === 1);
+          return this.messages.filter((item) => item.isRead === 0);
+        }
+        if (this.filterType === 'read') {
+          return this.messages.filter((item) => item.isRead === 1);
         }
         return this.messages;
       }
@@ -136,107 +375,108 @@
       this.loadUnreadCount();
     },
     methods: {
+      goBack() {
+        history.back();
+      },
       loadMessages() {
-        this.loading = true;
-        axios.get('/message/list', { params: { current: this.current } })
-          .then(({ data }) => {
-            const list = data?.data || data;
-            if (this.current === 1) {
-              this.messages = Array.isArray(list) ? list : [];
-            } else {
-              this.messages = this.messages.concat(Array.isArray(list) ? list : []);
-            }
-            this.hasMore = Array.isArray(list) && list.length === 10;
-            this.loading = false;
-            this.loadingMore = false;
-          })
-          .catch(() => {
-            this.loading = false;
-            this.loadingMore = false;
-          });
+        this.loading = this.current === 1;
+        axios.get('/message/list', { params: { current: this.current } }).then(({ data }) => {
+          const list = data?.data || data;
+          const rows = Array.isArray(list) ? list : [];
+          if (this.current === 1) {
+            this.messages = rows;
+          } else {
+            this.messages = this.messages.concat(rows);
+          }
+          this.hasMore = rows.length === 10;
+        }).catch((err) => {
+          this.$message.error(this.getErrorMessage(err, '加载消息失败'));
+        }).finally(() => {
+          this.loading = false;
+          this.loadingMore = false;
+        });
       },
       loadUnreadCount() {
-        axios.get('/message/unread-count')
-          .then(({ data }) => {
-            this.unreadCount = data?.data || data || 0;
-          })
-          .catch(() => {});
-      },
-      handleFilterChange() {
-        // 筛选不需要重新加载
+        axios.get('/message/unread-count').then(({ data }) => {
+          this.unreadCount = data?.data || data || 0;
+        }).catch(() => {});
       },
       loadMore() {
-        this.current++;
+        if (this.loadingMore || !this.hasMore) return;
+        this.current += 1;
         this.loadingMore = true;
         this.loadMessages();
       },
+      goAssistant() {
+        location.href = '/pages/misc/assistant.html?scene=' + encodeURIComponent('消息中心');
+      },
+      goAssistantWithPrompt(prompt) {
+        const query = 'scene=' + encodeURIComponent('消息中心') + '&prompt=' + encodeURIComponent(prompt);
+        location.href = '/pages/misc/assistant.html?' + query;
+      },
       openMessage(msg) {
         if (msg.isRead === 0) {
-          axios.post('/message/read', null, { params: { messageId: msg.id } })
-            .then(() => {
-              msg.isRead = 1;
-              this.unreadCount = Math.max(0, this.unreadCount - 1);
-            });
+          axios.post('/message/read', null, { params: { messageId: msg.id } }).then(() => {
+            msg.isRead = 1;
+            this.unreadCount = Math.max(0, this.unreadCount - 1);
+          }).catch(() => {});
         }
-        // 如果有关联店铺，跳转到店铺详情
         if (msg.shopId) {
-          location.href = 'shop-detail.html?id=' + msg.shopId;
+          location.href = '/pages/shop/shop-detail.html?id=' + msg.shopId;
         }
       },
       markAllAsRead() {
-        axios.post('/message/read')
-          .then(() => {
-            this.messages.forEach(m => m.isRead = 1);
-            this.unreadCount = 0;
-            this.$message.success('已全部标记为已读');
-          })
-          .catch(() => {
-            this.$message.error('操作失败');
-          });
+        axios.post('/message/read').then(() => {
+          this.messages.forEach((item) => { item.isRead = 1; });
+          this.unreadCount = 0;
+          this.$message.success('已全部标记为已读');
+        }).catch((err) => {
+          this.$message.error(this.getErrorMessage(err, '操作失败'));
+        });
       },
       deleteMessage(id) {
         this.$confirm('确定删除这条消息吗？', '提示', {
-          confirmButtonText: '确定',
+          confirmButtonText: '确定删除',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          axios.delete('/message/' + id)
-            .then(() => {
-              const msg = this.messages.find(m => m.id === id);
-              if (msg && msg.isRead === 0) {
-                this.unreadCount = Math.max(0, this.unreadCount - 1);
-              }
-              this.messages = this.messages.filter(m => m.id !== id);
-              this.$message.success('已删除');
-            })
-            .catch(() => {
-              this.$message.error('删除失败');
-            });
+          return axios.delete('/message/' + id);
+        }).then(() => {
+          const target = this.messages.find((item) => item.id === id);
+          if (target && target.isRead === 0) {
+            this.unreadCount = Math.max(0, this.unreadCount - 1);
+          }
+          this.messages = this.messages.filter((item) => item.id !== id);
+          this.$message.success('删除成功');
+        }).catch((err) => {
+          if (err !== 'cancel') {
+            this.$message.error(this.getErrorMessage(err, '删除失败'));
+          }
         });
       },
       clearAll() {
         this.$confirm('确定清空所有消息吗？', '提示', {
-          confirmButtonText: '确定',
+          confirmButtonText: '确定清空',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          axios.delete('/message/clear')
-            .then(() => {
-              this.messages = [];
-              this.unreadCount = 0;
-              this.$message.success('已清空');
-            })
-            .catch(() => {
-              this.$message.error('清空失败');
-            });
+          return axios.delete('/message/clear');
+        }).then(() => {
+          this.messages = [];
+          this.unreadCount = 0;
+          this.$message.success('已清空消息');
+        }).catch((err) => {
+          if (err !== 'cancel') {
+            this.$message.error(this.getErrorMessage(err, '清空失败'));
+          }
         });
       },
       getIcon(type) {
         const icons = {
-          1: 'el-icon-present', // 优惠活动
-          2: 'el-icon-goods', // 新品上架
-          3: 'el-icon-info', // 店铺公告
-          4: 'el-icon-price-tag' // 价格变动
+          1: 'el-icon-present',
+          2: 'el-icon-goods',
+          3: 'el-icon-info',
+          4: 'el-icon-price-tag'
         };
         return icons[type] || 'el-icon-bell';
       },
@@ -245,13 +485,15 @@
         const date = new Date(timeStr);
         const now = new Date();
         const diff = now - date;
-        
         if (diff < 60000) return '刚刚';
         if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
         if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
         if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
-        
-        return `${date.getMonth() + 1}月${date.getDate()}日`;
+        return (date.getMonth() + 1) + '月' + date.getDate() + '日';
+      },
+      getErrorMessage(err, fallback) {
+        if (typeof err === 'string') return err;
+        return err?.response?.data?.errorMsg || err?.message || fallback;
       }
     }
   });

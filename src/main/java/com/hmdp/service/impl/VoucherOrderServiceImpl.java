@@ -5,10 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.dto.Result;
 import com.hmdp.dto.UserDTO;
+import com.hmdp.dto.VoucherOrderDTO;
 import com.hmdp.entity.SeckillVoucher;
+import com.hmdp.entity.Shop;
+import com.hmdp.entity.Voucher;
 import com.hmdp.entity.VoucherOrder;
 import com.hmdp.mapper.VoucherOrderMapper;
 import com.hmdp.service.ISeckillVoucherService;
+import com.hmdp.service.IShopService;
 import com.hmdp.service.IVoucherOrderService;
 import com.hmdp.service.IVoucherService;
 import com.hmdp.utils.RedisIdWorker;
@@ -32,7 +36,9 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
@@ -51,6 +57,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     private ISeckillVoucherService seckillVoucherService;
     @Resource
     private IVoucherService voucherService;
+    @Resource
+    private IShopService shopService;
     @Resource
     private RedisIdWorker redisIdWorker;
     @Resource
@@ -342,7 +350,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 .orderByDesc(VoucherOrder::getCreateTime)
                 .page(new Page<>(current, 10));
         
-        return Result.ok(page.getRecords());
+        return Result.ok(toOrderDTOs(page.getRecords()));
     }
 
     @Override
@@ -351,7 +359,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (order == null) {
             return Result.fail("订单不存在");
         }
-        return Result.ok(order);
+        List<VoucherOrderDTO> orders = toOrderDTOs(Collections.singletonList(order));
+        return Result.ok(orders.isEmpty() ? null : orders.get(0));
     }
 
     @Override
@@ -511,5 +520,62 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         this.save(voucherOrder);
         
         return Result.ok(orderId);
+    }
+
+    private List<VoucherOrderDTO> toOrderDTOs(List<VoucherOrder> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> voucherIds = orders.stream()
+                .map(VoucherOrder::getVoucherId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, Voucher> voucherMap = voucherService.listByIds(voucherIds).stream()
+                .collect(Collectors.toMap(Voucher::getId, Function.identity(), (left, right) -> left));
+
+        List<Long> shopIds = voucherMap.values().stream()
+                .map(Voucher::getShopId)
+                .filter(shopId -> shopId != null && shopId > 0)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, Shop> shopMap = shopIds.isEmpty()
+                ? Collections.emptyMap()
+                : shopService.listByIds(shopIds).stream()
+                .collect(Collectors.toMap(Shop::getId, Function.identity(), (left, right) -> left));
+
+        return orders.stream().map(order -> {
+            VoucherOrderDTO dto = BeanUtil.copyProperties(order, VoucherOrderDTO.class);
+            Voucher voucher = voucherMap.get(order.getVoucherId());
+            if (voucher != null) {
+                dto.setVoucherTitle(voucher.getTitle());
+                dto.setVoucherSubTitle(voucher.getSubTitle());
+                dto.setPayValue(voucher.getPayValue());
+                dto.setActualValue(voucher.getActualValue());
+                dto.setShopId(voucher.getShopId());
+                dto.setVoucherType(voucher.getType());
+            }
+
+            Shop shop = voucher == null ? null : shopMap.get(voucher.getShopId());
+            if (shop != null) {
+                dto.setShopName(shop.getName());
+                dto.setVoucherImages(firstImage(shop.getImages()));
+            } else {
+                dto.setVoucherImages("/imgs/icons/default-icon.png");
+            }
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    private String firstImage(String images) {
+        if (images == null || images.trim().isEmpty()) {
+            return "/imgs/icons/default-icon.png";
+        }
+        String[] parts = images.split(",");
+        return parts.length == 0 || parts[0].trim().isEmpty()
+                ? "/imgs/icons/default-icon.png"
+                : parts[0].trim();
     }
 }

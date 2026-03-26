@@ -221,6 +221,7 @@ public class AmapServiceImpl implements IAmapService {
             } else {
                 shop.setAvgPrice(null);
             }
+            shop.setSold(0);
 
             // 评论数
             String commentNum = poi.getStr("comment_num");

@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能助手</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <style>
+    :root {
+      --assistant-ink: #14213d;
+      --assistant-muted: #667085;
+      --assistant-shadow: 0 18px 38px rgba(17, 37, 63, 0.1);
+      --assistant-gradient: linear-gradient(135deg, #132743 0%, #1f578b 50%, #ff7d4d 100%);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(255, 122, 69, 0.18), transparent 30%),
+        linear-gradient(180deg, #f8fbff 0%, #f4f6fb 100%);
+      color: var(--assistant-ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .assistant-page {
+      padding: 20px 16px calc(220px + env(safe-area-inset-bottom, 0px));
+      scroll-padding-bottom: 220px;
+    }
+    .assistant-app {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    .assistant-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 0 16px;
+      background: linear-gradient(180deg, rgba(248, 251, 255, 0.96) 0%, rgba(248, 251, 255, 0.82) 70%, rgba(248, 251, 255, 0));
+      backdrop-filter: blur(14px);
+    }
+    .header-back,
+    .ghost-btn,
+    .suggestion-chip,
+    .action-btn,
+    .send-btn {
+      border: none;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .header-back {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(20, 33, 61, 0.05);
+      color: var(--assistant-ink);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .header-copy {
+      min-width: 0;
+      flex: 1;
+    }
+    .header-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .header-subtitle {
+      margin-top: 4px;
+      color: var(--assistant-muted);
+      font-size: 13px;
+    }
+    .header-tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-pill.connected {
+      background: rgba(34, 197, 94, 0.12);
+      color: #15803d;
+    }
+    .status-pill.fallback {
+      background: rgba(255, 122, 69, 0.14);
+      color: #b54708;
+    }
+    .status-pill.idle {
+      background: rgba(20, 33, 61, 0.06);
+      color: var(--assistant-muted);
+    }
+    .ghost-btn {
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--assistant-ink);
+      box-shadow: 0 8px 18px rgba(20, 33, 61, 0.08);
+    }
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
+      border-radius: 26px;
+      background: var(--assistant-gradient);
+      color: #fff;
+      box-shadow: 0 20px 44px rgba(19, 39, 67, 0.2);
+    }
+    .hero-card::after {
+      content: '';
+      position: absolute;
+      right: -40px;
+      top: -52px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .hero-card > * {
+      position: relative;
+      z-index: 1;
+    }
+    .hero-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .hero-desc {
+      margin-top: 12px;
+      max-width: 720px;
+      color: rgba(255, 255, 255, 0.84);
+      line-height: 1.75;
+      font-size: 14px;
+    }
+    .suggestion-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .suggestion-chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 13px;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .suggestion-chip:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .chat-shell {
+      margin-top: 18px;
+      padding: 18px 18px 28px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 26px;
+      box-shadow: var(--assistant-shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .message-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .message-row + .message-row {
+      margin-top: 16px;
+    }
+    .message-row.user {
+      flex-direction: row-reverse;
+    }
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(20, 33, 61, 0.12);
+    }
+    .message-row.assistant .message-avatar {
+      background: linear-gradient(135deg, #183a63 0%, #ff7d4d 100%);
+    }
+    .message-row.user .message-avatar {
+      background: linear-gradient(135deg, #ff6b35 0%, #ff9152 100%);
+    }
+    .message-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .message-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--assistant-muted);
+      margin-bottom: 8px;
+    }
+    .message-bubble {
+      width: fit-content;
+      max-width: min(720px, 100%);
+      padding: 14px 16px;
+      border-radius: 20px;
+      line-height: 1.8;
+      font-size: 14px;
+      word-break: break-word;
+    }
+    .message-row.assistant .message-bubble {
+      background: #fff;
+      color: var(--assistant-ink);
+      border-top-left-radius: 8px;
+      box-shadow: 0 12px 26px rgba(20, 33, 61, 0.08);
+    }
+    .message-row.user .message-bubble {
+      margin-left: auto;
+      background: linear-gradient(135deg, #ff6b35 0%, #ff9152 100%);
+      color: #fff;
+      border-top-right-radius: 8px;
+    }
+    .message-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .action-btn {
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: rgba(20, 33, 61, 0.05);
+      color: var(--assistant-ink);
+      border: 1px solid rgba(20, 33, 61, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .action-btn span {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .action-btn small {
+      display: block;
+      margin-top: 4px;
+      color: var(--assistant-muted);
+      font-size: 11px;
+    }
+    .typing-dots {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .typing-dots span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      animation: typing 1s ease-in-out infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typing {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+      40% { transform: translateY(-4px); opacity: 1; }
+    }
+    .composer {
+      position: fixed;
+      left: 50%;
+      bottom: max(8px, env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      width: min(980px, calc(100% - 24px));
+      padding: 14px 0 0;
+      background: linear-gradient(180deg, rgba(245, 247, 251, 0) 0%, rgba(245, 247, 251, 0.9) 26%, rgba(245, 247, 251, 1) 100%);
+      backdrop-filter: blur(12px);
+      z-index: 30;
+    }
+    .composer-inner {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      padding: 12px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(20, 33, 61, 0.08);
+      box-shadow: 0 18px 32px rgba(20, 33, 61, 0.08);
+    }
+    .composer textarea {
+      flex: 1;
+      min-height: 58px;
+      max-height: 180px;
+      resize: none;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--assistant-ink);
+      font-family: inherit;
+    }
+    .composer textarea::placeholder {
+      color: #98a2b3;
+    }
+    .send-btn {
+      min-width: 104px;
+      height: 48px;
+      padding: 0 18px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ff6b35 0%, #ff9152 100%);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 12px 24px rgba(255, 107, 53, 0.24);
+    }
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    @media (max-width: 768px) {
+      .assistant-page {
+        padding: 14px 12px calc(204px + env(safe-area-inset-bottom, 0px));
+      }
+      .assistant-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .header-title { font-size: 20px; }
+      .header-tools {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .hero-card {
+        padding: 18px;
+        border-radius: 22px;
+      }
+      .hero-title { font-size: 22px; }
+      .chat-shell {
+        padding: 14px 14px 24px;
+        border-radius: 22px;
+      }
+      .message-bubble { max-width: 100%; }
+      .composer {
+        width: calc(100% - 16px);
+      }
+      .composer-inner {
+        padding: 10px;
+        gap: 10px;
+      }
+      .composer textarea {
+        min-height: 76px;
+      }
+      .send-btn { min-width: 88px; }
+    }
+    @media (max-width: 560px) {
+      .header-tools { flex-wrap: wrap; }
+      .status-pill { display: none; }
+      .composer-inner {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .send-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div id="app" class="assistant-page">
+  <div class="assistant-app">
+    <div class="assistant-header">
+      <button class="header-back" @click="goBack">
+        <i class="el-icon-arrow-left"></i>
+      </button>
+      <div class="header-copy">
+        <div class="header-title">智能助手</div>
+        <div class="header-subtitle">{{ sceneLabel }} · 直接告诉我你想完成什么操作。</div>
+      </div>
+      <div class="header-tools">
+        <span class="status-pill" :class="statusClass">{{ statusText }}</span>
+        <button class="ghost-btn" @click="clearConversation">清空对话</button>
+      </div>
+    </div>
+
+    <section class="hero-card">
+      <div class="hero-title">
+        <i class="el-icon-magic-stick"></i>
+        DeepSeek 智能助手
+      </div>
+      <div class="hero-desc">
+        你可以问我店铺、优惠券、订单、收藏、笔记和消息相关的问题。如果后端已经配置 DeepSeek Key，我会直接调用模型回答；
+        如果还没配置，我也会先用本地兜底能力帮你完成页面跳转和功能指引。
+      </div>
+      <div class="suggestion-list">
+        <button class="suggestion-chip" v-for="prompt in quickPrompts" :key="prompt" @click="usePrompt(prompt)">
+          {{ prompt }}
+        </button>
+      </div>
+    </section>
+
+    <section class="chat-shell">
+      <div class="message-row" :class="item.role" v-for="(item, index) in messages" :key="index + '-' + item.role">
+        <div class="message-avatar">
+          <i :class="item.role === 'assistant' ? 'el-icon-magic-stick' : 'el-icon-user'"></i>
+        </div>
+        <div class="message-body">
+          <div class="message-meta">
+            <span>{{ item.role === 'assistant' ? '助手' : '我' }}</span>
+            <span>{{ formatTime(item.createdAt) }}</span>
+          </div>
+          <div class="message-bubble" v-html="formatMessage(item.content)"></div>
+          <div class="message-actions" v-if="item.role === 'assistant' && item.actions && item.actions.length">
+            <button class="action-btn" v-for="action in item.actions" :key="action.path + action.label" @click="handleAction(action)">
+              <span>{{ action.label }}</span>
+              <small>{{ action.description }}</small>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="message-row assistant" v-if="loading">
+        <div class="message-avatar">
+          <i class="el-icon-loading"></i>
+        </div>
+        <div class="message-body">
+          <div class="message-meta">
+            <span>助手</span>
+            <span>思考中...</span>
+          </div>
+          <div class="message-bubble">
+            <div class="typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="composer">
+    <div class="composer-inner">
+      <textarea
+        ref="composerInput"
+        v-model="draft"
+        placeholder="例如：帮我找附近评分高的火锅，或者告诉我订单在哪里看"
+        @keydown.enter.exact.prevent="submitMessage"
+      ></textarea>
+      <button class="send-btn" @click="submitMessage" :disabled="loading || !draft.trim()">发送</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script>
+  const STORAGE_KEY = 'hmdp_assistant_history';
+
+  new Vue({
+    el: '#app',
+    data: {
+      scene: util.getUrlParam('scene') || '智能助手',
+      draft: util.getUrlParam('prompt') || '',
+      loading: false,
+      assistantConfigured: null,
+      autoPromptSent: false,
+      quickPrompts: [
+        '帮我找附近评分高的火锅',
+        '优惠券怎么领更划算',
+        '我的订单在哪里查看',
+        '我想发布一篇探店笔记',
+        '消息中心都能做什么',
+        '推荐一家适合约会的餐厅'
+      ],
+      messages: []
+    },
+    computed: {
+      sceneLabel() {
+        return this.scene || '智能助手';
+      },
+      statusText() {
+        if (this.assistantConfigured === true) return 'DeepSeek 已连接';
+        if (this.assistantConfigured === false) return '本地兜底模式';
+        return '连接中';
+      },
+      statusClass() {
+        if (this.assistantConfigured === true) return 'connected';
+        if (this.assistantConfigured === false) return 'fallback';
+        return 'idle';
+      }
+    },
+    mounted() {
+      this.restoreConversation();
+      this.$nextTick(() => {
+        this.scrollToBottom();
+        if (this.draft.trim() && !this.autoPromptSent) {
+          this.autoPromptSent = true;
+          this.submitMessage();
+        }
+      });
+    },
+    methods: {
+      goBack() {
+        history.back();
+      },
+      buildWelcomeMessage() {
+        return {
+          role: 'assistant',
+          content: '你好，我可以帮你找店、领券、查看订单、发布笔记、进入消息中心，也可以告诉你下一步该怎么操作。',
+          actions: [
+            { label: '查看优惠券', description: '打开可领取优惠券和秒杀券页面', path: '/pages/misc/vouchers.html' },
+            { label: '查看订单', description: '继续支付、取消或核销订单', path: '/pages/order/orders.html' },
+            { label: '发布笔记', description: '进入发布探店笔记页面', path: '/pages/blog/blog-edit.html' }
+          ],
+          createdAt: Date.now()
+        };
+      },
+      restoreConversation() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          this.messages = [this.buildWelcomeMessage()];
+          return;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) {
+            this.messages = parsed;
+            const latestAssistant = parsed.slice().reverse().find((item) => item.role === 'assistant');
+            if (latestAssistant && typeof latestAssistant.configured === 'boolean') {
+              this.assistantConfigured = latestAssistant.configured;
+            }
+            return;
+          }
+        } catch (e) {
+          console.warn('restore assistant history failed', e);
+        }
+        this.messages = [this.buildWelcomeMessage()];
+      },
+      persistConversation() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.messages.slice(-24)));
+      },
+      clearConversation() {
+        this.$confirm('确定清空当前对话吗？', '提示', {
+          confirmButtonText: '清空',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.assistantConfigured = null;
+          this.messages = [this.buildWelcomeMessage()];
+          this.persistConversation();
+          this.$nextTick(this.scrollToBottom);
+        }).catch(() => {});
+      },
+      usePrompt(prompt) {
+        this.draft = prompt;
+        this.$nextTick(() => this.submitMessage());
+      },
+      submitMessage() {
+        const content = this.draft.trim();
+        if (!content || this.loading) return;
+
+        const history = this.messages
+          .filter((item) => item.role === 'assistant' || item.role === 'user')
+          .map((item) => ({ role: item.role, content: item.content }))
+          .slice(-10);
+
+        this.messages.push({
+          role: 'user',
+          content: content,
+          actions: [],
+          createdAt: Date.now()
+        });
+        this.draft = '';
+        this.loading = true;
+        this.persistConversation();
+        this.$nextTick(this.scrollToBottom);
+
+        axios.post('/assistant/chat', {
+          message: content,
+          scene: this.sceneLabel,
+          history: history
+        }).then((res) => {
+          const payload = res.data || {};
+          this.assistantConfigured = payload.configured;
+          this.messages.push({
+            role: 'assistant',
+            content: payload.reply || '这次没有拿到完整回答，你可以换个说法再试一次。',
+            actions: Array.isArray(payload.actions) ? payload.actions : [],
+            configured: payload.configured,
+            createdAt: Date.now()
+          });
+          this.persistConversation();
+        }).catch((err) => {
+          const fallbackMessage = typeof err === 'string'
+            ? err
+            : '智能助手暂时不可用，我先给你常用入口，你也可以稍后再试。';
+          this.assistantConfigured = false;
+          this.messages.push({
+            role: 'assistant',
+            content: fallbackMessage,
+            actions: [
+              { label: '去搜索页', description: '搜索店铺、地点和笔记', path: '/pages/misc/search.html' },
+              { label: '查看优惠券', description: '看看当前能领哪些券', path: '/pages/misc/vouchers.html' }
+            ],
+            configured: false,
+            createdAt: Date.now()
+          });
+          this.persistConversation();
+          this.$message.error('智能助手暂时不可用，请稍后重试');
+        }).finally(() => {
+          this.loading = false;
+          this.$nextTick(this.scrollToBottom);
+        });
+      },
+      handleAction(action) {
+        if (!action || !action.path) return;
+        location.href = action.path;
+      },
+      formatMessage(content) {
+        const value = this.escapeHtml(content || '');
+        return value.replace(/\n/g, '<br>');
+      },
+      escapeHtml(content) {
+        return String(content)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      },
+      formatTime(time) {
+        if (!time) return '';
+        const date = new Date(time);
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+        return hour + ':' + minute;
+      },
+      scrollToBottom() {
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,137 +1,252 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>优惠券 - 周边优速通</title>
+  <title>优惠券</title>
   <link rel="stylesheet" href="/css/element.css">
   <link href="/css/main.css" rel="stylesheet">
   <style>
-    .vouchers-container { padding: 16px; max-width: 1000px; margin: 0 auto; }
-    .voucher-card { border: 1px solid #eee; border-radius: 8px; padding: 16px; margin-bottom: 12px; background: #fff; }
-    .voucher-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-    .voucher-title { font-weight: 600; font-size: 16px; }
-    .voucher-shop { color: #666; font-size: 13px; margin-top: 4px; }
-    .voucher-value { text-align: right; }
-    .voucher-amount { color: #ff6633; font-size: 24px; font-weight: bold; }
-    .voucher-amount span { font-size: 14px; }
-    .voucher-pay { color: #999; font-size: 12px; text-decoration: line-through; }
-    .voucher-rules { background: #f9f9f9; padding: 8px 12px; border-radius: 4px; font-size: 12px; color: #666; margin-bottom: 12px; }
-    .voucher-footer { display: flex; justify-content: space-between; align-items: center; }
-    .voucher-time { color: #999; font-size: 12px; }
-    .voucher-stock { color: #ff6633; font-size: 13px; }
-    .empty-state { text-align: center; padding: 60px 0; color: #999; }
-    .empty-state i { font-size: 64px; color: #ddd; margin-bottom: 16px; }
-    .seckill-badge { background: linear-gradient(90deg, #ff6633, #ff9966); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px; }
-    .countdown { color: #ff6633; font-size: 13px; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(255, 122, 69, 0.12), transparent 28%),
+        linear-gradient(180deg, #fffdfc 0%, #f7f8fc 100%);
+      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .vouchers-container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 18px 16px 32px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .header-back-btn {
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .header-title {
+      flex: 1;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .voucher-card {
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 14px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.92);
+    }
+    .voucher-card.is-disabled { opacity: 0.6; }
+    .voucher-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .voucher-title {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+    .voucher-shop {
+      color: #6b7280;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+    .voucher-value {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .voucher-amount {
+      color: #ff6633;
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .voucher-amount span {
+      font-size: 16px;
+      margin-right: 2px;
+    }
+    .voucher-pay {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-top: 8px;
+      text-decoration: line-through;
+    }
+    .voucher-rules {
+      background: #f8fafc;
+      color: #64748b;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .voucher-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .voucher-time,
+    .voucher-stock {
+      color: #6b7280;
+      font-size: 13px;
+    }
+    .voucher-stock { color: #ff6633; }
+    .seckill-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #ff6633 0%, #ff9966 100%);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 10px;
+    }
+    .countdown {
+      color: #ff6633;
+      font-weight: 600;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 90px 20px;
+      color: #9ca3af;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+    }
+    .empty-state i {
+      display: block;
+      font-size: 58px;
+      color: #d4dce7;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 768px) {
+      .vouchers-container { padding: 14px 12px 24px; }
+      .header-title { font-size: 20px; }
+      .voucher-header { flex-direction: column; }
+      .voucher-value { text-align: left; }
+    }
   </style>
 </head>
 <body>
 <div id="app" class="vouchers-container">
-  <div class="header" style="display:flex; align-items:center; margin-bottom:16px;">
-    <div class="header-back-btn" onclick="history.back()"><i class="el-icon-arrow-left"></i></div>
-    <div style="flex:1; text-align:center; font-weight:600;">优惠券</div>
+  <div class="header">
+    <button class="header-back-btn" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </button>
+    <div class="header-title">优惠券</div>
+    <div style="width:42px;"></div>
   </div>
 
-  <!-- 类型切换 -->
   <el-tabs v-model="activeTab" @tab-click="handleTabChange">
     <el-tab-pane label="可领取" name="available"></el-tab-pane>
     <el-tab-pane label="我的优惠券" name="my"></el-tab-pane>
   </el-tabs>
 
-  <!-- 可领取的优惠券 -->
-  <div v-if="activeTab === 'available'">
-    <div v-if="loading" style="text-align:center; padding:40px 0;">
-      <i class="el-icon-loading" style="font-size:32px; color:#ff6633;"></i>
-    </div>
+  <div v-if="loading" style="text-align:center; padding:40px 0;">
+    <i class="el-icon-loading" style="font-size:32px; color:#ff6633;"></i>
+  </div>
 
-    <div v-else-if="vouchers.length === 0" class="empty-state">
-      <i class="el-icon-tickets"></i>
-      <div>暂无可领取的优惠券</div>
-    </div>
+  <div v-else-if="activeTab === 'available' && vouchers.length === 0" class="empty-state">
+    <i class="el-icon-tickets"></i>
+    <div>当前没有可领取的优惠券</div>
+  </div>
 
-    <div v-else>
-      <div v-for="v in vouchers" :key="v.id" class="voucher-card">
-        <div class="voucher-header">
-          <div>
-            <div class="voucher-title">
-              {{ v.title }}
-              <span v-if="v.type === 1" class="seckill-badge">秒杀</span>
-            </div>
-            <div class="voucher-shop">{{ v.subTitle }}</div>
+  <div v-else-if="activeTab === 'my' && myVouchers.length === 0" class="empty-state">
+    <i class="el-icon-wallet"></i>
+    <div>你还没有优惠券</div>
+    <el-button type="primary" style="margin-top:16px;" @click="activeTab = 'available'; loadVouchers();">去领取</el-button>
+  </div>
+
+  <div v-if="!loading && activeTab === 'available'">
+    <div v-for="voucher in vouchers" :key="voucher.id" class="voucher-card" :class="{ 'is-disabled': voucher.stock === 0 }">
+      <div class="voucher-header">
+        <div>
+          <div class="voucher-title">
+            {{ voucher.title }}
+            <span v-if="voucher.type === 1" class="seckill-badge">秒杀</span>
           </div>
-          <div class="voucher-value">
-            <div class="voucher-amount"><span>¥</span>{{ v.actualValue / 100 }}</div>
-            <div class="voucher-pay">¥{{ v.payValue / 100 }}</div>
-          </div>
+          <div class="voucher-shop">{{ voucher.subTitle || '到店消费可用' }}</div>
         </div>
-        <div class="voucher-rules">{{ v.rules }}</div>
-        <div class="voucher-footer">
-          <div class="voucher-time">
-            <span v-if="v.type === 1 && v.beginTime">
-              <span class="countdown">{{ formatCountdown(v) }}</span>
-            </span>
-            <span v-else>有效期至 {{ formatDate(v.endTime) }}</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:12px;">
-            <span class="voucher-stock" v-if="v.stock !== undefined">剩余 {{ v.stock }} 张</span>
-            <el-button 
-              :type="v.type === 1 ? 'danger' : 'primary'" 
-              size="small"
-              :disabled="v.stock === 0 || (v.type === 1 && !isSeckillActive(v))"
-              @click="receiveVoucher(v)"
-            >
-              {{ v.type === 1 ? '立即秒杀' : '立即领取' }}
-            </el-button>
-          </div>
+        <div class="voucher-value">
+          <div class="voucher-amount"><span>¥</span>{{ toYuan(voucher.actualValue) }}</div>
+          <div class="voucher-pay">售价 ¥{{ toYuan(voucher.payValue) }}</div>
+        </div>
+      </div>
+
+      <div class="voucher-rules">{{ voucher.rules || '具体使用规则以门店说明为准。' }}</div>
+
+      <div class="voucher-footer">
+        <div class="voucher-time">
+          <span v-if="voucher.type === 1 && voucher.beginTime" class="countdown">{{ formatCountdown(voucher) }}</span>
+          <span v-else>有效期至 {{ formatDate(voucher.endTime) }}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="voucher-stock" v-if="voucher.stock !== undefined">剩余 {{ voucher.stock }} 张</span>
+          <el-button
+            :type="voucher.type === 1 ? 'danger' : 'primary'"
+            size="small"
+            :disabled="voucher.stock === 0 || (voucher.type === 1 && !isSeckillActive(voucher))"
+            @click="receiveVoucher(voucher)"
+          >
+            {{ voucher.type === 1 ? '立即秒杀' : '立即领取' }}
+          </el-button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 我的优惠券 -->
-  <div v-if="activeTab === 'my'">
-    <div v-if="loading" style="text-align:center; padding:40px 0;">
-      <i class="el-icon-loading" style="font-size:32px; color:#ff6633;"></i>
-    </div>
-
-    <div v-else-if="myVouchers.length === 0" class="empty-state">
-      <i class="el-icon-wallet"></i>
-      <div>暂无优惠券</div>
-      <el-button type="primary" style="margin-top:16px;" @click="activeTab = 'available'">去领取</el-button>
-    </div>
-
-    <div v-else>
-      <div v-for="order in myVouchers" :key="order.id" class="voucher-card" :style="getOrderStyle(order.status)">
-        <div class="voucher-header">
-          <div>
-            <div class="voucher-title">{{ order.voucherTitle }}</div>
-            <div class="voucher-shop">订单号: {{ order.id }}</div>
-          </div>
-          <div class="voucher-value">
-            <div class="voucher-amount" :style="{color: getStatusColor(order.status)}"><span>¥</span>{{ order.actualValue / 100 }}</div>
-            <div class="voucher-pay">¥{{ order.payValue / 100 }}</div>
-          </div>
+  <div v-if="!loading && activeTab === 'my'">
+    <div v-for="order in myVouchers" :key="order.id" class="voucher-card" :class="{ 'is-disabled': [3, 4, 6].includes(order.status) }">
+      <div class="voucher-header">
+        <div>
+          <div class="voucher-title">{{ order.voucherTitle || '优惠券' }}</div>
+          <div class="voucher-shop">订单号：{{ order.id }}</div>
         </div>
-        <div class="voucher-footer">
-          <div class="voucher-time">
-            状态: <span :style="{color: getStatusColor(order.status)}">{{ getStatusText(order.status) }}</span>
-          </div>
-          <div>
-            <el-button v-if="order.status === 1" type="primary" size="small" @click="payOrder(order.id)">去支付</el-button>
-            <el-button v-if="order.status === 2" type="success" size="small" @click="useOrder(order.id)">去使用</el-button>
-            <el-button v-if="order.status === 1" type="text" size="small" @click="cancelOrder(order.id)">取消</el-button>
-          </div>
+        <div class="voucher-value">
+          <div class="voucher-amount"><span>¥</span>{{ toYuan(order.actualValue) }}</div>
+          <div class="voucher-pay">支付 ¥{{ toYuan(order.payValue) }}</div>
+        </div>
+      </div>
+
+      <div class="voucher-footer">
+        <div class="voucher-time">状态：<span :style="{ color: getStatusColor(order.status), fontWeight: 700 }">{{ getStatusText(order.status) }}</span></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <el-button v-if="order.status === 1" type="primary" size="small" @click="payOrder(order.id)">立即支付</el-button>
+          <el-button v-if="order.status === 2" type="success" size="small" @click="useOrder(order.id)">去核销</el-button>
+          <el-button v-if="order.status === 1" type="text" size="small" @click="cancelOrder(order.id)">取消订单</el-button>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-  <script src="/js/vue.js"></script>
-  <script src="/js/axios.min.js"></script>
-  <script src="/js/element.js"></script>
-  <script src="/js/common.js"></script>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
 <script>
   new Vue({
     el: '#app',
@@ -140,34 +255,42 @@
       vouchers: [],
       myVouchers: [],
       loading: true,
-      countdowns: {}
+      countdownTimer: null
     },
     created() {
       this.loadVouchers();
+      this.startCountdowns();
+    },
+    beforeDestroy() {
+      if (this.countdownTimer) clearInterval(this.countdownTimer);
     },
     methods: {
+      goBack() {
+        history.back();
+      },
       loadVouchers() {
         this.loading = true;
-        axios.get('/voucher/list')
-          .then(({ data }) => {
-            this.vouchers = data?.data || data || [];
-            this.loading = false;
-            this.startCountdowns();
-          })
-          .catch(() => {
-            this.loading = false;
-          });
+        axios.get('/voucher/list').then(({ data }) => {
+          this.vouchers = Array.isArray(data) ? data : [];
+        }).catch((err) => {
+          this.$message.error(this.getErrorMessage(err, '加载优惠券失败'));
+        }).finally(() => {
+          this.loading = false;
+        });
       },
       loadMyVouchers() {
+        if (!this.ensureLogin()) {
+          this.loading = false;
+          return;
+        }
         this.loading = true;
-        axios.get('/voucher-order/list')
-          .then(({ data }) => {
-            this.myVouchers = data?.data || data || [];
-            this.loading = false;
-          })
-          .catch(() => {
-            this.loading = false;
-          });
+        axios.get('/voucher-order/list').then(({ data }) => {
+          this.myVouchers = Array.isArray(data) ? data : [];
+        }).catch((err) => {
+          this.$message.error(this.getErrorMessage(err, '加载订单失败'));
+        }).finally(() => {
+          this.loading = false;
+        });
       },
       handleTabChange() {
         if (this.activeTab === 'my') {
@@ -176,121 +299,120 @@
           this.loadVouchers();
         }
       },
-      receiveVoucher(v) {
-        if (v.type === 1) {
-          // 秒杀券
-          axios.post(`/voucher-order/seckill/${v.id}`)
-            .then(({ data }) => {
-              this.$message.success('秒杀成功！');
-              this.activeTab = 'my';
-              this.loadMyVouchers();
-            })
-            .catch(err => {
-              this.$message.error(err.response?.data?.errorMsg || '秒杀失败');
-            });
-        } else {
-          // 普通券
-          axios.post(`/voucher-order/receive/${v.id}`)
-            .then(({ data }) => {
-              this.$message.success('领取成功！');
-              v.stock--;
-            })
-            .catch(err => {
-              this.$message.error(err.response?.data?.errorMsg || '领取失败');
-            });
-        }
+      receiveVoucher(voucher) {
+        if (!this.ensureLogin()) return;
+        const request = voucher.type === 1
+          ? axios.post('/voucher-order/seckill/' + voucher.id)
+          : axios.post('/voucher-order/receive/' + voucher.id);
+        request.then(() => {
+          this.$message.success(voucher.type === 1 ? '秒杀成功' : '领取成功');
+          if (typeof voucher.stock === 'number' && voucher.stock > 0) voucher.stock -= 1;
+          this.activeTab = 'my';
+          this.loadMyVouchers();
+        }).catch((err) => {
+          this.$message.error(this.getErrorMessage(err, voucher.type === 1 ? '秒杀失败' : '领取失败'));
+        });
       },
       payOrder(id) {
-        axios.post(`/voucher-order/pay/${id}`)
-          .then(() => {
-            this.$message.success('支付成功！');
-            this.loadMyVouchers();
-          })
-          .catch(err => {
-            this.$message.error(err.response?.data?.errorMsg || '支付失败');
-          });
+        if (!this.ensureLogin()) return;
+        axios.post('/voucher-order/pay/' + id).then(() => {
+          this.$message.success('支付成功');
+          this.loadMyVouchers();
+        }).catch((err) => {
+          this.$message.error(this.getErrorMessage(err, '支付失败'));
+        });
       },
       useOrder(id) {
-        this.$confirm('确定要使用这张优惠券吗？', '提示', {
-          confirmButtonText: '确定',
+        this.$confirm('确定要核销这张优惠券吗？', '提示', {
+          confirmButtonText: '确定核销',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          axios.post(`/voucher-order/verify/${id}`)
-            .then(() => {
-              this.$message.success('核销成功！');
-              this.loadMyVouchers();
-            })
-            .catch(err => {
-              this.$message.error(err.response?.data?.errorMsg || '核销失败');
-            });
+          return axios.post('/voucher-order/verify/' + id);
+        }).then(() => {
+          this.$message.success('核销成功');
+          this.loadMyVouchers();
+        }).catch((err) => {
+          if (err !== 'cancel') {
+            this.$message.error(this.getErrorMessage(err, '核销失败'));
+          }
         });
       },
       cancelOrder(id) {
         this.$confirm('确定要取消这个订单吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+          confirmButtonText: '确定取消',
+          cancelButtonText: '再想想',
           type: 'warning'
         }).then(() => {
-          axios.post(`/voucher-order/cancel/${id}`)
-            .then(() => {
-              this.$message.success('取消成功！');
-              this.loadMyVouchers();
-            })
-            .catch(err => {
-              this.$message.error(err.response?.data?.errorMsg || '取消失败');
-            });
+          return axios.post('/voucher-order/cancel/' + id);
+        }).then(() => {
+          this.$message.success('取消成功');
+          this.loadMyVouchers();
+        }).catch((err) => {
+          if (err !== 'cancel') {
+            this.$message.error(this.getErrorMessage(err, '取消失败'));
+          }
         });
       },
       formatDate(dateStr) {
-        if (!dateStr) return '';
+        if (!dateStr) return '长期有效';
         const date = new Date(dateStr);
-        return `${date.getMonth() + 1}月${date.getDate()}日`;
+        return (date.getMonth() + 1) + '月' + date.getDate() + '日';
       },
-      isSeckillActive(v) {
-        if (!v.beginTime || !v.endTime) return false;
-        const now = new Date().getTime();
-        const begin = new Date(v.beginTime).getTime();
-        const end = new Date(v.endTime).getTime();
+      isSeckillActive(voucher) {
+        if (!voucher.beginTime || !voucher.endTime) return false;
+        const now = Date.now();
+        const begin = new Date(voucher.beginTime).getTime();
+        const end = new Date(voucher.endTime).getTime();
         return now >= begin && now <= end;
       },
-      formatCountdown(v) {
-        if (!v.beginTime) return '';
-        const now = new Date().getTime();
-        const begin = new Date(v.beginTime).getTime();
-        const end = new Date(v.endTime).getTime();
-        
+      formatCountdown(voucher) {
+        if (!voucher.beginTime) return '';
+        const now = Date.now();
+        const begin = new Date(voucher.beginTime).getTime();
+        const end = new Date(voucher.endTime).getTime();
         if (now < begin) {
           const diff = begin - now;
           const hours = Math.floor(diff / 3600000);
           const mins = Math.floor((diff % 3600000) / 60000);
-          return `距开始 ${hours}时${mins}分`;
-        } else if (now <= end) {
+          return '距开始 ' + hours + '小时' + mins + '分钟';
+        }
+        if (now <= end) {
           const diff = end - now;
           const hours = Math.floor(diff / 3600000);
           const mins = Math.floor((diff % 3600000) / 60000);
-          return `距结束 ${hours}时${mins}分`;
+          return '距结束 ' + hours + '小时' + mins + '分钟';
         }
         return '已结束';
       },
       startCountdowns() {
-        setInterval(() => {
-          this.vouchers = [...this.vouchers];
+        this.countdownTimer = setInterval(() => {
+          this.vouchers = this.vouchers.slice();
         }, 60000);
       },
       getStatusText(status) {
-        const map = { 1: '未支付', 2: '已支付', 3: '已核销', 4: '已取消', 5: '退款中', 6: '已退款' };
-        return map[status] || '未知';
+        const map = { 1: '待支付', 2: '已支付', 3: '已核销', 4: '已取消', 5: '退款中', 6: '已退款' };
+        return map[status] || '未知状态';
       },
       getStatusColor(status) {
         const map = { 1: '#ff6633', 2: '#67c23a', 3: '#909399', 4: '#909399', 5: '#e6a23c', 6: '#909399' };
         return map[status] || '#333';
       },
-      getOrderStyle(status) {
-        if (status === 3 || status === 4 || status === 6) {
-          return { opacity: 0.6 };
-        }
-        return {};
+      toYuan(value) {
+        const price = util.formatPrice(value);
+        return price == null ? '0.00' : price;
+      },
+      ensureLogin() {
+        if (localStorage.getItem('token')) return true;
+        this.$message.error('请先登录');
+        setTimeout(() => {
+          location.href = '/pages/auth/login.html';
+        }, 200);
+        return false;
+      },
+      getErrorMessage(err, fallback) {
+        if (typeof err === 'string') return err;
+        return err?.response?.data?.errorMsg || err?.message || fallback;
       }
     }
   });

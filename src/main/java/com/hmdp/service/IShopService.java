@@ -40,4 +40,8 @@ public interface IShopService extends IService<Shop> {
      * @return {@link Result}
      */
     Result queryShopByType(Integer typeId, Integer current, Double x, Double y);
+
+    Result searchShopsForAssociation(String name, Double x, Double y);
+
+    Shop ensureShopExists(Long shopId);
 }

@@ -1,85 +1,255 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>浏览历史 - 周边优速通</title>
+  <title>浏览历史</title>
   <link rel="stylesheet" href="/css/element.css">
   <link href="/css/main.css" rel="stylesheet">
   <style>
-    .history-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #eee; cursor: pointer; }
-    .history-thumb { width:60px; height:60px; object-fit:cover; border-radius:4px; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #fcfdff 0%, #f5f7fb 100%);
+      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .page-shell {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 16px 32px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .back-btn {
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+      cursor: pointer;
+    }
+
+    .title {
+      flex: 1;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 14px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .history-item {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+      cursor: pointer;
+    }
+
+    .history-thumb {
+      width: 88px;
+      height: 88px;
+      border-radius: 16px;
+      object-fit: cover;
+      background: #f1f5f9;
+    }
+
+    .history-name {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .history-time {
+      margin-top: 8px;
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .empty-state {
+      padding: 96px 20px;
+      text-align: center;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 24px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+    }
+
+    .empty-state i {
+      font-size: 56px;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    @media (max-width: 640px) {
+      .page-shell {
+        padding: 14px 12px 24px;
+      }
+
+      .title {
+        font-size: 20px;
+      }
+
+      .history-item {
+        grid-template-columns: 72px minmax(0, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
-<div id="app" style="padding:20px; max-width:980px; margin:0 auto;">
-  <div class="header" style="display:flex; align-items:center; margin-bottom:10px;">
-    <div class="header-back-btn" onclick="history.back()"><i class="el-icon-arrow-left"></i></div>
-    <div style="flex:1; text-align:center; font-weight:600;">浏览历史</div>
+<div id="app" class="page-shell">
+  <div class="header">
+    <button class="back-btn" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </button>
+    <div class="title">浏览历史</div>
+    <div style="width:42px;"></div>
   </div>
 
-  <div style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:8px;">
-    <el-button type="danger" @click="clearHistory(null)">清空全部</el-button>
+  <div class="toolbar">
+    <el-button type="danger" plain @click="clearHistory()">清空全部</el-button>
   </div>
 
-  <div class="history-list">
-    <div class="history-item" v-for="h in history" :key="h.id" @click="openDetail(h)">
-      <img class="history-thumb" :src="(h.images && (h.images.split(',')[0] || h.images)) || '/imgs/icons/default-icon.png'" alt="">
-      <div style="flex:1;">
-        <div style="font-weight:600">{{ h.name || h.title }}</div>
-        <div style="color:#666; font-size:12px;" v-if="h.createTime">时间: {{ h.createTime }}</div>
-      </div>
+  <div class="history-list" v-if="history.length">
+    <div class="history-item" v-for="item in history" :key="item.historyId || item.id" @click="openDetail(item)">
+      <img class="history-thumb" :src="getThumb(item)" :alt="item.name || item.title || '历史记录'" @error="handleImageError">
       <div>
-        <el-button type="text" @click.stop="deleteHistory(h.id)">删除</el-button>
+        <div class="history-name">{{ item.name || item.title || '未命名内容' }}</div>
+        <div class="history-time" v-if="item.browseTime">浏览时间：{{ formatTime(item.browseTime) }}</div>
       </div>
+      <el-button type="text" @click.stop="deleteHistory(item.historyId)" style="color:#ff6b35;">删除</el-button>
     </div>
   </div>
+
+  <div class="empty-state" v-else>
+    <i class="el-icon-time"></i>
+    <div>你还没有浏览历史</div>
+    <div style="margin-top:8px; font-size:14px;">逛过的店铺和笔记会显示在这里，方便再次查看。</div>
+  </div>
 </div>
-  
-  <script src="/js/vue.js"></script>
-  <script src="/js/axios.min.js"></script>
-  <script src="/js/element.js"></script>
-  <script src="/js/common.js"></script>
-  <script>
-    new Vue({
-      el: '#app',
-      data: {
-        history: []
+
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      history: [],
+      fallbackImage: '/imgs/blogs/14/2/c760152a-7a31-4afa-8767-c9144701dcd5.jpg'
+    },
+    created() {
+      this.loadHistory();
+    },
+    methods: {
+      goBack() {
+        history.back();
       },
-      created() {
-        this.loadHistory();
+      loadHistory() {
+        axios.get('/history/list').then(({ data }) => {
+          this.history = Array.isArray(data) ? data : [];
+        }).catch((err) => {
+          this.$message.error(this.getErrorMessage(err, '加载浏览历史失败'));
+        });
       },
-      methods: {
-        loadHistory() {
-          axios.get('/history/list')
-            .then(({ data }) => {
-              const d = data?.data ?? data;
-              this.history = Array.isArray(d) ? d : [];
-            })
-            .catch(() => { this.$message.error('加载历史失败'); });
-        },
-        openDetail(item) {
-          if (item.name) {
-            // 店铺
-            location.href = 'shop-detail.html?id=' + item.id;
-          } else if (item.title) {
-            location.href = 'blog-detail.html?id=' + item.id;
-          }
-        },
-        deleteHistory(id) {
-          axios.delete('/history/' + id)
-            .then(() => { this.loadHistory(); })
-            .catch(() => { this.$message.error('删除失败'); });
-        },
-        clearHistory(type) {
-          // type: null 清空全部，1/2 清空对应类型
-          const url = '/history/clear' + (type == null ? '' : ('?type=' + type));
-          axios.delete(url)
-            .then(() => { this.loadHistory(); })
-            .catch(() => { this.$message.error('清空失败'); });
+      openDetail(item) {
+        if (item?.name) {
+          location.href = '/pages/shop/shop-detail.html?id=' + item.id;
+          return;
         }
+        if (item?.title) {
+          location.href = '/pages/blog/blog-detail.html?id=' + item.id;
+        }
+      },
+      deleteHistory(id) {
+        if (!id) {
+          this.$message.error('这条历史记录不存在');
+          return;
+        }
+        axios.delete('/history/' + id).then(() => {
+          this.$message.success('删除成功');
+          this.loadHistory();
+        }).catch((err) => {
+          this.$message.error(this.getErrorMessage(err, '删除失败'));
+        });
+      },
+      clearHistory() {
+        this.$confirm('确定清空全部浏览历史吗？', '提示', {
+          confirmButtonText: '确定清空',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          return axios.delete('/history/clear');
+        }).then(() => {
+          this.$message.success('已清空浏览历史');
+          this.history = [];
+        }).catch((err) => {
+          if (err !== 'cancel') {
+            this.$message.error(this.getErrorMessage(err, '清空失败'));
+          }
+        });
+      },
+      normalizeImagePath(path) {
+        if (!path) return '';
+        const value = String(path).trim().replace(/^['"]+|['"]+$/g, '');
+        if (value.startsWith('http') || value.startsWith('data:')) return value;
+        if (value.startsWith(util.commonURL)) return value;
+        if (value.startsWith('/blogs/')) return '/imgs' + value;
+        if (value.startsWith('blogs/')) return '/imgs/' + value;
+        if (value.startsWith('/icons/')) return '/imgs' + value;
+        if (value.startsWith('icons/')) return '/imgs/' + value;
+        return value.startsWith('/') ? value : '/' + value;
+      },
+      resolveImageUrl(path) {
+        const normalized = this.normalizeImagePath(path);
+        if (!normalized) return this.fallbackImage;
+        if (normalized.startsWith('http') || normalized.startsWith('data:')) return normalized;
+        return util.commonURL + normalized;
+      },
+      getThumb(item) {
+        const first = item?.images ? String(item.images).split(',')[0] : '';
+        return this.resolveImageUrl(first);
+      },
+      handleImageError(event) {
+        if (event?.target) event.target.src = this.fallbackImage;
+      },
+      formatTime(value) {
+        if (!value) return '';
+        return String(value).replace('T', ' ').replace(/\.\d+$/, '');
+      },
+      getErrorMessage(err, fallback) {
+        if (typeof err === 'string') return err;
+        return err?.response?.data?.errorMsg || err?.message || fallback;
       }
-    })
-  </script>
+    }
+  });
+</script>
 </body>
 </html>

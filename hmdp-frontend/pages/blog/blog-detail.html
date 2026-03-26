@@ -1,399 +1,712 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-  <title>周边优速通</title>
-  <!-- 引入样式 -->
+  <title>笔记详情</title>
   <link rel="stylesheet" href="/css/element.css">
-
-  <link href="/css/blog-detail.css" rel="stylesheet">
-  <link href="/css/main.css" rel="stylesheet">
-
-  <style type="text/css">
-    .header{
-        position: relative;
-    }
-    .foot-view span{
-        font-size: 12px;
-    }
-    .liked{
-
-    }
-  </style>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/blog-detail.css">
 </head>
 <body>
-<div id="app">
-  <div class="header">
-    <div class="header-back-btn" @click="goBack"><i class="el-icon-arrow-left"></i></div>
-    <div class="header-title"></div>
-    <div class="header-share">...</div>
-  </div>
-  <div style="height: 85%; overflow-y: scroll; overflow-x: hidden">
-    <div class="blog-info-box" ref="swiper"
-         @touchstart="moveStart"
-         @touchmove="moving"
-         @touchend="moveEnd">
-      <div class="swiper-item" v-for="(img, i) in blog.images" :key="i">
-        <img :src="getImageUrl(img)" alt="" style="width: 100%" height="100%">
-      </div>
-    </div>
-    <div class="basic">
-      <div class="basic-icon" @click="toOtherInfo">
-        <img :src="getImageUrl(blog.icon || '/imgs/icons/default-icon.png')" alt="">
-      </div>
-      <div class="basic-info">
-        <div class="name">{{blog.name}}</div>
-        <span class="time">{{formatTime(new Date(blog.createTime))}}</span>
-      </div>
-      <div style="width: 20%">
-        <div class="logout-btn" @click="follow" v-show="!user || user.id !== blog.userId ">
-          {{followed ? '取消关注' : '关注'}}
+<div id="app" class="blog-page" v-cloak>
+  <header class="blog-header">
+    <button class="blog-header__action" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </button>
+    <div class="blog-header__title">笔记详情</div>
+    <button class="blog-header__action" @click="shareBlog">
+      <i class="el-icon-share"></i>
+    </button>
+  </header>
+
+  <main class="blog-main" v-if="blog.id">
+    <section class="story-card">
+      <div class="story-hero" v-if="blogImages.length">
+        <img class="story-hero__image" :src="currentImage" alt="" @error="handleImageError($event, 'hero')">
+        <button
+          v-if="blogImages.length > 1"
+          class="story-hero__nav story-hero__nav--prev"
+          @click="changeImage(-1)"
+        >
+          <i class="el-icon-arrow-left"></i>
+        </button>
+        <button
+          v-if="blogImages.length > 1"
+          class="story-hero__nav story-hero__nav--next"
+          @click="changeImage(1)"
+        >
+          <i class="el-icon-arrow-right"></i>
+        </button>
+        <div class="story-hero__dots" v-if="blogImages.length > 1">
+          <span
+            v-for="(image, index) in blogImages"
+            :key="index"
+            class="story-hero__dot"
+            :class="{ 'is-active': index === activeImageIndex }"
+            @click="activeImageIndex = index"
+          ></span>
         </div>
+      </div>
+      <div v-else class="story-hero__empty">这篇笔记还没有图片</div>
+
+      <div class="story-body">
+        <div class="story-author">
+          <div class="story-author__meta" @click="openProfile">
+            <img class="story-author__avatar" :src="resolveImageUrl(blog.icon, 'avatar')" alt="" @error="handleImageError($event, 'avatar')">
+            <div>
+              <div class="story-author__name">{{ blog.name || '匿名用户' }}</div>
+              <div class="story-author__time">{{ formatDate(blog.createTime) }}</div>
+            </div>
+          </div>
+          <button
+            v-if="canFollowAuthor"
+            class="story-author__follow"
+            :class="{ 'is-active': followed }"
+            @click="toggleFollow"
+          >
+            {{ followed ? '已关注' : '关注作者' }}
+          </button>
+        </div>
+
+        <h1 class="story-title">{{ blog.title || '未命名笔记' }}</h1>
+        <div class="story-content" v-html="blog.content || '暂无内容'"></div>
+
+        <div class="story-stats">
+          <div class="story-stat">
+            <i class="el-icon-star-on"></i>
+            <strong>{{ formatCount(blog.liked) }}</strong> 点赞
+          </div>
+          <div class="story-stat">
+            <i class="el-icon-chat-dot-round"></i>
+            <strong>{{ formatCount(commentTotal) }}</strong> 评论
+          </div>
+          <div class="story-stat" v-if="shop && shop.name">
+            <i class="el-icon-location-outline"></i>
+            关联店铺
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-shop" v-if="shop && shop.name" @click="openShop">
+      <img class="story-shop__thumb" :src="shopImage" alt="" @error="handleImageError($event, 'hero')">
+      <div>
+        <div class="story-shop__name">{{ shop.name }}</div>
+        <div class="story-shop__desc">
+          {{ shop.area || shop.address || '查看这家店的详情与优惠券' }}
+        </div>
+      </div>
+      <button class="story-shop__cta">查看店铺</button>
+    </section>
+
+    <section class="story-likes">
+      <div class="section-head">
+        <div>
+          <div class="section-title">点赞的朋友</div>
+          <div class="section-subtitle">最近喜欢这篇笔记的用户</div>
+        </div>
+        <div class="section-subtitle">{{ formatCount(blog.liked) }} 人点赞</div>
       </div>
 
-    </div>
-    <div class="blog-text" v-html="blog.content">
-    </div>
-    <div class="shop-basic">
-      <div class="shop-icon">
-        <img :src="getImageUrl(shop.image)" alt="">
+      <div class="likes-row" v-if="likes.length">
+        <div class="likes-avatars">
+          <img
+            v-for="user in likes.slice(0, 8)"
+            :key="user.id"
+            class="likes-avatar"
+            :src="resolveImageUrl(user.icon, 'avatar')"
+            :alt="user.nickName || user.name || '用户头像'"
+            @error="handleImageError($event, 'avatar')"
+          >
+        </div>
+        <div class="section-subtitle">{{ likesLabel }}</div>
       </div>
-      <div style="width: 80%">
-        <div class="name">{{shop.name}}</div>
+
+      <div class="likes-empty" v-else>还没有人抢先点赞，试试点个赞把这篇笔记顶起来。</div>
+    </section>
+
+    <section class="story-comments">
+      <div class="section-head">
         <div>
-          <el-rate
-              v-model="shop.score/10">
-          </el-rate>
+          <div class="section-title">评论区</div>
+          <div class="section-subtitle">真实反馈会让这篇笔记更有参考价值</div>
         </div>
-          <div class="shop-avg">￥{{shop.avgPrice}}/人</div>
+        <div class="section-subtitle">{{ formatCount(commentTotal) }} 条评论</div>
       </div>
-    </div>
-    <div class="zan-box">
-      <div>
-        <svg t="1646634642977" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2187" width="20" height="20">
-          <path d="M160 944c0 8.8-7.2 16-16 16h-32c-26.5 0-48-21.5-48-48V528c0-26.5 21.5-48 48-48h32c8.8 0 16 7.2 16 16v448zM96 416c-53 0-96 43-96 96v416c0 53 43 96 96 96h96c17.7 0 32-14.3 32-32V448c0-17.7-14.3-32-32-32H96zM505.6 64c16.2 0 26.4 8.7 31 13.9 4.6 5.2 12.1 16.3 10.3 32.4l-23.5 203.4c-4.9 42.2 8.6 84.6 36.8 116.4 28.3 31.7 68.9 49.9 111.4 49.9h271.2c6.6 0 10.8 3.3 13.2 6.1s5 7.5 4 14l-48 303.4c-6.9 43.6-29.1 83.4-62.7 112C815.8 944.2 773 960 728.9 960h-317c-33.1 0-59.9-26.8-59.9-59.9v-455c0-6.1 1.7-12 5-17.1 69.5-109 106.4-234.2 107-364h41.6z m0-64h-44.9C427.2 0 400 27.2 400 60.7c0 127.1-39.1 251.2-112 355.3v484.1c0 68.4 55.5 123.9 123.9 123.9h317c122.7 0 227.2-89.3 246.3-210.5l47.9-303.4c7.8-49.4-30.4-94.1-80.4-94.1H671.6c-50.9 0-90.5-44.4-84.6-95l23.5-203.4C617.7 55 568.7 0 505.6 0z" p-id="2188" :fill="blog.isLike ? '#ff6633' : '#82848a'"></path>
-        </svg>
-      </div>
-      <div class="zan-list">
-        <div class="user-icon-mini" v-for="u in likes" :key="u.id">
-          <img :src="getImageUrl(u.icon || '/imgs/icons/default-icon.png')" alt="">
-        </div>
-        <div style="margin-left:10px;text-align: center;line-height: 24px;">{{blog.liked}}人点赞</div>
-      </div>
-    </div>
-    <div class="blog-divider"></div>
-    <div class="blog-comments">
-      <div class="comments-head">
-        <div>网友评价 <span>（119）</span></div>
-        <div><i class="el-icon-arrow-right"></i></div>
-      </div>
-      <div class="comment-list">
-        <div class="comment-box" v-for="i in 3" :key="i">
-          <div class="comment-icon">
-            <img
-                src="https://p0.meituan.net/userheadpicbackend/57e44d6eba01aad0d8d711788f30a126549507.jpg%4048w_48h_1e_1c_1l%7Cwatermark%3D0"
-                alt="">
-          </div>
-          <div class="comment-info">
-            <div class="comment-user">叶小乙 <span>Lv5</span></div>
-            <div style="display: flex;">
-              打分
-              <el-rate disabled v-model="4.5"></el-rate>
-            </div>
-            <div style="padding: 5px 0; font-size: 14px">
-              某平台上买的券，价格可以当工作餐吃，虽然价格便宜，但是这家店一点都没有...
-            </div>
-            <div class="comment-images">
-              <img
-                  src="https://qcloud.dpfile.com/pc/6T7MfXzx7USPIkSy7jzm40qZSmlHUF2jd-FZUL6WpjE9byagjLlrseWxnl1LcbuSGybIjx5eX6WNgCPvcASYAw.jpg"
-                  alt="">
-              <img
-                  src="https://qcloud.dpfile.com/pc/sZ5q-zgglv4VXEWU71xCFjnLM_jUHq-ylq0GKivtrz3JksWQ1f7oBWZsxm1DWgcaGybIjx5eX6WNgCPvcASYAw.jpg"
-                  alt="">
-              <img
-                  src="https://qcloud.dpfile.com/pc/xZy6W4NwuRFchlOi43DVLPFsx7KWWvPqifE1JTe_jreqdsBYA9CFkeSm2ZlF0OVmGybIjx5eX6WNgCPvcASYAw.jpg"
-                  alt="">
-              <img
-                  src="https://qcloud.dpfile.com/pc/xZy6W4NwuRFchlOi43DVLPFsx7KWWvPqifE1JTe_jreqdsBYA9CFkeSm2ZlF0OVmGybIjx5eX6WNgCPvcASYAw.jpg"
-                  alt="">
-            </div>
-            <div>
-              浏览641 &nbsp;&nbsp;&nbsp;&nbsp;评论5
+
+      <div class="comment-list" v-if="comments.length">
+        <article class="comment-card" v-for="comment in comments" :key="comment.id">
+          <div class="comment-card__top">
+            <img class="comment-card__avatar" :src="resolveImageUrl(comment.userIcon, 'avatar')" alt="" @error="handleImageError($event, 'avatar')">
+            <div class="comment-card__main">
+              <div class="comment-card__user">
+                <span class="comment-card__name">{{ comment.userName || '匿名用户' }}</span>
+                <span class="comment-card__badge" v-if="comment.owner">我的评论</span>
+              </div>
+              <div class="comment-card__time">{{ formatRelativeTime(comment.createTime) }}</div>
+              <div class="comment-card__content">{{ comment.content }}</div>
+              <div class="comment-card__actions">
+                <button
+                  class="comment-action"
+                  :class="{ 'is-accent': comment.likedByCurrentUser }"
+                  @click="toggleCommentLike(comment)"
+                >
+                  <i class="el-icon-star-on"></i>
+                  {{ comment.liked || 0 }}
+                </button>
+                <button class="comment-action" @click="replyTo(comment)">
+                  <i class="el-icon-chat-dot-round"></i>
+                  回复
+                </button>
+                <button
+                  class="comment-action"
+                  v-if="comment.replyTotal"
+                  @click="toggleReplies(comment)"
+                >
+                  <i class="el-icon-arrow-down"></i>
+                  {{ comment.showReplies ? '收起回复' : '查看回复 ' + comment.replyTotal }}
+                </button>
+                <button
+                  class="comment-action"
+                  v-if="comment.owner"
+                  @click="deleteComment(comment)"
+                >
+                  <i class="el-icon-delete"></i>
+                  删除
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-        <div
-            style="display: flex; justify-content: space-between;padding: 15px 0; border-top: 1px solid #f1f1f1; margin-top: 10px;">
-          <div>查看全部119条评价</div>
-          <div><i class="el-icon-arrow-right"></i></div>
-        </div>
+
+          <div class="comment-replies" v-if="comment.showReplies">
+            <div class="section-subtitle" v-if="comment.repliesLoading">正在加载回复...</div>
+            <div class="comment-reply" v-for="reply in comment.replies" :key="reply.id">
+              <div class="comment-reply__user">
+                {{ reply.userName || '匿名用户' }}
+                <span v-if="reply.owner" class="comment-card__badge">我</span>
+              </div>
+              <div class="comment-reply__meta">{{ formatRelativeTime(reply.createTime) }}</div>
+              <div class="comment-reply__content">{{ reply.content }}</div>
+              <div class="comment-card__actions">
+                <button
+                  class="comment-action"
+                  :class="{ 'is-accent': reply.likedByCurrentUser }"
+                  @click="toggleReplyLike(comment, reply)"
+                >
+                  <i class="el-icon-star-on"></i>
+                  {{ reply.liked || 0 }}
+                </button>
+                <button class="comment-action" @click="replyTo(comment)">回复</button>
+                <button class="comment-action" v-if="reply.owner" @click="deleteReply(comment, reply)">删除</button>
+              </div>
+            </div>
+            <div class="section-subtitle" v-if="comment.showReplies && !comment.repliesLoading && !comment.replies.length">
+              这条评论还没有回复
+            </div>
+          </div>
+        </article>
       </div>
-    </div>
-    <div class="blog-divider"></div>
-  </div>
-  <div class="foot">
-    <div class="foot-box">
-      <div class="foot-view"  @click="addLike()">
-        <svg t="1646634642977" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2187" width="26" height="26">
-          <path d="M160 944c0 8.8-7.2 16-16 16h-32c-26.5 0-48-21.5-48-48V528c0-26.5 21.5-48 48-48h32c8.8 0 16 7.2 16 16v448zM96 416c-53 0-96 43-96 96v416c0 53 43 96 96 96h96c17.7 0 32-14.3 32-32V448c0-17.7-14.3-32-32-32H96zM505.6 64c16.2 0 26.4 8.7 31 13.9 4.6 5.2 12.1 16.3 10.3 32.4l-23.5 203.4c-4.9 42.2 8.6 84.6 36.8 116.4 28.3 31.7 68.9 49.9 111.4 49.9h271.2c6.6 0 10.8 3.3 13.2 6.1s5 7.5 4 14l-48 303.4c-6.9 43.6-29.1 83.4-62.7 112C815.8 944.2 773 960 728.9 960h-317c-33.1 0-59.9-26.8-59.9-59.9v-455c0-6.1 1.7-12 5-17.1 69.5-109 106.4-234.2 107-364h41.6z m0-64h-44.9C427.2 0 400 27.2 400 60.7c0 127.1-39.1 251.2-112 355.3v484.1c0 68.4 55.5 123.9 123.9 123.9h317c122.7 0 227.2-89.3 246.3-210.5l47.9-303.4c7.8-49.4-30.4-94.1-80.4-94.1H671.6c-50.9 0-90.5-44.4-84.6-95l23.5-203.4C617.7 55 568.7 0 505.6 0z" p-id="2188" :fill="blog.isLike ? '#ff6633' : '#82848a'"></path>
-        </svg>
-        <span :class="{liked: blog.isLike}">{{blog.liked}}</span>
+
+      <div class="comments-empty" v-else>还没有评论，抢个沙发吧。</div>
+    </section>
+  </main>
+
+  <main class="blog-main" v-else>
+    <section class="story-card">
+      <div class="story-hero__empty">正在加载笔记内容...</div>
+    </section>
+  </main>
+
+  <div class="composer">
+    <div class="composer__wrap">
+      <div class="composer__input-wrap">
+        <div class="composer__reply" v-if="replyTargetName">
+          正在回复 {{ replyTargetName }}
+          <button @click="clearReplyTarget">取消</button>
+        </div>
+        <textarea
+          ref="commentInput"
+          class="composer__textarea"
+          v-model.trim="commentText"
+          :placeholder="replyTargetName ? '写下你的回复...' : '写下你的评论，和更多人交流吧...'"
+        ></textarea>
       </div>
-    </div>
-    <div style="width: 40%">
-    </div>
-    <div class="foot-box">
-      <div class="foot-view"><i class="el-icon-chat-square"></i></div>
+      <div class="composer__actions">
+        <button
+          class="composer__btn"
+          :class="{ 'is-like-active': blog.isLike }"
+          @click="toggleBlogLike"
+        >
+          <i class="el-icon-star-on"></i>
+        </button>
+        <button class="composer__submit" :disabled="commentSubmitting" @click="submitComment">
+          {{ commentSubmitting ? '发送中' : '发送' }}
+        </button>
+      </div>
     </div>
   </div>
 </div>
+
 <script src="/js/vue.js"></script>
 <script src="/js/axios.min.js"></script>
-<!-- 引入组件库 -->
 <script src="/js/element.js"></script>
 <script src="/js/common.js"></script>
 <script>
-  let each = function (ary, callback) {
-    for (let i = 0, l = ary.length; i < l; i++) {
-      if (callback(ary[i], i) === false) break
-    }
-  }
-  const app = new Vue({
-    el: "#app",
-    data: {
-      util,
-      blog: {},
-      shop: {},
-      likes: [],
-      user: {}, // 登录用户
-      followed: false, // 是否关注了
-      _width: 0,
-      duration: 300,
-      container: null,
-      items: [],
-      active: 0,
-      start: {
-        x: 0,
-        y: 0
+  new Vue({
+    el: '#app',
+    data() {
+      return {
+        util,
+        blogId: Number(util.getUrlParam('id') || 0),
+        blog: {
+          images: []
+        },
+        fallbackImage: '/imgs/blogs/14/2/c760152a-7a31-4afa-8767-c9144701dcd5.jpg',
+        fallbackAvatar: '/imgs/icons/default-icon.png',
+        shop: null,
+        likes: [],
+        comments: [],
+        commentTotal: 0,
+        currentUser: null,
+        followed: false,
+        activeImageIndex: 0,
+        commentText: '',
+        commentSubmitting: false,
+        replyParentId: 0,
+        replyTargetName: ''
+      };
+    },
+    computed: {
+      blogImages() {
+        return Array.isArray(this.blog.images) ? this.blog.images : [];
       },
-      move: {
-        x: 0,
-        y: 0
+      currentImage() {
+        return this.blogImages[this.activeImageIndex] || this.fallbackImage;
       },
-      sensitivity: 60,
-      resistance: 0.3
+      shopImage() {
+        if (!this.shop || !this.shop.images) {
+          return this.fallbackImage;
+        }
+        var first = this.shop.images.split(',')[0];
+        return this.resolveImageUrl(first);
+      },
+      canFollowAuthor() {
+        return this.currentUser && this.blog.userId && this.currentUser.id !== this.blog.userId;
+      },
+      likesLabel() {
+        if (!this.likes.length) {
+          return '还没有点赞';
+        }
+        return this.likes.map(function (user) {
+          return user.nickName || user.name || '用户';
+        }).slice(0, 3).join('、');
+      }
     },
     created() {
-      let id = util.getUrlParam("id");
-      this.queryBlogById(id);
+      if (!this.blogId) {
+        this.$message.error('缺少笔记编号');
+        return;
+      }
+      this.loadCurrentUser();
+      this.loadBlog();
+      this.loadComments();
     },
     methods: {
-      init() {
-        // 获得父容器节点
-        this.container = this.$refs.swiper
-        // 获得所有的子节点
-        this.items = this.container.querySelectorAll('.swiper-item')
-        this.updateItemWidth()
-        this.setTransform()
-        this.setTransition('none')
-      },
       goBack() {
         history.back();
       },
-      toOtherInfo(){
-        if(this.blog.userId === this.user.id){
-          location.href = "info.html"
-        }else{
-          location.href = "other-info.html?id=" + this.blog.userId
+      loadCurrentUser() {
+        if (!localStorage.getItem('token')) {
+          return;
         }
-      },
-      queryBlogById(id) {
-        axios.get("/blog/" + id)
-          .then(({data}) => {
-            data.images = data.images.split(",")
-            this.blog = data;
-            this.$nextTick(this.init);
-            this.queryShopById(data.shopId)
-            this.queryLikeList(id);
-            this.queryLoginUser();
-          })
-          .catch(this.$message.error)
-      },
-      queryShopById(shopId) {
-        axios.get("/shop/" + shopId)
-          .then(({data}) => {
-            data.image = data.images.split(",")[0]
-            this.shop = data
-          })
-          .catch(this.$message.error)
-      },
-      queryLikeList(id){
-        axios.get("/blog/likes/" + id)
-          .then(({data}) => this.likes = data)
-          .catch(this.$message.error)
-      },
-      addLike(){
-        axios.put("/blog/like/" +this.blog.id)
-          .then(({data}) => {
-            axios.get("/blog/" + this.blog.id)
-              .then(({data}) => {
-                data.images = data.images.split(",")
-                this.blog = data;
-                this.queryLikeList(this.blog.id);
-              })
-              .catch(this.$message.error)
-          })
-          .catch(err => {
-            this.$message.error(err)
-          })
-      },
-      isFollowed(){
-        axios.get("/follow/or/not/" + this.blog.userId)
-          .then(({data}) => this.followed = data)
-          .catch(this.$message.error)
-      },
-      follow(){
-        axios.put("/follow/" + this.blog.userId + "/" + !this.followed)
-          .then(() => {
-            this.$message.success(this.followed ? "已取消关注" : "已关注")
-            this.followed = !this.followed
-          })
-          .catch(this.$message.error)
-      },
-      formatTime(b) {
-        return b.getFullYear() + "年" + (b.getMonth() + 1) + "月" + b.getDate() + "日 ";
-      },
-      formatMinutes(m) {
-        if (m < 10) m = "0" + m
-        return m;
-      },
-      getImageUrl(icon) {
-        if (!icon) {
-          return '/imgs/icons/default-icon.png';
-        }
-        // 如果已经是完整URL，直接返回
-        if (icon.startsWith('http')) {
-          return icon;
-        }
-        // 拼接完整URL
-        return util.commonURL + icon;
-      },
-      queryLoginUser(){
-        // 查询用户信息
-        axios.get("/user/me")
-          .then(({ data }) => {
-            // 保存用户
-            this.user = data;
-            if(this.user.id !== this.blog.userId){
-              this.isFollowed();
-            }
-          })
-          .catch(console.log)
-      },
-      // 获取父容器宽度，并且更新所有的子节点宽度，因为我们默认所有子节点的宽高等于父节点的宽高
-      updateItemWidth() {
-        this._width = this.container.offsetWidth || document.documentElement.offsetWidth
-      },
-      // 根据当前活动子项的下标计算各个子项的X轴位置
-      // 计算公式(子项的下标 - 当前活动下标) * 子项宽度 + 偏移(手指移动距离)；
-      setTransform(offset) {
-        offset = offset || 0
-        each(this.items, (item, i) => {
-          let distance = (i - this.active) * this._width + offset
-          let transform = `translate3d(${distance}px, 0, 0)`
-          item.style.webkitTransform = transform
-          item.style.transform = transform
-        })
-      },
-      // 给每一个子项添加transition过度动画
-      setTransition(duration) {
-        duration = duration || this.duration
-        duration = typeof duration === 'number' ? (duration + 'ms') : duration
-        each(this.items, (item) => {
-          item.style.webkitTransition = duration
-          item.style.transition = duration
-        })
-      },
-      moveStart(e) {
-        console.log('moveStart')
-        this.start.x = e.changedTouches[0].pageX
-        this.start.y = e.changedTouches[0].pageY
-        this.setTransition('none')
-      },
-      moving(e) {
-        console.log('moving')
-        e.preventDefault()
-        e.stopPropagation()
-        let distanceX = e.changedTouches[0].pageX - this.start.x
-        let distanceY = e.changedTouches[0].pageY - this.start.y
-        if (Math.abs(distanceX) > Math.abs(distanceY)) {
-          this.isMoving = true
-          this.move.x = this.start.x + distanceX
-          this.move.y = this.start.y + distanceY
-          // 当活动子项为第一项且手指向右滑动或者活动项为最后一项切向左滑动的时候，添加阻力，形成一个拉弹簧的效果
-          if ((this.active === 0 && distanceX > 0) || (this.active === (this.items.length - 1) && distanceX < 0)) {
-            distanceX = distanceX * this.resistance
+        axios.get('/user/me').then(function (res) {
+          this.currentUser = res.data || null;
+          if (this.blog.userId && this.currentUser && this.currentUser.id !== this.blog.userId) {
+            this.checkFollowed();
           }
-          this.setTransform(distanceX)
-        }
+        }.bind(this)).catch(function () {
+          this.currentUser = null;
+        }.bind(this));
       },
-      moveEnd(e) {
-        console.log('moveEnd')
-        if (this.isMoving) {
-          e.preventDefault()
-          e.stopPropagation()
-          let distance = this.move.x - this.start.x
-          if (Math.abs(distance) > this.sensitivity) {
-            if (distance < 0) {
-              this.next()
-            } else {
-              this.prev()
-            }
+      loadBlog() {
+        axios.get('/blog/' + this.blogId).then(function (res) {
+          var data = res.data || {};
+          data.images = this.normalizeImages(data.images);
+          this.blog = data;
+          this.activeImageIndex = 0;
+          this.commentTotal = data.comments || this.commentTotal || 0;
+          this.loadLikeUsers();
+          if (data.shopId) {
+            this.loadShop(data.shopId);
           } else {
-            this.back()
+            this.shop = null;
           }
-          this.reset()
-          this.isMoving = false
+          if (this.currentUser && this.currentUser.id !== data.userId) {
+            this.checkFollowed();
+          }
+        }.bind(this)).catch(function (err) {
+          this.$message.error(this.getErrorMessage(err, '加载笔记失败'));
+        }.bind(this));
+      },
+      loadShop(shopId) {
+        axios.get('/shop/' + shopId).then(function (res) {
+          var data = res.data || {};
+          if (data.images) {
+            data.images = data.images;
+          }
+          this.shop = data;
+        }.bind(this)).catch(function () {
+          this.shop = null;
+        }.bind(this));
+      },
+      loadLikeUsers() {
+        axios.get('/blog/likes/' + this.blogId).then(function (res) {
+          this.likes = Array.isArray(res.data) ? res.data : [];
+        }.bind(this)).catch(function () {
+          this.likes = [];
+        }.bind(this));
+      },
+      loadComments() {
+        axios.get('/blog-comments/list/' + this.blogId, {
+          params: { current: 1 }
+        }).then(function (res) {
+          this.comments = Array.isArray(res.data) ? res.data.map(this.normalizeComment) : [];
+          this.commentTotal = typeof res.total === 'number' ? res.total : this.comments.length;
+        }.bind(this)).catch(function (err) {
+          this.$message.error(this.getErrorMessage(err, '加载评论失败'));
+        }.bind(this));
+      },
+      normalizeComment(comment) {
+        return Object.assign({
+          liked: 0,
+          likedByCurrentUser: false,
+          owner: false,
+          replyTotal: 0,
+          replies: [],
+          repliesLoading: false,
+          showReplies: false
+        }, comment || {});
+      },
+      toggleReplies(comment) {
+        if (comment.showReplies) {
+          this.$set(comment, 'showReplies', false);
+          return;
+        }
+        this.$set(comment, 'showReplies', true);
+        if (comment.replies && comment.replies.length) {
+          return;
+        }
+        this.$set(comment, 'repliesLoading', true);
+        axios.get('/blog-comments/replies/' + comment.id, {
+          params: { current: 1 }
+        }).then(function (res) {
+          var replies = Array.isArray(res.data) ? res.data.map(this.normalizeComment) : [];
+          this.$set(comment, 'replies', replies);
+          this.$set(comment, 'replyTotal', typeof res.total === 'number' ? res.total : replies.length);
+        }.bind(this)).catch(function (err) {
+          this.$message.error(this.getErrorMessage(err, '加载回复失败'));
+          this.$set(comment, 'showReplies', false);
+        }.bind(this)).finally(function () {
+          this.$set(comment, 'repliesLoading', false);
+        }.bind(this));
+      },
+      submitComment() {
+        if (!this.ensureLogin()) {
+          return;
+        }
+        if (!this.commentText) {
+          this.$message.warning('先写点内容再发送吧');
+          return;
+        }
+        this.commentSubmitting = true;
+        var params = {
+          blogId: this.blogId,
+          content: this.commentText
+        };
+        if (this.replyParentId) {
+          params.parentId = this.replyParentId;
+        }
+        axios.post('/blog-comments', null, { params: params }).then(function () {
+          this.$message.success(this.replyParentId ? '回复成功' : '评论成功');
+          this.commentText = '';
+          this.commentSubmitting = false;
+          this.clearReplyTarget();
+          this.loadBlog();
+          this.loadComments();
+        }.bind(this)).catch(function (err) {
+          this.commentSubmitting = false;
+          this.$message.error(this.getErrorMessage(err, '评论失败'));
+        }.bind(this));
+      },
+      deleteComment(comment) {
+        this.$confirm('确定删除这条评论吗？', '提示', {
+          confirmButtonText: '删除',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(function () {
+          return axios.delete('/blog-comments/' + comment.id);
+        }).then(function () {
+          this.$message.success('评论已删除');
+          this.loadBlog();
+          this.loadComments();
+        }.bind(this)).catch(function (err) {
+          if (err !== 'cancel') {
+            this.$message.error(this.getErrorMessage(err, '删除评论失败'));
+          }
+        }.bind(this));
+      },
+      deleteReply(comment, reply) {
+        this.$confirm('确定删除这条回复吗？', '提示', {
+          confirmButtonText: '删除',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(function () {
+          return axios.delete('/blog-comments/' + reply.id);
+        }).then(function () {
+          this.$message.success('回复已删除');
+          this.loadBlog();
+          this.loadComments();
+        }.bind(this)).catch(function (err) {
+          if (err !== 'cancel') {
+            this.$message.error(this.getErrorMessage(err, '删除回复失败'));
+          }
+        }.bind(this));
+      },
+      toggleCommentLike(comment) {
+        if (!this.ensureLogin()) {
+          return;
+        }
+        axios.put('/blog-comments/like/' + comment.id).then(function () {
+          this.loadComments();
+        }.bind(this)).catch(function (err) {
+          this.$message.error(this.getErrorMessage(err, '操作失败'));
+        }.bind(this));
+      },
+      toggleReplyLike(comment, reply) {
+        if (!this.ensureLogin()) {
+          return;
+        }
+        axios.put('/blog-comments/like/' + reply.id).then(function () {
+          this.loadComments();
+        }.bind(this)).catch(function (err) {
+          this.$message.error(this.getErrorMessage(err, '操作失败'));
+        }.bind(this));
+      },
+      replyTo(comment) {
+        if (!this.ensureLogin()) {
+          return;
+        }
+        this.replyParentId = comment.id;
+        this.replyTargetName = comment.userName || '这条评论';
+        this.$nextTick(function () {
+          if (this.$refs.commentInput) {
+            this.$refs.commentInput.focus();
+          }
+        }.bind(this));
+      },
+      clearReplyTarget() {
+        this.replyParentId = 0;
+        this.replyTargetName = '';
+      },
+      toggleBlogLike() {
+        if (!this.ensureLogin()) {
+          return;
+        }
+        axios.put('/blog/like/' + this.blogId).then(function () {
+          this.loadBlog();
+        }.bind(this)).catch(function (err) {
+          this.$message.error(this.getErrorMessage(err, '点赞失败'));
+        }.bind(this));
+      },
+      toggleFollow() {
+        if (!this.ensureLogin()) {
+          return;
+        }
+        axios.put('/follow/' + this.blog.userId + '/' + (!this.followed)).then(function () {
+          this.followed = !this.followed;
+          this.$message.success(this.followed ? '已关注作者' : '已取消关注');
+        }.bind(this)).catch(function (err) {
+          this.$message.error(this.getErrorMessage(err, '关注失败'));
+        }.bind(this));
+      },
+      checkFollowed() {
+        axios.get('/follow/or/not/' + this.blog.userId).then(function (res) {
+          this.followed = !!res.data;
+        }.bind(this)).catch(function () {
+          this.followed = false;
+        }.bind(this));
+      },
+      openProfile() {
+        if (!this.blog.userId) {
+          return;
+        }
+        if (this.currentUser && this.currentUser.id === this.blog.userId) {
+          location.href = '/pages/user/info.html';
+          return;
+        }
+        location.href = '/pages/user/other-info.html?id=' + this.blog.userId;
+      },
+      openShop() {
+        if (this.shop && this.shop.id) {
+          location.href = '/pages/shop/shop-detail.html?id=' + this.shop.id;
         }
       },
-      next() {
-        let index = this.active + 1
-        // 运用动画切换到指定下标的子项
-        this.go(index)
-      },
-      prev() {
-        let index = this.active - 1
-        // 运用动画切换到指定下标的子项
-        this.go(index)
-      },
-      reset() {
-        this.start.x = 0
-        this.start.y = 0
-        this.move.x = 0
-        this.move.y = 0
-      },
-      back() {
-        this.setTransition()
-        this.setTransform()
-      },
-      destroy() {
-        this.setTransition('none')
-      },
-      // 运用动画切换到指定下标的子项
-      go(index) {
-        this.active = index
-        if (this.active < 0) {
-          this.active = 0
-        } else if (this.active > this.items.length - 1) {
-          this.active = this.items.length - 1
+      shareBlog() {
+        var text = window.location.href;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            this.$message.success('链接已复制');
+          }.bind(this)).catch(function () {
+            this.$message.success('请复制当前页面链接分享');
+          }.bind(this));
+          return;
         }
-        this.$emit('change', this.active)
-        this.setTransition()
-        this.setTransform()
+        this.$message.success('请复制当前页面链接分享');
+      },
+      changeImage(step) {
+        if (!this.blogImages.length) {
+          return;
+        }
+        var next = this.activeImageIndex + step;
+        if (next < 0) {
+          next = this.blogImages.length - 1;
+        }
+        if (next >= this.blogImages.length) {
+          next = 0;
+        }
+        this.activeImageIndex = next;
+      },
+      normalizeImages(images) {
+        if (!images) {
+          return [];
+        }
+        if (Array.isArray(images)) {
+          return images.map(function (item) {
+            return this.resolveImageUrl(item);
+          }.bind(this)).filter(Boolean);
+        }
+        return images.split(',').filter(function (item) {
+          return item && item.trim();
+        }).map(function (item) {
+          return this.resolveImageUrl(item);
+        }.bind(this)).filter(Boolean);
+      },
+      normalizeImagePath(path) {
+        if (!path) {
+          return '';
+        }
+        var value = String(path).trim().replace(/^['"]+|['"]+$/g, '');
+        if (!value) {
+          return '';
+        }
+        if (value.indexOf('http') === 0 || value.indexOf('data:') === 0) {
+          return value;
+        }
+        if (value.indexOf(util.commonURL) === 0) {
+          return value;
+        }
+        if (value.indexOf('/blogs/') === 0) {
+          return '/imgs' + value;
+        }
+        if (value.indexOf('blogs/') === 0) {
+          return '/imgs/' + value;
+        }
+        if (value.indexOf('/icons/') === 0) {
+          return '/imgs' + value;
+        }
+        if (value.indexOf('icons/') === 0) {
+          return '/imgs/' + value;
+        }
+        return value.charAt(0) === '/' ? value : '/' + value;
+      },
+      resolveImageUrl(path, type) {
+        var normalized = this.normalizeImagePath(path);
+        var fallback = type === 'avatar' ? this.fallbackAvatar : this.fallbackImage;
+        if (!normalized) {
+          return fallback;
+        }
+        if (normalized.indexOf('http') === 0 || normalized.indexOf('data:') === 0) {
+          return normalized;
+        }
+        return util.commonURL + normalized;
+      },
+      handleImageError(event, type) {
+        if (!event || !event.target) {
+          return;
+        }
+        event.target.src = type === 'avatar' ? this.fallbackAvatar : this.fallbackImage;
+      },
+      ensureLogin() {
+        if (localStorage.getItem('token')) {
+          return true;
+        }
+        this.$message.warning('请先登录');
+        setTimeout(function () {
+          location.href = '/pages/auth/login.html';
+        }, 200);
+        return false;
+      },
+      formatDate(value) {
+        if (!value) {
+          return '刚刚发布';
+        }
+        var date = new Date(value);
+        if (isNaN(date.getTime())) {
+          return value;
+        }
+        var pad = function (num) {
+          return String(num).padStart(2, '0');
+        };
+        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+      },
+      formatRelativeTime(value) {
+        if (!value) {
+          return '刚刚';
+        }
+        var date = new Date(value);
+        if (isNaN(date.getTime())) {
+          return value;
+        }
+        var diff = Date.now() - date.getTime();
+        var minute = 60 * 1000;
+        var hour = 60 * minute;
+        var day = 24 * hour;
+        if (diff < minute) {
+          return '刚刚';
+        }
+        if (diff < hour) {
+          return Math.floor(diff / minute) + ' 分钟前';
+        }
+        if (diff < day) {
+          return Math.floor(diff / hour) + ' 小时前';
+        }
+        if (diff < 7 * day) {
+          return Math.floor(diff / day) + ' 天前';
+        }
+        return this.formatDate(value);
+      },
+      formatCount(value) {
+        var num = Number(value || 0);
+        if (num >= 10000) {
+          return (num / 10000).toFixed(num >= 100000 ? 0 : 1) + 'w';
+        }
+        return String(num);
+      },
+      getErrorMessage(err, fallback) {
+        if (typeof err === 'string') {
+          return err;
+        }
+        if (err && err.response && err.response.data && err.response.data.errorMsg) {
+          return err.response.data.errorMsg;
+        }
+        if (err && err.message) {
+          return err.message;
+        }
+        return fallback || '操作失败';
       }
     }
-  })
+  });
 </script>
 </body>
 </html>

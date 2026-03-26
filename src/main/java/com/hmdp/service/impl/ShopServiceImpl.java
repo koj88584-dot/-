@@ -45,6 +45,7 @@ import static com.hmdp.utils.RedisConstants.*;
  */
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
+    private static final int[] NEARBY_SEARCH_RADII = {5000, 10000, 20000, 50000};
     @Resource
     private StringRedisTemplate stringRedisTemplate;
     @Resource
@@ -231,13 +232,16 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         }
         
         // 首先尝试从Redis查询
-        List<Shop> shopList = queryFromRedis(typeId, current, x, y);
-        if (!shopList.isEmpty()) {
-            return Result.ok(shopList);
+        for (int radius : NEARBY_SEARCH_RADII) {
+            List<Shop> shopList = queryFromRedis(typeId, current, x, y, radius);
+            if (!shopList.isEmpty()) {
+                return Result.ok(shopList);
+            }
         }
         
         // Redis中没有数据，调用高德地图服务
-        List<Shop> amapShops = amapService.searchNearbyShops(typeId, x, y, 5000);
+        int fallbackRadius = NEARBY_SEARCH_RADII[NEARBY_SEARCH_RADII.length - 1];
+        List<Shop> amapShops = amapService.searchNearbyShops(typeId, x, y, fallbackRadius);
         
         // 按照分页返回结果
         int from = (current - 1) * SystemConstants.MAX_PAGE_SIZE;
@@ -250,11 +254,55 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         List<Shop> paginatedShops = amapShops.subList(from, end);
         return Result.ok(paginatedShops);
     }
+
+    @Override
+    public Result searchShopsForAssociation(String name, Double x, Double y) {
+        List<Shop> cachedShops = queryCachedShops(name, x, y);
+        if (!cachedShops.isEmpty()) {
+            return Result.ok(cachedShops);
+        }
+
+        List<Shop> dbShops = lambdaQuery()
+                .like(StrUtil.isNotBlank(name), Shop::getName, name)
+                .orderByDesc(Shop::getUpdateTime)
+                .last("limit " + SystemConstants.MAX_PAGE_SIZE)
+                .list();
+        dbShops.forEach(shop -> applyDistance(shop, x, y));
+        dbShops.sort(Comparator.comparing(shop -> shop.getDistance() == null ? Double.MAX_VALUE : shop.getDistance()));
+        return Result.ok(dbShops);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Shop ensureShopExists(Long shopId) {
+        if (shopId == null) {
+            return null;
+        }
+        Shop dbShop = getById(shopId);
+        if (dbShop != null) {
+            return dbShop;
+        }
+
+        String shopJson = stringRedisTemplate.opsForValue().get(CACHE_SHOP_KEY + shopId);
+        if (StrUtil.isBlank(shopJson)) {
+            return null;
+        }
+
+        Shop cachedShop = JSONUtil.toBean(shopJson, Shop.class);
+        if (cachedShop == null) {
+            return null;
+        }
+
+        fillShopDefaults(cachedShop);
+        saveOrUpdate(cachedShop);
+        stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + shopId, JSONUtil.toJsonStr(cachedShop), 30, TimeUnit.MINUTES);
+        return getById(shopId);
+    }
     
     /**
      * 从Redis查询店铺
      */
-    private List<Shop> queryFromRedis(Integer typeId, Integer current, Double x, Double y) {
+    private List<Shop> queryFromRedis(Integer typeId, Integer current, Double x, Double y, int radius) {
         //计算分页参数
         int from = (current - 1) * SystemConstants.MAX_PAGE_SIZE;
         int end = current * SystemConstants.MAX_PAGE_SIZE;
@@ -263,7 +311,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = stringRedisTemplate.opsForGeo()
                 .search(key
                         , GeoReference.fromCoordinate(x, y)
-                        , new Distance(5000)
+                        , new Distance(radius)
                         , RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs().includeDistance().limit(end)
                 );
         //解析出id
@@ -298,6 +346,86 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             shop.setDistance(distanceMap.get(shop.getId().toString()).getValue());
         }
         return shopList;
+    }
+
+    private List<Shop> queryCachedShops(String name, Double x, Double y) {
+        Set<String> keys = stringRedisTemplate.keys(CACHE_SHOP_KEY + "*");
+        if (keys == null || keys.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Shop> shops = new ArrayList<>();
+        for (String key : keys) {
+            String shopJson = stringRedisTemplate.opsForValue().get(key);
+            if (StrUtil.isBlank(shopJson)) {
+                continue;
+            }
+            Shop shop = JSONUtil.toBean(shopJson, Shop.class);
+            if (shop == null || shop.getId() == null || StrUtil.isBlank(shop.getName())) {
+                continue;
+            }
+            if (StrUtil.isNotBlank(name) && !StrUtil.containsIgnoreCase(shop.getName(), name)) {
+                continue;
+            }
+            applyDistance(shop, x, y);
+            shops.add(shop);
+        }
+
+        Map<Long, Shop> deduplicated = new LinkedHashMap<>();
+        for (Shop shop : shops) {
+            deduplicated.putIfAbsent(shop.getId(), shop);
+        }
+
+        List<Shop> result = new ArrayList<>(deduplicated.values());
+        result.sort(Comparator.comparing(shop -> shop.getDistance() == null ? Double.MAX_VALUE : shop.getDistance()));
+        if (result.size() > SystemConstants.MAX_PAGE_SIZE) {
+            return result.subList(0, SystemConstants.MAX_PAGE_SIZE);
+        }
+        return result;
+    }
+
+    private void fillShopDefaults(Shop shop) {
+        LocalDateTime now = LocalDateTime.now();
+        if (StrUtil.isBlank(shop.getImages())) {
+            shop.setImages("/imgs/shop/default.png");
+        }
+        if (StrUtil.isBlank(shop.getAddress())) {
+            shop.setAddress("暂无地址");
+        }
+        if (shop.getSold() == null) {
+            shop.setSold(0);
+        }
+        if (shop.getComments() == null) {
+            shop.setComments(0);
+        }
+        if (shop.getScore() == null || shop.getScore() <= 0) {
+            shop.setScore(40);
+        }
+        if (StrUtil.isBlank(shop.getOpenHours())) {
+            shop.setOpenHours("09:00-22:00");
+        }
+        if (shop.getCreateTime() == null) {
+            shop.setCreateTime(now);
+        }
+        shop.setUpdateTime(now);
+    }
+
+    private void applyDistance(Shop shop, Double x, Double y) {
+        if (shop == null || x == null || y == null || shop.getX() == null || shop.getY() == null) {
+            return;
+        }
+        shop.setDistance(calculateDistance(x, y, shop.getX(), shop.getY()));
+    }
+
+    private double calculateDistance(double lng1, double lat1, double lng2, double lat2) {
+        double radLat1 = Math.toRadians(lat1);
+        double radLat2 = Math.toRadians(lat2);
+        double a = radLat1 - radLat2;
+        double b = Math.toRadians(lng1) - Math.toRadians(lng2);
+        double s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) +
+                Math.cos(radLat1) * Math.cos(radLat2) * Math.pow(Math.sin(b / 2), 2)));
+        s = s * 6378137;
+        return s;
     }
 
 //    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);

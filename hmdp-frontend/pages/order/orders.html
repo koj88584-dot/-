@@ -1,98 +1,505 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>我的订单 - 周边优速通</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>我的订单</title>
   <link rel="stylesheet" href="/css/element.css">
-  <link href="/css/main.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
   <style>
-    .orders-container { padding: 16px; max-width: 1000px; margin: 0 auto; }
-    .order-card { border: 1px solid #eee; border-radius: 8px; margin-bottom: 12px; background: #fff; overflow: hidden; }
-    .order-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f9f9f9; border-bottom: 1px solid #eee; }
-    .order-id { color: #999; font-size: 13px; }
-    .order-status { font-size: 13px; font-weight: 600; }
-    .order-body { display: flex; gap: 12px; padding: 16px; }
-    .order-img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; }
-    .order-info { flex: 1; }
-    .order-title { font-weight: 600; margin-bottom: 4px; }
-    .order-shop { color: #666; font-size: 13px; margin-bottom: 8px; }
-    .order-price { display: flex; align-items: baseline; gap: 8px; }
-    .price-current { color: #ff6633; font-size: 20px; font-weight: bold; }
-    .price-current span { font-size: 14px; }
-    .price-original { color: #999; font-size: 13px; text-decoration: line-through; }
-    .order-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid #eee; }
-    .order-time { color: #999; font-size: 12px; }
-    .order-actions { display: flex; gap: 8px; }
-    .empty-state { text-align: center; padding: 60px 0; color: #999; }
-    .empty-state i { font-size: 64px; color: #ddd; margin-bottom: 16px; }
-    .status-1 { color: #ff6633; }
-    .status-2 { color: #67c23a; }
-    .status-3 { color: #909399; }
-    .status-4 { color: #909399; }
-    .status-5 { color: #e6a23c; }
-    .status-6 { color: #909399; }
+    :root {
+      --order-primary: #ff6b35;
+      --order-primary-soft: rgba(255, 107, 53, 0.12);
+      --order-bg: #f6f7fb;
+      --order-surface: #ffffff;
+      --order-border: #eceef4;
+      --order-text: #1f2937;
+      --order-subtle: #6b7280;
+      --order-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top right, rgba(255, 107, 53, 0.08), transparent 24%),
+        linear-gradient(180deg, #fff7f2 0%, var(--order-bg) 22%, var(--order-bg) 100%);
+      color: var(--order-text);
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .orders-page {
+      min-height: 100vh;
+      padding-bottom: 36px;
+    }
+
+    .orders-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(236, 238, 244, 0.95);
+    }
+
+    .header-action {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--order-primary-soft);
+      color: var(--order-primary);
+      font-size: 18px;
+    }
+
+    .orders-title {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .orders-shell {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 16px 0;
+    }
+
+    .orders-summary,
+    .orders-panel {
+      background: var(--order-surface);
+      border-radius: 28px;
+      box-shadow: var(--order-shadow);
+    }
+
+    .orders-summary {
+      padding: 22px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .summary-card {
+      padding: 16px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #fff8f3 0%, #fff 100%);
+      border: 1px solid rgba(255, 107, 53, 0.08);
+    }
+
+    .summary-label {
+      color: var(--order-subtle);
+      font-size: 13px;
+    }
+
+    .summary-value {
+      margin-top: 10px;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--order-primary);
+    }
+
+    .orders-panel {
+      margin-top: 18px;
+      padding: 20px;
+    }
+
+    .status-tabs {
+      margin-bottom: 18px;
+    }
+
+    .status-tabs .el-tabs__item {
+      height: 42px;
+      line-height: 42px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-tabs .el-tabs__item.is-active {
+      color: var(--order-primary);
+    }
+
+    .status-tabs .el-tabs__active-bar {
+      background-color: var(--order-primary);
+      height: 3px;
+      border-radius: 999px;
+    }
+
+    .orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .order-card {
+      border: 1px solid var(--order-border);
+      border-radius: 24px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #fff 0%, #fcfcfd 100%);
+    }
+
+    .order-card__head,
+    .order-card__foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+    }
+
+    .order-card__head {
+      border-bottom: 1px solid var(--order-border);
+    }
+
+    .order-card__id {
+      color: var(--order-subtle);
+      font-size: 13px;
+    }
+
+    .order-card__status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .status-1 {
+      color: #f97316;
+      background: rgba(249, 115, 22, 0.12);
+    }
+
+    .status-2 {
+      color: #2563eb;
+      background: rgba(37, 99, 235, 0.12);
+    }
+
+    .status-3 {
+      color: #059669;
+      background: rgba(5, 150, 105, 0.12);
+    }
+
+    .status-4,
+    .status-6 {
+      color: #6b7280;
+      background: rgba(107, 114, 128, 0.12);
+    }
+
+    .status-5 {
+      color: #d97706;
+      background: rgba(217, 119, 6, 0.12);
+    }
+
+    .order-card__body {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .order-cover {
+      width: 108px;
+      height: 108px;
+      border-radius: 24px;
+      object-fit: cover;
+      background: #f3f4f6;
+    }
+
+    .order-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .order-title {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .order-shop {
+      margin-top: 8px;
+      color: var(--order-subtle);
+      font-size: 14px;
+    }
+
+    .order-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .order-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f8fafc;
+      color: var(--order-subtle);
+      font-size: 12px;
+    }
+
+    .order-price {
+      margin-top: 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .order-price__current {
+      color: var(--order-primary);
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .order-price__current small {
+      font-size: 14px;
+      margin-right: 2px;
+    }
+
+    .order-price__origin {
+      color: #9ca3af;
+      font-size: 14px;
+      text-decoration: line-through;
+    }
+
+    .order-card__foot {
+      border-top: 1px solid var(--order-border);
+      flex-wrap: wrap;
+    }
+
+    .order-time {
+      color: var(--order-subtle);
+      font-size: 13px;
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .order-actions .el-button {
+      min-width: 96px;
+      height: 38px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+
+    .load-more {
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    .empty-state {
+      padding: 72px 18px;
+      text-align: center;
+      color: var(--order-subtle);
+    }
+
+    .empty-state i {
+      font-size: 56px;
+      color: #d1d5db;
+    }
+
+    .empty-title {
+      margin-top: 14px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--order-text);
+    }
+
+    .empty-desc {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    .loading-wrap {
+      padding: 80px 0;
+      text-align: center;
+      color: var(--order-primary);
+    }
+
+    @media (max-width: 900px) {
+      .orders-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .orders-shell {
+        padding: 14px 12px 0;
+      }
+
+      .orders-summary,
+      .orders-panel {
+        border-radius: 24px;
+      }
+
+      .orders-summary {
+        gap: 12px;
+        padding: 16px;
+      }
+
+      .summary-card {
+        border-radius: 18px;
+        padding: 14px;
+      }
+
+      .order-card__body {
+        padding: 16px;
+      }
+
+      .order-cover {
+        width: 86px;
+        height: 86px;
+        border-radius: 18px;
+      }
+
+      .order-title {
+        font-size: 16px;
+      }
+
+      .order-price__current {
+        font-size: 24px;
+      }
+    }
   </style>
 </head>
 <body>
-<div id="app" class="orders-container">
-  <div class="header" style="display:flex; align-items:center; margin-bottom:16px;">
-    <div class="header-back-btn" onclick="history.back()"><i class="el-icon-arrow-left"></i></div>
-    <div style="flex:1; text-align:center; font-weight:600;">我的订单</div>
-  </div>
+<div id="app" class="orders-page">
+  <header class="orders-header">
+    <button class="header-action" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </button>
+    <div class="orders-title">我的订单</div>
+    <button class="header-action" @click="goToVouchers">
+      <i class="el-icon-tickets"></i>
+    </button>
+  </header>
 
-  <!-- 状态筛选 -->
-  <el-tabs v-model="activeStatus" @tab-click="handleStatusChange">
-    <el-tab-pane label="全部" name="0"></el-tab-pane>
-    <el-tab-pane label="待支付" name="1"></el-tab-pane>
-    <el-tab-pane label="已支付" name="2"></el-tab-pane>
-    <el-tab-pane label="已核销" name="3"></el-tab-pane>
-    <el-tab-pane label="已取消" name="4"></el-tab-pane>
-  </el-tabs>
-
-  <!-- 订单列表 -->
-  <div v-if="loading" style="text-align:center; padding:40px 0;">
-    <i class="el-icon-loading" style="font-size:32px; color:#ff6633;"></i>
-  </div>
-
-  <div v-else-if="orders.length === 0" class="empty-state">
-    <i class="el-icon-document"></i>
-    <div>暂无订单</div>
-    <el-button type="primary" style="margin-top:16px;" @click="goToVouchers">去领取优惠券</el-button>
-  </div>
-
-  <div v-else>
-    <div v-for="order in orders" :key="order.id" class="order-card">
-      <div class="order-header">
-        <span class="order-id">订单号: {{ order.id }}</span>
-        <span :class="['order-status', 'status-' + order.status]">{{ getStatusText(order.status) }}</span>
+  <div class="orders-shell">
+    <section class="orders-summary">
+      <div class="summary-card" v-for="card in summaryCards" :key="card.key">
+        <div class="summary-label">{{ card.label }}</div>
+        <div class="summary-value">{{ card.value }}</div>
       </div>
-      <div class="order-body">
-        <img class="order-img" :src="order.voucherImages || '/imgs/icons/default-icon.png'" alt="">
-        <div class="order-info">
-          <div class="order-title">{{ order.voucherTitle || '优惠券' }}</div>
-          <div class="order-shop">{{ order.voucherSubTitle || '' }}</div>
-          <div class="order-price">
-            <span class="price-current"><span>¥</span>{{ (order.actualValue || 0) / 100 }}</span>
-            <span class="price-original">¥{{ (order.payValue || 0) / 100 }}</span>
-          </div>
+    </section>
+
+    <section class="orders-panel">
+      <el-tabs class="status-tabs" v-model="activeStatus" @tab-click="handleStatusChange">
+        <el-tab-pane label="全部" name="0"></el-tab-pane>
+        <el-tab-pane label="待支付" name="1"></el-tab-pane>
+        <el-tab-pane label="已支付" name="2"></el-tab-pane>
+        <el-tab-pane label="已核销" name="3"></el-tab-pane>
+        <el-tab-pane label="已取消" name="4"></el-tab-pane>
+      </el-tabs>
+
+      <div class="loading-wrap" v-if="loading">
+        <i class="el-icon-loading" style="font-size: 32px;"></i>
+      </div>
+
+      <template v-else>
+        <div class="orders-list" v-if="orders.length">
+          <article class="order-card" v-for="order in orders" :key="order.id">
+            <div class="order-card__head">
+              <div class="order-card__id">订单号 {{ order.id }}</div>
+              <div class="order-card__status" :class="'status-' + order.status">
+                <i class="el-icon-success" v-if="order.status === 3"></i>
+                <i class="el-icon-time" v-else-if="order.status === 1"></i>
+                <i class="el-icon-wallet" v-else-if="order.status === 2"></i>
+                <i class="el-icon-circle-close" v-else></i>
+                {{ getStatusText(order.status) }}
+              </div>
+            </div>
+            <div class="order-card__body">
+              <img class="order-cover" :src="resolveImageUrl(order.voucherImages)" alt="">
+              <div class="order-main">
+                <div class="order-title">{{ order.voucherTitle || '优惠券订单' }}</div>
+                <div class="order-shop">{{ order.shopName || order.voucherSubTitle || '关联商户信息待补充' }}</div>
+                <div class="order-meta">
+                  <div class="order-chip">
+                    <i class="el-icon-s-ticket"></i>
+                    {{ order.voucherType === 1 ? '秒杀券' : '普通券' }}
+                  </div>
+                  <div class="order-chip" v-if="order.payTime">
+                    <i class="el-icon-date"></i>
+                    支付于 {{ formatDate(order.payTime) }}
+                  </div>
+                  <div class="order-chip" v-else>
+                    <i class="el-icon-timer"></i>
+                    创建于 {{ formatDate(order.createTime) }}
+                  </div>
+                </div>
+                <div class="order-price">
+                  <div class="order-price__current">
+                    <small>¥</small>{{ toYuan(order.actualValue) }}
+                  </div>
+                  <div class="order-price__origin">原价 ¥{{ toYuan(order.payValue) }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="order-card__foot">
+              <div class="order-time">{{ getStatusHint(order) }}</div>
+              <div class="order-actions">
+                <el-button
+                  v-if="order.status === 1"
+                  type="info"
+                  plain
+                  @click="cancelOrder(order.id)"
+                >
+                  取消订单
+                </el-button>
+                <el-button
+                  v-if="order.status === 1"
+                  type="primary"
+                  @click="payOrder(order.id)"
+                >
+                  立即支付
+                </el-button>
+                <el-button
+                  v-if="order.status === 2"
+                  type="success"
+                  @click="useOrder(order.id)"
+                >
+                  立即核销
+                </el-button>
+                <el-button
+                  v-if="order.status === 2"
+                  type="warning"
+                  plain
+                  @click="refundOrder(order.id)"
+                >
+                  申请退款
+                </el-button>
+              </div>
+            </div>
+          </article>
         </div>
-      </div>
-      <div class="order-footer">
-        <span class="order-time">{{ formatTime(order.createTime) }}</span>
-        <div class="order-actions">
-          <el-button v-if="order.status === 1" type="primary" size="small" @click="payOrder(order.id)">立即支付</el-button>
-          <el-button v-if="order.status === 2" type="success" size="small" @click="useOrder(order.id)">去使用</el-button>
-          <el-button v-if="order.status === 1" size="small" @click="cancelOrder(order.id)">取消</el-button>
-          <el-button v-if="order.status === 2" type="text" size="small" @click="refundOrder(order.id)">申请退款</el-button>
-        </div>
-      </div>
-    </div>
 
-    <!-- 加载更多 -->
-    <div v-if="hasMore" style="text-align:center; padding:20px 0;">
-      <el-button type="text" @click="loadMore" :loading="loadingMore">加载更多</el-button>
-    </div>
+        <div class="empty-state" v-else>
+          <i class="el-icon-document"></i>
+          <div class="empty-title">还没有订单记录</div>
+          <div class="empty-desc">领一张优惠券，再回来完成下单和支付吧。</div>
+          <el-button type="primary" style="margin-top: 18px;" @click="goToVouchers">
+            去领优惠券
+          </el-button>
+        </div>
+
+        <div class="load-more" v-if="orders.length && hasMore">
+          <el-button :loading="loadingMore" plain @click="loadMore">加载更多</el-button>
+        </div>
+      </template>
+    </section>
   </div>
 </div>
 
@@ -103,125 +510,187 @@
 <script>
   new Vue({
     el: '#app',
-    data: {
-      activeStatus: '0',
-      orders: [],
-      loading: true,
-      loadingMore: false,
-      current: 1,
-      hasMore: true
+    data() {
+      return {
+        util,
+        activeStatus: '0',
+        orders: [],
+        loading: true,
+        loadingMore: false,
+        current: 1,
+        hasMore: true
+      };
+    },
+    computed: {
+      summaryCards() {
+        return [
+          { key: 'all', label: '当前筛选', value: this.orders.length },
+          { key: 'paying', label: '待支付', value: this.countByStatus(1) },
+          { key: 'paid', label: '已支付', value: this.countByStatus(2) },
+          { key: 'done', label: '已完成', value: this.countByStatus(3) }
+        ];
+      }
     },
     created() {
+      this.ensureLogin();
       this.loadOrders();
     },
     methods: {
+      goBack() {
+        history.back();
+      },
+      ensureLogin() {
+        if (localStorage.getItem('token')) {
+          return true;
+        }
+        this.$message.warning('请先登录');
+        setTimeout(function () {
+          location.href = '/pages/auth/login.html';
+        }, 200);
+        return false;
+      },
       loadOrders() {
-        this.loading = true;
-        const status = this.activeStatus === '0' ? null : parseInt(this.activeStatus);
-        
+        if (!this.ensureLogin()) {
+          return;
+        }
+        this.loading = this.current === 1 && !this.loadingMore;
+        var status = this.activeStatus === '0' ? null : Number(this.activeStatus);
         axios.get('/voucher-order/list', {
-          params: { status: status, current: this.current }
-        })
-        .then(({ data }) => {
-          const list = data?.data || data;
-          if (this.current === 1) {
-            this.orders = Array.isArray(list) ? list : [];
-          } else {
-            this.orders = this.orders.concat(Array.isArray(list) ? list : []);
+          params: {
+            current: this.current,
+            status: status
           }
-          this.hasMore = Array.isArray(list) && list.length === 10;
+        }).then(function (res) {
+          var list = Array.isArray(res.data) ? res.data : [];
+          if (this.current === 1) {
+            this.orders = list;
+          } else {
+            this.orders = this.orders.concat(list);
+          }
+          this.hasMore = list.length >= 10;
+        }.bind(this)).catch(function (err) {
+          this.$message.error(this.getErrorMessage(err, '加载订单失败'));
+        }.bind(this)).finally(function () {
           this.loading = false;
           this.loadingMore = false;
-        })
-        .catch(() => {
-          this.loading = false;
-          this.loadingMore = false;
-        });
+        }.bind(this));
       },
       handleStatusChange() {
         this.current = 1;
+        this.hasMore = true;
         this.loadOrders();
       },
       loadMore() {
-        this.current++;
+        this.current += 1;
         this.loadingMore = true;
         this.loadOrders();
       },
       payOrder(id) {
-        this.$confirm('确认支付该订单？', '提示', {
-          confirmButtonText: '确认支付',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          axios.post(`/voucher-order/pay/${id}`)
-            .then(() => {
-              this.$message.success('支付成功！');
-              this.loadOrders();
-            })
-            .catch(err => {
-              this.$message.error(err.response?.data?.errorMsg || '支付失败');
-            });
-        });
+        this.confirmThen('确认支付这笔订单吗？', '/voucher-order/pay/' + id, '支付成功');
       },
       useOrder(id) {
-        this.$confirm('确定要核销这张优惠券吗？核销后将无法退款。', '提示', {
-          confirmButtonText: '确定核销',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          axios.post(`/voucher-order/verify/${id}`)
-            .then(() => {
-              this.$message.success('核销成功！');
-              this.loadOrders();
-            })
-            .catch(err => {
-              this.$message.error(err.response?.data?.errorMsg || '核销失败');
-            });
-        });
+        this.confirmThen('确认核销后将无法再退款，是否继续？', '/voucher-order/verify/' + id, '核销成功');
       },
       cancelOrder(id) {
-        this.$confirm('确定要取消这个订单吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          axios.post(`/voucher-order/cancel/${id}`)
-            .then(() => {
-              this.$message.success('取消成功！');
-              this.loadOrders();
-            })
-            .catch(err => {
-              this.$message.error(err.response?.data?.errorMsg || '取消失败');
-            });
-        });
+        this.confirmThen('取消后会释放本次订单名额，确定要取消吗？', '/voucher-order/cancel/' + id, '订单已取消');
       },
       refundOrder(id) {
-        this.$confirm('确定要申请退款吗？', '提示', {
+        this.confirmThen('确认申请退款吗？退款成功后会恢复券库存。', '/voucher-order/refund/' + id, '退款成功');
+      },
+      confirmThen(message, url, successText) {
+        this.$confirm(message, '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
-        }).then(() => {
-          axios.post(`/voucher-order/refund/${id}`)
-            .then(() => {
-              this.$message.success('退款申请已提交');
-              this.loadOrders();
-            })
-            .catch(err => {
-              this.$message.error(err.response?.data?.errorMsg || '退款失败');
-            });
-        });
+        }).then(function () {
+          return axios.post(url);
+        }).then(function () {
+          this.$message.success(successText);
+          this.current = 1;
+          this.hasMore = true;
+          this.loadOrders();
+        }.bind(this)).catch(function (err) {
+          if (err !== 'cancel') {
+            this.$message.error(this.getErrorMessage(err, '操作失败'));
+          }
+        }.bind(this));
+      },
+      countByStatus(status) {
+        return this.orders.filter(function (order) {
+          return order.status === status;
+        }).length;
       },
       getStatusText(status) {
-        const map = { 1: '待支付', 2: '已支付', 3: '已核销', 4: '已取消', 5: '退款中', 6: '已退款' };
-        return map[status] || '未知';
+        var map = {
+          1: '待支付',
+          2: '已支付',
+          3: '已核销',
+          4: '已取消',
+          5: '退款中',
+          6: '已退款'
+        };
+        return map[status] || '未知状态';
       },
-      formatTime(timeStr) {
-        if (!timeStr) return '';
-        const date = new Date(timeStr);
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      getStatusHint(order) {
+        if (order.status === 1) {
+          return '下单后仍未支付，可直接取消或完成支付。';
+        }
+        if (order.status === 2) {
+          return '订单已支付，可到店核销或在未使用前申请退款。';
+        }
+        if (order.status === 3) {
+          return '订单已核销完成，消费已闭环。';
+        }
+        if (order.status === 4) {
+          return '订单已取消，库存已经退回。';
+        }
+        if (order.status === 6) {
+          return '订单已退款，费用与库存已恢复。';
+        }
+        return '订单状态处理中。';
+      },
+      formatDate(value) {
+        if (!value) {
+          return '--';
+        }
+        var date = new Date(value);
+        if (isNaN(date.getTime())) {
+          return value;
+        }
+        var pad = function (num) {
+          return String(num).padStart(2, '0');
+        };
+        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+      },
+      toYuan(value) {
+        return ((Number(value) || 0) / 100).toFixed((Number(value) || 0) % 100 === 0 ? 0 : 2);
+      },
+      resolveImageUrl(path) {
+        if (!path) {
+          return '/imgs/icons/default-icon.png';
+        }
+        if (path.indexOf('http') === 0) {
+          return path;
+        }
+        if (path.indexOf(util.commonURL) === 0) {
+          return path;
+        }
+        return util.commonURL + (path.charAt(0) === '/' ? path : '/' + path);
+      },
+      getErrorMessage(err, fallback) {
+        if (typeof err === 'string') {
+          return err;
+        }
+        if (err && err.response && err.response.data && err.response.data.errorMsg) {
+          return err.response.data.errorMsg;
+        }
+        if (err && err.message) {
+          return err.message;
+        }
+        return fallback || '操作失败';
       },
       goToVouchers() {
-        location.href = 'vouchers.html';
+        location.href = '/pages/misc/vouchers.html';
       }
     }
   });
