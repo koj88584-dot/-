@@ -29,6 +29,7 @@ public class MvcConfig implements WebMvcConfigurer {
                 .addInterceptor(new LoginInterceptor())
                 .excludePathPatterns("/user/code"
                         , "/user/login"
+                        , "/user/register"
                         , "/auth/login"
                         , "/assistant/**"
                         , "/blog/hot"

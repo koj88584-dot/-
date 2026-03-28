@@ -428,7 +428,7 @@
       loadingMore: false,
       current: 1,
       hasMore: true,
-      fallbackImage: '/imgs/blogs/14/2/c760152a-7a31-4afa-8767-c9144701dcd5.jpg'
+      fallbackImage: '/imgs/blogs/blog1.jpg'
     },
     created() {
       this.loadFavorites();
@@ -500,7 +500,10 @@
         return this.resolveImageUrl(first);
       },
       handleImageError(event) {
-        if (event?.target) event.target.src = this.fallbackImage;
+        if (!event || !event.target) return;
+        if (event.target.dataset.fallbackApplied === '1') return;
+        event.target.dataset.fallbackApplied = '1';
+        event.target.src = this.fallbackImage;
       },
       getDesc(item) {
         if (item?.address) return item.address;

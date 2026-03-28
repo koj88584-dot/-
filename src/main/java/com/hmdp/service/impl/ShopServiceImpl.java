@@ -13,11 +13,14 @@ import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IAmapService;
 import com.hmdp.service.IBrowseHistoryService;
 import com.hmdp.service.IShopService;
+import com.hmdp.service.IShopSyncService;
 import com.hmdp.utils.CacheClient;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.SystemConstants;
 import com.hmdp.utils.UserHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Point;
 import org.springframework.data.geo.GeoResult;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.redis.connection.RedisGeoCommands;
@@ -44,8 +47,9 @@ import static com.hmdp.utils.RedisConstants.*;
  * @since 2021-12-22
  */
 @Service
+@Slf4j
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
-    private static final int[] NEARBY_SEARCH_RADII = {5000, 10000, 20000, 50000};
+    private static final int[] NEARBY_SEARCH_RADII = {5000, 10000, 20000, 50000, 100000};
     @Resource
     private StringRedisTemplate stringRedisTemplate;
     @Resource
@@ -219,9 +223,12 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
     @Resource
     private IAmapService amapService;
+    @Resource
+    private IShopSyncService shopSyncService;
 
     @Override
     public Result queryShopByType(Integer typeId, Integer current, Double x, Double y) {
+        try {
         //判断是否需要坐标查询
         if (x == null || y == null) {
             //不需要坐标查询
@@ -230,8 +237,44 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
                     .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
             return Result.ok(page.getRecords());
         }
+
+        int pageSize = SystemConstants.MAX_PAGE_SIZE;
+        int page = current == null || current < 1 ? 1 : current;
+        int end = page * pageSize;
+        int maxRadius = NEARBY_SEARCH_RADII[NEARBY_SEARCH_RADII.length - 1];
+
+        List<Shop> candidates = queryFromRedisRaw(typeId, end, x, y, maxRadius);
+        Set<Long> seen = candidates.stream()
+                .filter(Objects::nonNull)
+                .map(Shop::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (candidates.size() < end) {
+            List<Shop> dbCandidates = queryFromDatabase(typeId, x, y, end, maxRadius);
+            mergeUnique(candidates, dbCandidates, seen);
+        }
+
+        if (candidates.size() < end) {
+            List<Shop> amapCandidates = queryFromAmapAndSync(typeId, x, y, maxRadius, page, pageSize);
+            mergeUnique(candidates, amapCandidates, seen);
+        }
+
+        candidates.sort(Comparator.comparing(shop -> shop.getDistance() == null ? Double.MAX_VALUE : shop.getDistance()));
+
+        int from = (page - 1) * pageSize;
+        if (from >= candidates.size()) {
+            return Result.ok(Collections.emptyList());
+        }
+        int to = Math.min(from + pageSize, candidates.size());
+        return Result.ok(candidates.subList(from, to));
+        } catch (Exception e) {
+            log.error("Query nearby shops failed. typeId={}, current={}, x={}, y={}", typeId, current, x, y, e);
+            return Result.ok(Collections.emptyList());
+        }
         
         // 首先尝试从Redis查询
+        /*
         for (int radius : NEARBY_SEARCH_RADII) {
             List<Shop> shopList = queryFromRedis(typeId, current, x, y, radius);
             if (!shopList.isEmpty()) {
@@ -253,6 +296,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         
         List<Shop> paginatedShops = amapShops.subList(from, end);
         return Result.ok(paginatedShops);
+        */
     }
 
     @Override
@@ -295,6 +339,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
         fillShopDefaults(cachedShop);
         saveOrUpdate(cachedShop);
+        cacheShopGeo(cachedShop);
         stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + shopId, JSONUtil.toJsonStr(cachedShop), 30, TimeUnit.MINUTES);
         return getById(shopId);
     }
@@ -303,6 +348,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
      * 从Redis查询店铺
      */
     private List<Shop> queryFromRedis(Integer typeId, Integer current, Double x, Double y, int radius) {
+        try {
         //计算分页参数
         int from = (current - 1) * SystemConstants.MAX_PAGE_SIZE;
         int end = current * SystemConstants.MAX_PAGE_SIZE;
@@ -319,20 +365,28 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             return Collections.emptyList();
         }
         List<GeoResult<RedisGeoCommands.GeoLocation<String>>> content = results.getContent();
-        if (content.size()<from){
+        if (content == null || content.size()<from){
             //没有下一页
             return Collections.emptyList();
         }
         //截取
         List<Long> ids=new ArrayList<>(content.size());
         Map<String,Distance> distanceMap=new HashMap<>();
-        content.stream().skip(from).forEach(result->{  
+        content.stream().skip(from).forEach(result->{
+            if (result == null || result.getContent() == null) {
+                return;
+            }
             //店铺id
             String shopId = result.getContent().getName();
+            if (StrUtil.isBlank(shopId) || !StrUtil.isNumeric(shopId)) {
+                return;
+            }
             ids.add(Long.valueOf(shopId));
             //距离
             Distance distance = result.getDistance();
-            distanceMap.put(shopId,distance);
+            if (distance != null) {
+                distanceMap.put(shopId,distance);
+            }
         });
 
         //根据id查询shop
@@ -343,9 +397,158 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         List<Shop> shopList = lambdaQuery().in(Shop::getId, ids)
                 .last("order by field(id,"+join+")").list();
         for (Shop shop : shopList) {
-            shop.setDistance(distanceMap.get(shop.getId().toString()).getValue());
+            Distance distance = distanceMap.get(shop.getId().toString());
+            if (distance != null) {
+                shop.setDistance(distance.getValue());
+            }
         }
         return shopList;
+        } catch (Exception e) {
+            log.warn("Read shop geo cache failed. typeId={}, current={}, x={}, y={}, radius={}", typeId, current, x, y, radius, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Shop> queryFromRedisRaw(Integer typeId, int end, Double x, Double y, int radius) {
+        if (end <= 0) {
+            return Collections.emptyList();
+        }
+        try {
+        String key = SHOP_GEO_KEY + typeId;
+        GeoResults<RedisGeoCommands.GeoLocation<String>> results = stringRedisTemplate.opsForGeo()
+                .search(key,
+                        GeoReference.fromCoordinate(x, y),
+                        new Distance(radius),
+                        RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs().includeDistance().limit(end)
+                );
+        if (results == null) {
+            return Collections.emptyList();
+        }
+        List<GeoResult<RedisGeoCommands.GeoLocation<String>>> content = results.getContent();
+        if (content == null || content.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Long> ids = new ArrayList<>(content.size());
+        Map<String, Distance> distanceMap = new HashMap<>();
+        for (GeoResult<RedisGeoCommands.GeoLocation<String>> result : content) {
+            if (result == null || result.getContent() == null) {
+                continue;
+            }
+            String shopId = result.getContent().getName();
+            if (StrUtil.isBlank(shopId) || !StrUtil.isNumeric(shopId)) {
+                continue;
+            }
+            ids.add(Long.valueOf(shopId));
+            if (result.getDistance() != null) {
+                distanceMap.put(shopId, result.getDistance());
+            }
+        }
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        String join = StrUtil.join(",", ids);
+        List<Shop> shopList = lambdaQuery().in(Shop::getId, ids)
+                .last("order by field(id," + join + ")").list();
+        for (Shop shop : shopList) {
+            Distance distance = distanceMap.get(shop.getId().toString());
+            if (distance != null) {
+                shop.setDistance(distance.getValue());
+            }
+        }
+        return shopList;
+        } catch (Exception e) {
+            log.warn("Read raw geo shop cache failed. typeId={}, x={}, y={}, radius={}, end={}", typeId, x, y, radius, end, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Shop> queryFromDatabase(Integer typeId, Double x, Double y, int end, int radius) {
+        int limit = Math.min(Math.max(end * 3, SystemConstants.MAX_PAGE_SIZE), 200);
+        List<Shop> shops = lambdaQuery()
+                .eq(Shop::getTypeId, typeId)
+                .last("limit " + limit)
+                .list();
+        shops.forEach(shop -> {
+            fillShopDefaults(shop);
+            applyDistance(shop, x, y);
+        });
+        List<Shop> nearbyShops = shops.stream()
+                .filter(shop -> shop.getDistance() != null)
+                .filter(shop -> radius <= 0 || shop.getDistance() <= radius)
+                .sorted(Comparator.comparing(shop -> shop.getDistance() == null ? Double.MAX_VALUE : shop.getDistance()))
+                .collect(Collectors.toList());
+        for (Shop shop : nearbyShops) {
+            cacheShopGeo(shop);
+        }
+        return nearbyShops;
+    }
+
+    private List<Shop> queryFromAmapAndSync(Integer typeId, Double x, Double y, int radius, int page, int pageSize) {
+        List<Shop> amapShops = amapService.searchNearbyShops(typeId, null, x, y, radius, page, pageSize);
+        if (amapShops == null || amapShops.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Shop> synced = new ArrayList<>();
+        Set<Long> seen = new HashSet<>();
+        for (Shop amapShop : amapShops) {
+            if (amapShop == null) {
+                continue;
+            }
+            try {
+                fillShopDefaults(amapShop);
+                Shop localShop = shopSyncService.getOrSync(amapShop);
+                Shop candidate = localShop != null ? localShop : amapShop;
+                fillShopDefaults(candidate);
+                applyDistance(candidate, x, y);
+                if (candidate.getId() == null || !seen.add(candidate.getId())) {
+                    continue;
+                }
+                if (localShop != null) {
+                    cacheShopValue(localShop);
+                    cacheShopGeo(localShop);
+                }
+                synced.add(candidate);
+            } catch (Exception e) {
+                log.warn("Sync amap shop failed, keep transient result. shopId={}, typeId={}", amapShop.getId(), typeId, e);
+                fillShopDefaults(amapShop);
+                applyDistance(amapShop, x, y);
+                if (amapShop.getId() != null && seen.add(amapShop.getId())) {
+                    synced.add(amapShop);
+                }
+            }
+        }
+        return synced;
+    }
+
+    private void mergeUnique(List<Shop> target, List<Shop> source, Set<Long> seen) {
+        if (source == null || source.isEmpty()) {
+            return;
+        }
+        for (Shop shop : source) {
+            if (shop == null || shop.getId() == null) {
+                continue;
+            }
+            if (seen.add(shop.getId())) {
+                target.add(shop);
+            }
+        }
+    }
+
+    private void cacheShopValue(Shop shop) {
+        if (shop == null || shop.getId() == null) {
+            return;
+        }
+        stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + shop.getId(),
+                JSONUtil.toJsonStr(shop),
+                30, TimeUnit.MINUTES);
+    }
+
+    private void cacheShopGeo(Shop shop) {
+        if (shop == null || shop.getId() == null || shop.getTypeId() == null || shop.getX() == null || shop.getY() == null) {
+            return;
+        }
+        String key = SHOP_GEO_KEY + shop.getTypeId();
+        stringRedisTemplate.opsForGeo().add(key, new Point(shop.getX(), shop.getY()), shop.getId().toString());
     }
 
     private List<Shop> queryCachedShops(String name, Double x, Double y) {

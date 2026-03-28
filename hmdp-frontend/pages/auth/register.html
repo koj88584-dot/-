@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>验证码登录</title>
+  <title>注册账号</title>
   <link rel="stylesheet" href="/css/element.css">
   <link href="/css/main.css" rel="stylesheet">
   <link href="/css/login.css" rel="stylesheet">
@@ -66,19 +66,20 @@
       flex: 1;
     }
 
-    .code-btn {
-      width: 128px;
+    .code-btn,
+    .submit-btn {
       border: none;
       background: linear-gradient(135deg, #ff7a45 0%, #ff5a36 100%);
       color: #fff;
+    }
+
+    .code-btn {
+      width: 128px;
       box-shadow: 0 8px 18px rgba(255, 102, 51, 0.25);
     }
 
     .submit-btn {
       width: 100%;
-      border: none;
-      background: linear-gradient(135deg, #ff7a45 0%, #ff5a36 100%);
-      color: #fff;
       font-size: 16px;
       font-weight: 600;
       box-shadow: 0 12px 28px rgba(255, 102, 51, 0.24);
@@ -91,7 +92,8 @@
       font-size: 14px;
     }
 
-    .switch-links a {
+    .switch-links a,
+    .agreement a {
       color: #ff6633;
       text-decoration: none;
     }
@@ -109,11 +111,6 @@
       line-height: 1.8;
     }
 
-    .agreement a {
-      color: #ff6633;
-      text-decoration: none;
-    }
-
     .agreement input[type="radio"] {
       margin-top: 3px;
     }
@@ -124,32 +121,38 @@
   <div class="login-container">
     <div class="header">
       <div class="header-back-btn" @click="goBack"><i class="el-icon-arrow-left"></i></div>
-      <div class="header-title">验证码登录</div>
+      <div class="header-title">注册账号</div>
     </div>
     <div class="content">
       <div class="auth-panel">
-        <h1 class="auth-title">欢迎回来</h1>
-        <p class="auth-desc">输入手机号和验证码即可登录，未注册手机号会在验证码校验通过后自动创建账号。</p>
+        <h1 class="auth-title">创建你的账号</h1>
+        <p class="auth-desc">注册完成后会自动登录，并回到你刚才准备访问的页面。</p>
+        <el-input v-model.trim="form.phone" placeholder="请输入手机号"></el-input>
+        <div class="field-gap"></div>
         <div class="code-row">
-          <el-input v-model.trim="form.phone" placeholder="请输入手机号"></el-input>
+          <el-input v-model.trim="form.code" placeholder="请输入短信验证码"></el-input>
           <el-button class="code-btn" :disabled="disabled || !radio" @click="sendCode">
             {{ codeBtnMsg }}
           </el-button>
         </div>
         <div class="field-gap"></div>
-        <el-input v-model.trim="form.code" placeholder="请输入短信验证码"></el-input>
+        <el-input v-model.trim="form.nickName" placeholder="请输入昵称（可选）"></el-input>
         <div class="field-gap"></div>
-        <el-button class="submit-btn" @click="login">登录</el-button>
+        <el-input v-model.trim="form.password" placeholder="请输入密码（至少 6 位）" show-password></el-input>
+        <div class="field-gap"></div>
+        <el-input v-model.trim="form.confirmPassword" placeholder="请再次输入密码" show-password></el-input>
+        <div class="field-gap"></div>
+        <el-button class="submit-btn" @click="register">注册并登录</el-button>
         <div class="switch-links">
-          <a :href="registerUrl">注册账号</a>
+          <a :href="codeLoginUrl">验证码登录</a>
           <a :href="passwordLoginUrl">密码登录</a>
         </div>
       </div>
 
       <div class="agreement">
         <div>
-          <input type="radio" id="agree-login" name="agree-login" v-model="radio" value="1">
-          <label for="agree-login"></label>
+          <input type="radio" id="agree-register" name="agree-register" v-model="radio" value="1">
+          <label for="agree-register"></label>
         </div>
         <div>
           我已阅读并同意
@@ -177,12 +180,15 @@
       redirectTarget: window.authHelper.normalizeRedirectPath(util.getUrlParam("redirect") || "/pages/index-new.html"),
       form: {
         phone: "",
-        code: ""
+        code: "",
+        nickName: "",
+        password: "",
+        confirmPassword: ""
       }
     },
     computed: {
-      registerUrl() {
-        return "/pages/auth/register.html?redirect=" + encodeURIComponent(this.redirectTarget);
+      codeLoginUrl() {
+        return "/pages/auth/login.html?redirect=" + encodeURIComponent(this.redirectTarget);
       },
       passwordLoginUrl() {
         return "/pages/auth/login2.html?redirect=" + encodeURIComponent(this.redirectTarget);
@@ -208,16 +214,31 @@
         }
         return true;
       },
-      async login() {
+      async register() {
         if (!this.validateAgreement()) {
           return;
         }
-        if (!this.form.phone || !this.form.code) {
-          this.$message.error("请输入手机号和验证码");
+        if (!this.form.phone || !this.form.code || !this.form.password || !this.form.confirmPassword) {
+          this.$message.error("请完整填写注册信息");
+          return;
+        }
+        if (this.form.password.length < 6) {
+          this.$message.error("密码长度不能少于 6 位");
+          return;
+        }
+        if (this.form.password !== this.form.confirmPassword) {
+          this.$message.error("两次输入的密码不一致");
           return;
         }
         try {
-          const res = await axios.post("/user/login", this.form);
+          const payload = {
+            phone: this.form.phone,
+            code: this.form.code,
+            nickName: this.form.nickName,
+            password: this.form.password,
+            confirmPassword: this.form.confirmPassword
+          };
+          const res = await axios.post("/user/register", payload);
           const token = res.data;
           if (token) {
             localStorage.setItem("token", token);

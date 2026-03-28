@@ -50,13 +50,16 @@ public class AmapServiceImpl implements IAmapService {
             "071100"    // 10-美睫美甲 (071100-美容美发店)
     };
 
+
     @Override
     public List<Shop> searchNearbyShops(Integer typeId, Double x, Double y, Integer radius) {
-        return searchNearbyShops(typeId, null, x, y, radius);
+        return searchNearbyShops(typeId, null, x, y, radius, 1, 20);
     }
 
     @Override
     public List<Shop> searchNearbyShops(Integer typeId, String keyword, Double x, Double y, Integer radius) {
+        return searchNearbyShops(typeId, keyword, x, y, radius, 1, 20);
+        /*
         log.info("开始搜索高德地图周边店铺 - typeId: {}, keyword: {}, x: {}, y: {}, radius: {}", typeId, keyword, x, y, radius);
 
         List<Shop> shops = new ArrayList<>();
@@ -126,11 +129,82 @@ public class AmapServiceImpl implements IAmapService {
 
         log.info("成功转换 {} 个店铺", shops.size());
         return shops;
+        */
     }
 
     /**
      * 将高德POI转换为店铺实体
      */
+
+    @Override
+    public List<Shop> searchNearbyShops(Integer typeId, String keyword, Double x, Double y, Integer radius, Integer page, Integer pageSize) {
+        log.info("AMap search nearby shops - typeId: {}, keyword: {}, x: {}, y: {}, radius: {}, page: {}, pageSize: {}", typeId, keyword, x, y, radius, page, pageSize);
+
+        List<Shop> shops = new ArrayList<>();
+
+        try {
+            String location = x + "," + y;
+            String keywords = keyword != null ? keyword : getKeywordsByType(typeId);
+            String types = getAmapTypeByTypeId(typeId);
+            int safePage = page == null || page < 1 ? 1 : page;
+            int safePageSize = pageSize == null || pageSize < 1 ? 20 : Math.min(pageSize, 25);
+            int safeRadius = radius == null ? 5000 : Math.min(radius, 50000);
+
+            StringBuilder urlBuilder = new StringBuilder(AMAP_POI_SEARCH_URL);
+            urlBuilder.append("?key=").append(amapConfig.getKey())
+                    .append("&location=").append(location)
+                    .append("&radius=").append(safeRadius)
+                    .append("&keywords=").append(keywords)
+                    .append("&offset=").append(safePageSize)
+                    .append("&page=").append(safePage)
+                    .append("&extensions=all")
+                    .append("&output=JSON");
+
+            if (types != null && !types.isEmpty()) {
+                urlBuilder.append("&types=").append(types);
+            }
+
+            String url = urlBuilder.toString();
+            log.debug("AMap request URL: {}", url);
+
+            String response = HttpUtil.get(url);
+            log.debug("AMap response: {}", response);
+
+            JSONObject jsonObject = JSONUtil.parseObj(response);
+            String status = jsonObject.getStr("status");
+
+            if (!"1".equals(status)) {
+                String info = jsonObject.getStr("info");
+                log.error("AMap API failed: {}", info);
+                return shops;
+            }
+
+            JSONArray pois = jsonObject.getJSONArray("pois");
+            if (pois == null || pois.isEmpty()) {
+                log.info("AMap returned no nearby shops.");
+                return shops;
+            }
+
+            log.info("AMap returned {} pois.", pois.size());
+
+            for (int i = 0; i < pois.size(); i++) {
+                JSONObject poi = pois.getJSONObject(i);
+                Shop shop = convertPoiToShop(poi, typeId);
+                if (shop != null) {
+                    shops.add(shop);
+                    cacheShopToRedis(shop);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("AMap API error", e);
+        }
+
+        log.info("AMap converted {} shops.", shops.size());
+        return shops;
+    }
+
+    // Convert AMap POI to Shop entity
     private Shop convertPoiToShop(JSONObject poi, Integer typeId) {
         try {
             Shop shop = new Shop();

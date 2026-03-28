@@ -32,6 +32,13 @@ Vue.component("footBar", {
         3: "/pages/misc/messages.html",
         4: "/pages/user/info.html"
       };
+      if (!routes[i]) {
+        return;
+      }
+      if (window.authHelper && [0, 3, 4].includes(i)) {
+        window.authHelper.navigateWithAuth(routes[i]);
+        return;
+      }
       if (routes[i]) {
         location.href = routes[i];
       }

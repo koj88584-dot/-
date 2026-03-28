@@ -652,9 +652,9 @@
 </head>
 <body>
 <!-- 在页面加载前检查登录状态 -->
-<script>
+<script type="text/plain">
   (function() {
-    const token = localStorage.getItem("token");
+    const token = "skip-inline-guard";
     if (!token) {
       alert("请先登录！");
       location.href = "../auth/login.html";
@@ -662,7 +662,7 @@
   }());
 </script>
 
-<div id="app" v-show="pageReady" style="display: none;">
+<div id="app">
   <!-- 顶部导航 -->
   <header class="header">
     <div class="header-back-btn" @click="goBack">
@@ -878,6 +878,7 @@
 <script src="/js/axios.min.js"></script>
 <script src="/js/element.js"></script>
 <script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
 <script>
   new Vue({
     el: "#app",
@@ -890,25 +891,33 @@
       followCount: 0,
       followerCount: 0,
       unreadCount: 0,
-      pageReady: false,
+      pageReady: true,
       params: {
         minTime: 0,
         offset: 0,
       },
     },
     created() {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        location.href = "../auth/login.html";
-        return;
-      }
-      this.queryUser();
+      this.bootstrap();
     },
     methods: {
+      async bootstrap() {
+        const ok = await window.authHelper.ensureLogin(location.pathname + location.search);
+        if (!ok) {
+          return;
+        }
+        this.pageReady = true;
+        this.queryUser();
+      },
       queryUser() {
         axios.get("/user/me")
           .then((result) => {
             // common.js 拦截器返回的是整个 Result 对象，需要取 data 部分
+            if (!result.data || !result.data.id) {
+              window.authHelper.clearAuth();
+              location.replace(window.authHelper.buildLoginUrl(location.pathname + location.search));
+              return;
+            }
             this.user = result.data;
             // 检查本地存储是否有更新的昵称和头像
             const savedNickName = localStorage.getItem('userNickName');
@@ -919,7 +928,6 @@
             if (savedIcon) {
               this.user.icon = savedIcon;
             }
-            this.pageReady = true;
             this.queryUserInfo();
             this.queryBlogs();
             if (this.user.id) {
@@ -927,7 +935,8 @@
             }
           })
           .catch(() => {
-            location.href = "../auth/login.html";
+            window.authHelper.clearAuth();
+            location.replace(window.authHelper.buildLoginUrl(location.pathname + location.search));
           });
       },
       queryUserInfo() {

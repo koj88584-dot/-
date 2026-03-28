@@ -3,6 +3,7 @@ package com.hmdp.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.hmdp.dto.LoginFormDTO;
+import com.hmdp.dto.RegisterFormDTO;
 import com.hmdp.dto.Result;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.User;
@@ -58,6 +59,11 @@ public class UserController {
      * 登出功能
      * @return 无
      */
+    @PostMapping("/register")
+    public Result register(@RequestBody RegisterFormDTO registerForm, HttpSession session){
+        return userService.register(registerForm, session);
+    }
+
     @PostMapping("/logout")
     public Result logout(@RequestHeader("authorization") String token){
         return userService.logout(token);

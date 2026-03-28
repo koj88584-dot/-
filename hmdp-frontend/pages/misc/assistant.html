@@ -28,8 +28,8 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
     .assistant-page {
-      padding: 20px 16px calc(220px + env(safe-area-inset-bottom, 0px));
-      scroll-padding-bottom: 220px;
+      padding: 20px 16px calc(380px + env(safe-area-inset-bottom, 0px));
+      scroll-padding-bottom: 380px;
     }
     .assistant-app {
       max-width: 980px;
@@ -169,7 +169,8 @@
     }
     .chat-shell {
       margin-top: 18px;
-      padding: 18px 18px 28px;
+      margin-bottom: 280px;
+      padding: 18px 18px 180px;
       background: rgba(255, 255, 255, 0.78);
       border: 1px solid rgba(255, 255, 255, 0.8);
       border-radius: 26px;
@@ -285,7 +286,7 @@
     .composer {
       position: fixed;
       left: 50%;
-      bottom: max(8px, env(safe-area-inset-bottom, 0px));
+      bottom: max(16px, env(safe-area-inset-bottom, 0px));
       transform: translateX(-50%);
       width: min(980px, calc(100% - 24px));
       padding: 14px 0 0;
@@ -337,7 +338,8 @@
     }
     @media (max-width: 768px) {
       .assistant-page {
-        padding: 14px 12px calc(204px + env(safe-area-inset-bottom, 0px));
+        padding: 14px 12px calc(360px + env(safe-area-inset-bottom, 0px));
+        scroll-padding-bottom: 360px;
       }
       .assistant-header {
         align-items: flex-start;
@@ -355,7 +357,8 @@
       }
       .hero-title { font-size: 22px; }
       .chat-shell {
-        padding: 14px 14px 24px;
+        margin-bottom: 320px;
+        padding: 14px 14px 210px;
         border-radius: 22px;
       }
       .message-bubble { max-width: 100%; }
@@ -374,6 +377,17 @@
     @media (max-width: 560px) {
       .header-tools { flex-wrap: wrap; }
       .status-pill { display: none; }
+      .assistant-page {
+        padding-bottom: calc(420px + env(safe-area-inset-bottom, 0px));
+        scroll-padding-bottom: 420px;
+      }
+      .chat-shell {
+        margin-bottom: 360px;
+        padding-bottom: 240px;
+      }
+      .composer {
+        bottom: max(20px, env(safe-area-inset-bottom, 0px));
+      }
       .composer-inner {
         flex-direction: column;
         align-items: stretch;
@@ -595,6 +609,18 @@
         this.persistConversation();
         this.$nextTick(this.scrollToBottom);
 
+        const assistantMessage = {
+          role: 'assistant',
+          content: '',
+          actions: [],
+          configured: this.assistantConfigured,
+          createdAt: Date.now()
+        };
+        this.messages.push(assistantMessage);
+        this.persistConversation();
+        this.streamAssistantReply(content, history, assistantMessage);
+        return;
+
         axios.post('/assistant/chat', {
           message: content,
           scene: this.sceneLabel,
@@ -631,6 +657,110 @@
           this.loading = false;
           this.$nextTick(this.scrollToBottom);
         });
+      },
+      async streamAssistantReply(content, history, assistantMessage) {
+        try {
+          const response = await fetch('/assistant/chat/stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: content,
+              scene: this.sceneLabel,
+              history: history
+            })
+          });
+
+          if (!response.ok || !response.body) {
+            throw new Error('Stream not available');
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let buffer = '';
+          let eventName = '';
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) {
+                eventName = '';
+                continue;
+              }
+              if (trimmed.startsWith('event:')) {
+                eventName = trimmed.slice(6).trim();
+                continue;
+              }
+              if (trimmed.startsWith('data:')) {
+                const data = trimmed.slice(5).trim();
+                this.handleStreamEvent(eventName || 'delta', data, assistantMessage);
+              }
+            }
+          }
+          this.loading = false;
+          this.persistConversation();
+          this.$nextTick(this.scrollToBottom);
+        } catch (err) {
+          await this.requestAssistantReplyFallback(content, history, assistantMessage, err);
+        } finally {
+          this.loading = false;
+        }
+      },
+      handleStreamEvent(eventName, data, assistantMessage) {
+        if (!assistantMessage) return;
+        if (eventName === 'meta') {
+          try {
+            const meta = JSON.parse(data);
+            this.assistantConfigured = meta.configured;
+            assistantMessage.actions = Array.isArray(meta.actions) ? meta.actions : [];
+            assistantMessage.configured = meta.configured;
+          } catch (e) {
+            // ignore
+          }
+          return;
+        }
+        if (eventName === 'done') {
+          this.loading = false;
+          this.persistConversation();
+          return;
+        }
+        if (this.loading) {
+          this.loading = false;
+        }
+        assistantMessage.content += data || '';
+        this.$nextTick(this.scrollToBottom);
+      },
+      async requestAssistantReplyFallback(content, history, assistantMessage, err) {
+        try {
+          const res = await axios.post('/assistant/chat', {
+            message: content,
+            scene: this.sceneLabel,
+            history: history
+          });
+          const payload = res.data || {};
+          this.assistantConfigured = payload.configured;
+          assistantMessage.content = payload.reply || '这次没有拿到完整回复，请稍后再试。';
+          assistantMessage.actions = Array.isArray(payload.actions) ? payload.actions : [];
+          assistantMessage.configured = payload.configured;
+          this.persistConversation();
+        } catch (err2) {
+          const fallbackMessage = typeof err2 === 'string'
+            ? err2
+            : '智能助手暂时不可用，请稍后再试。';
+          this.assistantConfigured = false;
+          assistantMessage.content = fallbackMessage;
+          assistantMessage.actions = [
+            { label: '去搜索页', description: '搜索店铺、地点和笔记', path: '/pages/misc/search.html' },
+            { label: '查看优惠券', description: '看看当前能领哪些券', path: '/pages/misc/vouchers.html' }
+          ];
+          assistantMessage.configured = false;
+          this.persistConversation();
+          this.$message.error('智能助手暂时不可用，请稍后重试');
+        }
       },
       handleAction(action) {
         if (!action || !action.path) return;

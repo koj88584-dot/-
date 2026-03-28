@@ -4,11 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>周边优速通</title>
-  <meta http-equiv="refresh" content="0; url=pages/index-new.html">
 </head>
 <body>
-  <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif;">
-    <p>正在跳转到首页...</p>
+  <div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial,sans-serif;color:#ff6633;">
+    <p>正在校验登录状态...</p>
   </div>
+  <script src="/js/auth.js"></script>
+  <script>
+    window.authHelper.redirectRoot();
+  </script>
 </body>
 </html>

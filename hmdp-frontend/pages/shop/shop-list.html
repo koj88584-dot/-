@@ -565,8 +565,8 @@
               <div class="shop-name">{{s.name}}</div>
               <div class="shop-meta">
                 <div class="shop-rate">
-                  <el-rate disabled v-model="s.score/10" text-color="#ff6b35"></el-rate>
-                  <span class="shop-rate-text">{{s.score/10}}</span>
+                  <el-rate disabled :value="(s.score || 0) / 10" text-color="#ff6b35"></el-rate>
+                  <span class="shop-rate-text">{{((s.score || 0) / 10).toFixed(1)}}</span>
                 </div>
                 <span class="shop-comments">{{s.comments}}条评价</span>
               </div>
@@ -637,6 +637,16 @@
     created() {
       this.params.typeId = util.getUrlParam("type");
       this.typeName = util.getUrlParam("name");
+      const urlX = util.getUrlParam("x");
+      const urlY = util.getUrlParam("y");
+      if (urlX && urlY) {
+        this.params.x = parseFloat(urlX);
+        this.params.y = parseFloat(urlY);
+        localStorage.setItem('userLocation', JSON.stringify({
+          x: this.params.x,
+          y: this.params.y
+        }));
+      }
       this.queryTypes();
       this.getCurrentLocation();
 
@@ -655,6 +665,24 @@
           }
           return shop;
         });
+      },
+      applySort() {
+        const sortBy = this.params.sortBy;
+        const toNumber = (val, fallback) => {
+          const num = Number(val);
+          return Number.isFinite(num) ? num : fallback;
+        };
+        if (!sortBy) {
+          this.shops.sort((a, b) => toNumber(a.distance, Infinity) - toNumber(b.distance, Infinity));
+          return;
+        }
+        if (sortBy === 'comments') {
+          this.shops.sort((a, b) => toNumber(b.comments, 0) - toNumber(a.comments, 0));
+          return;
+        }
+        if (sortBy === 'score') {
+          this.shops.sort((a, b) => toNumber(b.score, 0) - toNumber(a.score, 0));
+        }
       },
       isNearPageBottom() {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -750,6 +778,7 @@
               return;
             }
             this.shops = data;
+            this.applySort();
             this.ensureViewportFilled();
           })
           .catch(err => {
@@ -775,6 +804,7 @@
             }
             this.params.current = nextCurrent;
             this.shops = this.shops.concat(data);
+            this.applySort();
             this.ensureViewportFilled();
           })
           .catch(err => {
@@ -786,7 +816,13 @@
           });
       },
       handleCommand(t) {
-        location.href = "./shop-list.html?type="+t.id+"&name="+t.name;
+        const params = [
+          "type=" + t.id,
+          "name=" + encodeURIComponent(t.name || ""),
+          "x=" + this.params.x,
+          "y=" + this.params.y
+        ];
+        location.href = "./shop-list.html?" + params.join("&");
       },
       sortAndQuery(sortBy) {
         this.params.sortBy = sortBy;

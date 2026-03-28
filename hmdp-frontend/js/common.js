@@ -1,116 +1,97 @@
-// 开发环境：直接访问后端
+// 开发环境直接访问后端服务
 let commonURL = "http://localhost:8081";
-// 生产环境（使用Nginx代理）：
+// 生产环境可改成 Nginx 代理路径
 // let commonURL = "/api";
-// 设置后台服务地址
+
 axios.defaults.baseURL = commonURL;
 axios.defaults.timeout = 10000;
-// request拦截器，将用户token放入头中
+
 axios.interceptors.request.use(
   config => {
-    let token = localStorage.getItem("token");
-    console.log("========== 请求拦截器 ==========");
-    console.log("请求URL:", config.url);
-    console.log("请求方法:", config.method);
-    console.log("Token:", token ? token.substring(0, 30) + "..." : "(无)");
-    
-    if(token) {
-      config.headers['authorization'] = token;
-      console.log("已设置 authorization header:", token.substring(0, 30) + "...");
-    } else {
-      console.warn("警告：token不存在，未设置 authorization header");
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers["authorization"] = token;
     }
-    
-    // 打印所有请求头
-    console.log("所有请求头:", JSON.stringify(config.headers));
-    return config
+    return config;
+  },
+  error => Promise.reject(error)
+);
+
+axios.interceptors.response.use(
+  response => {
+    if (!response.data.success) {
+      const businessMsg = response.data.errorMsg || response.data.message || "请求失败，请稍后重试";
+      return Promise.reject(businessMsg);
+    }
+    return response.data;
   },
   error => {
-    console.error("请求拦截器错误:", error);
-    return Promise.reject(error)
-  }
-)
-axios.interceptors.response.use(function (response) {
-  console.log("========== 响应拦截器（成功） ==========");
-  console.log("响应URL:", response.config.url);
-  console.log("响应状态:", response.status);
-  console.log("响应数据:", response.data);
-  
-  // 判断执行结果
-  if (!response.data.success) {
-    console.error("业务逻辑错误:", response.data.errorMsg);
-    return Promise.reject(response.data.errorMsg)
-  }
-  return response.data;
-}, function (error) {
-  // 一般是服务端异常或者网络异常
-  console.error('========== 响应拦截器（错误） ==========');
-  console.error('错误对象:', error);
-  
-  if (error.response) {
-    console.error('响应状态:', error.response.status);
-    console.error('响应数据:', error.response.data);
-    console.error('响应头:', error.response.headers);
-    
-    if(error.response.status == 401){
-      console.error('收到401未授权错误，即将跳转到登录页');
-      // 未登录，跳转
+    if (error.response && error.response.status === 401) {
+      if (window.authHelper) {
+        window.authHelper.clearAuth();
+      } else {
+        localStorage.removeItem("token");
+      }
+      const redirectTarget = location.pathname + location.search;
+      const loginUrl = window.authHelper
+        ? window.authHelper.buildLoginUrl(redirectTarget)
+        : ("/pages/auth/login.html?redirect=" + encodeURIComponent(redirectTarget));
       setTimeout(() => {
-              location.href = "/pages/auth/login.html"
-            }, 200);
+        location.replace(loginUrl);
+      }, 120);
       return Promise.reject("请先登录");
     }
-  } else if (error.request) {
-    console.error('请求已发送但没有收到响应:', error.request);
-  } else {
-    console.error('请求配置错误:', error.message);
+    if (error.response && error.response.data) {
+      return Promise.reject(error.response.data.errorMsg || error.response.data.message || "请求失败，请稍后重试");
+    }
+    if (error.message) {
+      return Promise.reject(error.message);
+    }
+    return Promise.reject(error);
   }
-  
-  return Promise.reject(error);
-});
+);
+
 axios.defaults.paramsSerializer = function(params) {
   let p = "";
   Object.keys(params).forEach(k => {
-    if(params[k]){
-      p = p + "&" + k + "=" + params[k]
+    if (params[k] !== undefined && params[k] !== null && params[k] !== "") {
+      p = p + "&" + k + "=" + params[k];
     }
-  })
+  });
   return p;
-}
+};
+
 const util = {
   commonURL,
   getUrlParam(name) {
-    let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
-    let r = window.location.search.substr(1).match(reg);
+    const reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+    const r = window.location.search.substr(1).match(reg);
     if (r != null) {
-      return decodeURI(r[2]);
+      return decodeURIComponent(r[2]);
     }
     return "";
   },
   formatPrice(val) {
-    if (typeof val === 'string') {
+    if (typeof val === "string") {
       if (isNaN(val)) {
         return null;
       }
-      // 价格转为整数
       const index = val.lastIndexOf(".");
       let p = "";
       if (index < 0) {
-        // 无小数
         p = val + "00";
-      } else if (index === p.length - 2) {
-        // 1位小数
-        p = val.replace("\.", "") + "0";
+      } else if (index === val.length - 2) {
+        p = val.replace(".", "") + "0";
       } else {
-        // 2位小数
-        p = val.replace("\.", "")
+        p = val.replace(".", "");
       }
-      return parseInt(p);
-    } else if (typeof val === 'number') {
+      return parseInt(p, 10);
+    }
+    if (typeof val === "number") {
       if (!val) {
         return null;
       }
-      const s = val + '';
+      const s = val + "";
       if (s.length === 0) {
         return "0.00";
       }
@@ -122,19 +103,19 @@ const util = {
       }
       const i = s.indexOf(".");
       if (i < 0) {
-        return s.substring(0, s.length - 2) + "." + s.substring(s.length - 2)
+        return s.substring(0, s.length - 2) + "." + s.substring(s.length - 2);
       }
       const num = s.substring(0, i) + s.substring(i + 1);
       if (i === 1) {
-        // 1位整数
         return "0.0" + num;
       }
       if (i === 2) {
         return "0." + num;
       }
       if (i > 2) {
-        return num.substring(0, i - 2) + "." + num.substring(i - 2)
+        return num.substring(0, i - 2) + "." + num.substring(i - 2);
       }
     }
+    return val;
   }
-}
+};

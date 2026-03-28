@@ -2,6 +2,7 @@ package com.hmdp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.hmdp.dto.LoginFormDTO;
+import com.hmdp.dto.RegisterFormDTO;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.User;
 
@@ -34,6 +35,15 @@ public interface IUserService extends IService<User> {
      * @return {@link Result}
      */
     Result login(LoginFormDTO loginForm, HttpSession session);
+
+    /**
+     * 注册
+     *
+     * @param registerForm 注册表单
+     * @param session      会话
+     * @return {@link Result}
+     */
+    Result register(RegisterFormDTO registerForm, HttpSession session);
 
     /**
      * 签到

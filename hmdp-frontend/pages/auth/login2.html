@@ -1,21 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-  <title>周边优速通</title>
-  <link href="/css/login.css" rel="stylesheet">
-  <!-- 引入样式 -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>密码登录</title>
   <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <link href="/css/login.css" rel="stylesheet">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: linear-gradient(180deg, #fff6f1 0%, #fff 35%, #f7f8fa 100%);
+    }
 
-  <style type="text/css">
-      .el-radio__input.is-checked .el-radio__inner {
-          border-color: #F63;
-          background: #F63;
-      }
-      .el-input__inner:focus {
-          border: 1px solid #F63;
-      }
+    .login-container {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content {
+      flex: 1;
+      padding: 24px 18px 20px;
+      background: transparent;
+      justify-content: flex-start;
+      gap: 16px;
+    }
+
+    .auth-panel {
+      width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 28px 22px 24px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 18px 45px rgba(255, 102, 51, 0.12);
+    }
+
+    .auth-title {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .auth-desc {
+      margin: 0 0 20px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #667085;
+    }
+
+    .field-gap {
+      height: 12px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      border: none;
+      background: linear-gradient(135deg, #ff7a45 0%, #ff5a36 100%);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      box-shadow: 0 12px 28px rgba(255, 102, 51, 0.24);
+    }
+
+    .helper-link {
+      margin-top: 10px;
+      text-align: right;
+      font-size: 13px;
+    }
+
+    .helper-link a,
+    .switch-links a {
+      color: #ff6633;
+      text-decoration: none;
+    }
+
+    .switch-links {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    .agreement {
+      width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 0 6px;
+      color: #667085;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .agreement a {
+      color: #ff6633;
+      text-decoration: none;
+    }
+
+    .agreement input[type="radio"] {
+      margin-top: 3px;
+    }
   </style>
 </head>
 <body>
@@ -23,75 +113,104 @@
   <div class="login-container">
     <div class="header">
       <div class="header-back-btn" @click="goBack"><i class="el-icon-arrow-left"></i></div>
-      <div class="header-title">密码登录&nbsp;&nbsp;&nbsp;</div>
+      <div class="header-title">密码登录</div>
     </div>
     <div class="content">
-      <div class="login-form">
-        <el-input placeholder="请输入手机号" v-model="form.phone">
-        </el-input>
-        <div style="height: 5px"></div>
-        <el-input placeholder="请输入密码" v-model="form.password">
-        </el-input>
-        <div style="text-align: center; color: #8c939d;margin: 5px 0"><a href="javascript:void(0)">忘记密码</a></div>
-        <el-button @click="login" style="width: 100%; background-color:#f63; color: #fff;">登录</el-button>
-        <div style="text-align: right; color:#333333; margin: 5px 0"><a href="/login.html">验证码登录</a></div>
-      </div>
-      <div class="login-radio">
-        <div>
-          <input type="radio" name="readed" v-model="radio" value="1">
-          <label for="readed"></label>
+      <div class="auth-panel">
+        <h1 class="auth-title">欢迎回来</h1>
+        <p class="auth-desc">使用手机号和密码登录，适合已经完成注册并设置密码的账号。</p>
+        <el-input v-model.trim="form.phone" placeholder="请输入手机号"></el-input>
+        <div class="field-gap"></div>
+        <el-input v-model.trim="form.password" placeholder="请输入密码" show-password></el-input>
+        <div class="helper-link">
+          <a href="javascript:void(0)">忘记密码</a>
         </div>
-        <div>我已阅读并同意
-          <a href="javascript:void(0)">
-          《周边优速通用户服务协议》</a>、
+        <div class="field-gap"></div>
+        <el-button class="submit-btn" @click="login">登录</el-button>
+        <div class="switch-links">
+          <a :href="registerUrl">注册账号</a>
+          <a :href="codeLoginUrl">验证码登录</a>
+        </div>
+      </div>
+
+      <div class="agreement">
+        <div>
+          <input type="radio" id="agree-password-login" name="agree-password-login" v-model="radio" value="1">
+          <label for="agree-password-login"></label>
+        </div>
+        <div>
+          我已阅读并同意
+          <a href="javascript:void(0)">《用户服务协议》</a>
+          和
           <a href="javascript:void(0)">《隐私政策》</a>
-          等，接受免除或者限制责任、诉讼管辖约定等粗体标示条款
         </div>
       </div>
     </div>
   </div>
 </div>
-  <script src="/js/vue.js"></script>
-  <script src="/js/axios.min.js"></script>
-<!-- 引入组件库 -->
-  <script src="/js/element.js"></script>
-  <script src="/js/common.js"></script>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
 <script>
-
-  const app = new Vue({
+  new Vue({
     el: "#app",
     data: {
       radio: "",
-      form:{
+      redirectTarget: window.authHelper.normalizeRedirectPath(util.getUrlParam("redirect") || "/pages/index-new.html"),
+      form: {
+        phone: "",
+        password: ""
       }
     },
+    computed: {
+      registerUrl() {
+        return "/pages/auth/register.html?redirect=" + encodeURIComponent(this.redirectTarget);
+      },
+      codeLoginUrl() {
+        return "/pages/auth/login.html?redirect=" + encodeURIComponent(this.redirectTarget);
+      }
+    },
+    async mounted() {
+      await window.authHelper.redirectIfLoggedIn(this.redirectTarget);
+    },
     methods: {
-      login(){
-        if(!this.radio){
-          this.$message.error("请先确认阅读用户协议！");
+      showError(err) {
+        const msg = typeof err === "string" ? err : (err && err.message) || "操作失败，请稍后重试";
+        this.$message.error(msg);
+      },
+      validateAgreement() {
+        if (!this.radio) {
+          this.$message.error("请先勾选用户协议");
+          return false;
+        }
+        return true;
+      },
+      async login() {
+        if (!this.validateAgreement()) {
           return;
         }
-        axios.post("/user/login", this.form)
-          .then((res) => {
-            console.log("登录响应:", res);
-            // res 是 Result 对象，token 在 res.data 中
-            const token = res.data;
-            console.log("获取到的token:", token);
-            if(token){
-              // 保存用户信息到localStorage
-              localStorage.setItem("token", token);
-              console.log("保存后立即读取:", localStorage.getItem("token"));
-            }
-            // 跳转到首页
-            location.href = "index-new.html"
-          })
-          .catch(err => this.$message.error(err))
+        if (!this.form.phone || !this.form.password) {
+          this.$message.error("请输入手机号和密码");
+          return;
+        }
+        try {
+          const res = await axios.post("/user/login", this.form);
+          const token = res.data;
+          if (token) {
+            localStorage.setItem("token", token);
+          }
+          location.replace(this.redirectTarget);
+        } catch (err) {
+          this.showError(err);
+        }
       },
-      goBack(){
+      goBack() {
         history.back();
       }
     }
-  })
+  });
 </script>
 </body>
 </html>

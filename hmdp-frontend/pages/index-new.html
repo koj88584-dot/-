@@ -1394,7 +1394,12 @@
   <script src="/js/axios.min.js"></script>
   <script src="/js/element.js"></script>
   <script src="/js/common.js"></script>
+  <script src="/js/auth.js"></script>
   <script>
+    const NEARBY_CACHE_KEY = 'hmdp_nearby_shops_cache';
+    const NEARBY_CACHE_TTL = 10 * 60 * 1000;
+    const LOCATION_CHANGE_THRESHOLD = 200;
+
     new Vue({
       el: '#app',
       data: {
@@ -1422,7 +1427,7 @@
         notes: [],  // 推荐笔记，从后端获取
         nearbyShops: [],
         currentLocation: null,  // 当前坐标
-        noteFallbackImage: '/imgs/blogs/14/2/c760152a-7a31-4afa-8767-c9144701dcd5.jpg',
+        noteFallbackImage: '/imgs/blogs/blog1.jpg',
         avatarFallbackImage: '/imgs/icons/default-icon.png',
         isLocating: false       // 是否正在定位
       },
@@ -1439,8 +1444,118 @@
       },
 
       methods: {
+        readNearbyCache() {
+          const raw = localStorage.getItem(NEARBY_CACHE_KEY);
+          if (!raw) {
+            return null;
+          }
+          try {
+            const parsed = JSON.parse(raw);
+            if (!parsed || !parsed.location || !Array.isArray(parsed.shops)) {
+              return null;
+            }
+            if (Date.now() - (parsed.ts || 0) > NEARBY_CACHE_TTL) {
+              return null;
+            }
+            return parsed;
+          } catch (e) {
+            return null;
+          }
+        },
+        restoreNearbyCache() {
+          const cached = this.readNearbyCache();
+          if (!cached) {
+            return false;
+          }
+          this.nearbyShops = cached.shops;
+          this.currentLocation = cached.location;
+          if (cached.city) {
+            this.currentCity = cached.city;
+          }
+          this.isLoading = false;
+          return true;
+        },
+        saveNearbyCache() {
+          if (!this.currentLocation || !Array.isArray(this.nearbyShops)) {
+            return;
+          }
+          const payload = {
+            ts: Date.now(),
+            location: this.currentLocation,
+            city: this.currentCity,
+            shops: this.nearbyShops
+          };
+          localStorage.setItem(NEARBY_CACHE_KEY, JSON.stringify(payload));
+        },
+        isLocationChanged(newLocation, baseLocation) {
+          if (!newLocation || !baseLocation) {
+            return true;
+          }
+          const distance = this.calculateDistance(newLocation.x, newLocation.y, baseLocation.x, baseLocation.y);
+          return distance > LOCATION_CHANGE_THRESHOLD;
+        },
         // 自动定位并加载
         async autoLocateAndLoad() {
+          const savedCity = localStorage.getItem('currentCity');
+          if (savedCity) {
+            try {
+              const parsed = JSON.parse(savedCity);
+              if (parsed && parsed.name) {
+                this.currentCity = parsed.name;
+                localStorage.setItem('currentCity', parsed.name);
+              } else if (typeof parsed === 'object') {
+                this.currentCity = '定位中...';
+              } else {
+                this.currentCity = savedCity;
+              }
+            } catch (e) {
+              this.currentCity = savedCity;
+            }
+          } else {
+            this.currentCity = '定位中...';
+          }
+
+          const hasCache = this.restoreNearbyCache();
+
+          if (navigator.geolocation) {
+            this.isLocating = true;
+            navigator.geolocation.getCurrentPosition(
+              async (position) => {
+                const latestLocation = {
+                  x: position.coords.longitude,
+                  y: position.coords.latitude,
+                  accuracy: position.coords.accuracy
+                };
+
+                const locationChanged = this.isLocationChanged(latestLocation, this.currentLocation);
+                this.currentLocation = latestLocation;
+                localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
+
+                if (locationChanged || !hasCache) {
+                  await this.getCityByLocation(latestLocation.x, latestLocation.y);
+                  this.loadNearbyShops(true);
+                } else {
+                  this.isLocating = false;
+                }
+              },
+              (error) => {
+                console.log('自动定位失败，使用缓存位置:', error);
+                this.isLocating = false;
+                if (!hasCache) {
+                  this.getCurrentLocation();
+                }
+              },
+              {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000
+              }
+            );
+          } else if (!hasCache) {
+            this.getCurrentLocation();
+          }
+          return;
+          if (false) {
           // 先恢复保存的城市名称（用于显示）
           const savedCity = localStorage.getItem('currentCity');
           if (savedCity) {
@@ -1499,6 +1614,7 @@
           } else {
             // 浏览器不支持定位
             this.getCurrentLocation();
+          }
           }
         },
 
@@ -1625,17 +1741,28 @@
           this.$message.info('正在刷新位置...');
           // 清除保存的位置，强制重新获取
           localStorage.removeItem('userLocation');
+          localStorage.removeItem(NEARBY_CACHE_KEY);
           this.getCurrentLocation(true);
         },
 
         // 加载附近店铺
-        async loadNearbyShops() {
+        async loadNearbyShops(forceRefresh = false) {
+          if (!forceRefresh) {
+            const cached = this.readNearbyCache();
+            if (cached && (!this.currentLocation || !this.isLocationChanged(this.currentLocation, cached.location))) {
+              this.nearbyShops = cached.shops;
+              this.currentLocation = cached.location;
+              this.isLoading = false;
+              return;
+            }
+          }
+
           this.isLoading = true;
 
           try {
             // 如果没有坐标，先获取
             if (!this.currentLocation) {
-              this.getCurrentLocation();
+              this.getCurrentLocation(forceRefresh);
               return;
             }
 
@@ -1643,11 +1770,11 @@
             console.log('加载附近店铺，坐标:', x, y);
 
             // 并行请求多种类型的店铺
-            const requests = [1, 2, 3, 4, 5].map(typeId =>
-              axios.get('/shop/of/type', {
-                params: { typeId, current: 1, x, y }
-              }).catch(() => ({ data: [] }))
-            );
+          const requests = Array.from({ length: 10 }, (_, index) => index + 1).map(typeId =>
+            axios.get('/shop/of/type', {
+              params: { typeId, current: 1, x, y }
+            }).catch(() => ({ data: [] }))
+          );
 
             const responses = await Promise.all(requests);
             let allShops = [];
@@ -1678,6 +1805,7 @@
                 tags: this.getShopTags(shop.typeId),
                 distanceText: shop.distance ? this.formatDistance(shop.distance) : ''
               }));
+              this.saveNearbyCache();
             } else {
               this.nearbyShops = [];
             }
@@ -1735,6 +1863,8 @@
             this.$message.info('正在重新定位...');
             // 清除保存的位置，强制重新获取
             localStorage.removeItem('userLocation');
+            localStorage.removeItem(NEARBY_CACHE_KEY);
+            this.nearbyShops = [];
             this.getCurrentLocation(true);
           } else if (command === 'more') {
             // 打开更多城市对话框
@@ -1755,6 +1885,8 @@
         // 使用当前定位
         useCurrentLocation() {
           this.showCityDialog = false;
+          localStorage.removeItem(NEARBY_CACHE_KEY);
+          this.nearbyShops = [];
           this.$message.info('正在重新定位...');
           this.getCurrentLocation();
         },
@@ -1785,12 +1917,14 @@
             // 保存到本地存储
             localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
             localStorage.setItem('currentCity', cityName);
+            localStorage.removeItem(NEARBY_CACHE_KEY);
+            this.nearbyShops = [];
 
             this.showCityDialog = false;
             this.$message.success(`已切换到${cityName}`);
 
             // 刷新附近店铺
-            this.loadNearbyShops();
+            this.loadNearbyShops(true);
           }
         },
 
@@ -1806,12 +1940,14 @@
           // 保存到本地存储
           localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
           localStorage.setItem('currentCity', city.name);
+          localStorage.removeItem(NEARBY_CACHE_KEY);
+          this.nearbyShops = [];
 
           this.showCityDialog = false;
           this.$message.success(`已切换到${city.name}`);
 
           // 刷新附近店铺
-          this.loadNearbyShops();
+          this.loadNearbyShops(true);
         },
 
         // 搜索城市/地点
@@ -1860,7 +1996,9 @@
 
         // 分类点击
         goToCategory(cat) {
-          window.location.href = `shop/shop-list.html?type=${cat.id}`;
+          const coords = this.currentLocation ? `&x=${this.currentLocation.x}&y=${this.currentLocation.y}` : '';
+          const name = cat.name ? `&name=${encodeURIComponent(cat.name)}` : '';
+          window.location.href = `shop/shop-list.html?type=${cat.id}${name}${coords}`;
         },
 
         // 查看更多笔记
@@ -1971,6 +2109,10 @@
           if (!event || !event.target) {
             return;
           }
+          if (event.target.dataset.fallbackApplied === '1') {
+            return;
+          }
+          event.target.dataset.fallbackApplied = '1';
           event.target.src = type === 'avatar' ? this.avatarFallbackImage : this.noteFallbackImage;
         }
       }

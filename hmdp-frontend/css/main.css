@@ -19,13 +19,17 @@ html,body,#app{
 }
 .foot {
     width: 100%;
-    height: 8%;
+    height: 60px;
     display: flex;
     justify-content: center;
     align-items: center;
     box-shadow: 0 -1px 2px 1px rgba(0, 0, 0, 0.1);
-    position: absolute;
+    position: fixed;
     bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    z-index: 1000;
 }
 .foot .add-btn {
     width: 38px;

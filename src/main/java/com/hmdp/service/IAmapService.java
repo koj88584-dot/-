@@ -33,6 +33,20 @@ public interface IAmapService {
     List<Shop> searchNearbyShops(Integer typeId, String keyword, Double x, Double y, Integer radius);
 
     /**
+     * 鏍规嵁绫诲瀷鍜屽潗鏍囨悳绱㈠懆杈瑰簵閾伙紝鏀寔鎸囧畾鏍囬〉鍜屾瘡椤垫潯鏁?
+     *
+     * @param typeId 搴楅摵绫诲瀷ID
+     * @param keyword 鎼滅储鍏抽敭璇?
+     * @param x      缁忓害
+     * @param y      绾害
+     * @param radius 鎼滅储鍗婂緞锛堢背锛?
+     * @param page   绗嚑椤?1涓鸿捣濮?
+     * @param pageSize 姣忛〉鏉℃暟
+     * @return 搴楅摵鍒楄〃
+     */
+    List<Shop> searchNearbyShops(Integer typeId, String keyword, Double x, Double y, Integer radius, Integer page, Integer pageSize);
+
+    /**
      * 将高德地图数据转换为店铺实体
      *
      * @param amapData 高德地图返回的POI数据

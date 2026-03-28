@@ -967,7 +967,7 @@
       shop: {},
       vouchers: [],
       isFavorite: false,
-      fallbackImage: '/imgs/blogs/14/2/c760152a-7a31-4afa-8767-c9144701dcd5.jpg'
+      fallbackImage: '/imgs/blogs/blog1.jpg'
     },
     created() {
       let shopId = util.getUrlParam("id");
@@ -1110,9 +1110,10 @@
         return util.commonURL + (path.startsWith("/") ? path : "/" + path);
       },
       handleImageError(event) {
-        if (event && event.target) {
-          event.target.src = this.fallbackImage;
-        }
+        if (!event || !event.target) return;
+        if (event.target.dataset.fallbackApplied === '1') return;
+        event.target.dataset.fallbackApplied = '1';
+        event.target.src = this.fallbackImage;
       },
       getErrorMessage(err) {
         if (typeof err === "string") {

@@ -262,7 +262,7 @@
         blog: {
           images: []
         },
-        fallbackImage: '/imgs/blogs/14/2/c760152a-7a31-4afa-8767-c9144701dcd5.jpg',
+        fallbackImage: '/imgs/blogs/blog1.jpg',
         fallbackAvatar: '/imgs/icons/default-icon.png',
         shop: null,
         likes: [],
@@ -635,6 +635,10 @@
         if (!event || !event.target) {
           return;
         }
+        if (event.target.dataset.fallbackApplied === '1') {
+          return;
+        }
+        event.target.dataset.fallbackApplied = '1';
         event.target.src = type === 'avatar' ? this.fallbackAvatar : this.fallbackImage;
       },
       ensureLogin() {

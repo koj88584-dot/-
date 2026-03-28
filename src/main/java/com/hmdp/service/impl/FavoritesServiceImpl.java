@@ -56,6 +56,10 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
         favorites.setTargetId(targetId);
         favorites.setCreateTime(LocalDateTime.now());
         save(favorites);
+
+        if (type != null && type == 1) {
+            shopService.ensureShopExists(targetId);
+        }
         
         return Result.ok();
     }
@@ -107,6 +111,9 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
             if (fav.getType() == 1) {
                 // 店铺
                 Shop shop = shopService.getById(fav.getTargetId());
+                if (shop == null) {
+                    shop = shopService.ensureShopExists(fav.getTargetId());
+                }
                 if (shop != null) {
                     result.add(shop);
                 }
