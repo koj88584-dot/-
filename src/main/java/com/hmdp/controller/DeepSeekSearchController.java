@@ -36,12 +36,14 @@ public class DeepSeekSearchController {
     public Result simpleSearch(@RequestParam("keyword") String keyword,
                                @RequestParam(value = "type", defaultValue = "all") String type,
                                @RequestParam(value = "sortBy", defaultValue = "relevance") String sortBy,
-                               @RequestParam(value = "current", defaultValue = "1") Integer current) {
+                               @RequestParam(value = "current", defaultValue = "1") Integer current,
+                               @RequestParam(value = "cityCode", required = false) String cityCode) {
         DeepSeekSearchDTO dto = new DeepSeekSearchDTO();
         dto.setKeyword(keyword);
         dto.setType(type);
         dto.setSortBy(sortBy);
         dto.setCurrent(current);
+        dto.setCityCode(cityCode);
         return deepSeekSearchService.search(dto);
     }
 

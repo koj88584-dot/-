@@ -547,6 +547,11 @@ body {
   color: var(--blog-primary);
 }
 
+.composer__btn.is-fav-active {
+  background: rgba(250, 173, 20, 0.12);
+  color: #faad14;
+}
+
 .composer__submit {
   padding: 0 18px;
   height: 48px;

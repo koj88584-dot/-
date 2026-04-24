@@ -63,6 +63,16 @@ public class PrivacySetting implements Serializable {
     private Integer showOnlineStatus = 1;
 
     /**
+     * 隐身访问模式：0-关闭 1-开启（浏览他人主页不留足迹）
+     */
+    private Integer stealthMode = 0;
+
+    /**
+     * 是否允许访客通知：0-不允许 1-允许（有人访问主页时收到提示）
+     */
+    private Integer allowVisitNotify = 1;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

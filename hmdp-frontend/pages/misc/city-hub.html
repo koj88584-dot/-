@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>城市馆 - 周边优速通</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff6b35;
+      --primary-light: #ff8c61;
+      --primary-dark: #1b4d3e;
+      --bg: #f7f8fb;
+      --surface: #ffffff;
+      --text-primary: #1f2933;
+      --text-secondary: #667085;
+      --border: #edf0f5;
+      --shadow-sm: 0 8px 24px rgba(15,23,42,0.06);
+      --shadow-md: 0 14px 36px rgba(15,23,42,0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--city-bg, #fff8f4) 0%, var(--bg) 28%, #fff 100%);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+      line-height: 1.5;
+    }
+
+    #app {
+      width: min(100%, 430px);
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 14px 14px 36px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.94);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(16px);
+    }
+
+    .back {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255,107,53,0.1);
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    .topbar-title {
+      font-weight: 800;
+      flex: 1;
+    }
+
+    .hero {
+      margin-top: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--primary-dark);
+      color: #fff;
+      box-shadow: var(--shadow-md);
+    }
+
+    .hero-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+      filter: saturate(0.92) contrast(1.02);
+    }
+
+    .hero-copy {
+      padding: 18px 16px 20px;
+      background: linear-gradient(135deg, rgba(27,77,62,0.98), rgba(255,107,53,0.88));
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 28px;
+      line-height: 1.22;
+      letter-spacing: 0;
+    }
+
+    .hero-copy p {
+      margin-top: 10px;
+      color: rgba(255,255,255,0.84);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .hero-actions,
+    .chip-row,
+    .business-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hero-actions {
+      margin-top: 16px;
+    }
+
+    button {
+      font-family: inherit;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .hero-btn {
+      border: none;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .hero-btn.primary {
+      background: #fff;
+      color: var(--primary-dark);
+    }
+
+    .hero-btn.secondary {
+      color: #fff;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .section {
+      margin-top: 14px;
+      padding: 16px 14px;
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .section-desc {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.7;
+      margin-top: 4px;
+    }
+
+    .chip {
+      border: 1px solid rgba(255,107,53,0.16);
+      background: rgba(255,107,53,0.08);
+      color: var(--primary);
+      padding: 7px 9px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .city-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .city-card {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .city-cover {
+      width: 100%;
+      height: 118px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .city-body {
+      padding: 12px;
+    }
+
+    .city-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .city-title span:last-child {
+      color: var(--primary);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .city-text {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.7;
+      min-height: 40px;
+    }
+
+    .city-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .city-actions button {
+      height: 36px;
+      border: 1px solid rgba(255,107,53,0.18);
+      font-weight: 800;
+      font-size: 12px;
+      color: var(--primary);
+      background: #fff;
+    }
+
+    .city-actions button:first-child {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .business-item {
+      flex: 1 1 calc(50% - 8px);
+      min-height: 88px;
+      border-radius: 8px;
+      padding: 12px;
+      background: linear-gradient(180deg, var(--city-bg, #fff8f4), #fff);
+      border: 1px solid rgba(255,107,53,0.12);
+    }
+
+    .business-value {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .business-label {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .empty {
+      padding: 30px 12px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <button class="back" @click="goHome()"><i class="el-icon-arrow-left"></i></button>
+    <div class="topbar-title">全国城市馆</div>
+    <button class="back" @click="goMap()"><i class="el-icon-map-location"></i></button>
+  </div>
+
+  <div v-if="loading" class="empty">
+    <i class="el-icon-loading"></i>
+    正在加载城市版本...
+  </div>
+
+  <template v-else>
+    <section class="hero">
+      <img class="hero-img" :src="activeCity.cover || 'https://loremflickr.com/800/600/city,landscape'" :alt="activeCity.cityName + '消费场景'" @error="handleImageError">
+      <div class="hero-copy">
+        <div class="eyebrow">{{ brandClaim }}</div>
+        <h1>全国一套品牌主张，每座城市一个消费版本</h1>
+        <p>先做样板城市，再复制城市运营方法论。用户看到的是本城决策，商家获得的是本城成交，平台沉淀的是城市复制能力。</p>
+        <div class="hero-actions">
+          <button class="hero-btn primary" @click="goHome(activeCity)">进入{{ activeCity.cityName }}版首页</button>
+          <button class="hero-btn secondary" @click="goMap(activeCity)">打开城市玩法地图</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-title">{{ activeCity.cityName }}样板间</div>
+          <div class="section-desc">{{ activeCity.cityTagline }}</div>
+        </div>
+      </div>
+      <div class="chip-row">
+        <button class="chip" v-for="tag in activeCityTags" :key="tag" @click="goSearch(tag)">{{ tag }}</button>
+      </div>
+      <div class="chip-row" style="margin-top:10px;">
+        <button class="chip" v-for="district in activeCityDistricts" :key="district" @click="goSearch(district)">{{ district }}</button>
+      </div>
+      <div class="chip-row" style="margin-top:10px;">
+        <button class="chip" v-for="route in activeCityRoutes" :key="route" @click="goMap(activeCity)">{{ route }}</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-title">城市矩阵</div>
+          <div class="section-desc">先跑通 8 到 12 个高差异样板城市，证明全国化不是铺空城。</div>
+        </div>
+      </div>
+      <div class="city-grid">
+        <article class="city-card" v-for="city in openCities" :key="city.cityCode">
+          <img class="city-cover" :src="city.cover" :alt="city.cityName" @error="handleImageError">
+          <div class="city-body">
+            <div class="city-title">
+              <span>{{ city.cityName }}</span>
+              <span>{{ city.province }}</span>
+            </div>
+            <div class="city-text">{{ city.tagline || city.cityTagline }}</div>
+            <div class="chip-row" style="margin-top:10px;">
+              <span class="chip" v-for="tag in (city.tags || city.cultureTags || []).slice(0, 3)" :key="city.cityCode + tag">{{ tag }}</span>
+            </div>
+            <div class="city-actions">
+              <button @click="chooseCity(city)">切到本城</button>
+              <button @click="goMap(city)">玩法地图</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-title">商业闭环</div>
+          <div class="section-desc">城市选择、城市特色决策、领券下单、导航到店、核销成交、商家复购运营。</div>
+        </div>
+      </div>
+      <div class="business-grid">
+        <div class="business-item">
+          <div class="business-value">一城一策</div>
+          <div class="business-label">按文化底蕴、生活节奏和商圈结构做推荐权重。</div>
+        </div>
+        <div class="business-item">
+          <div class="business-value">样板复制</div>
+          <div class="business-label">先做高密度样板城市，再复制运营方法论。</div>
+        </div>
+        <div class="business-item">
+          <div class="business-value">本城成交</div>
+          <div class="business-label">用券、榜单、路线和导航把浏览转成核销。</div>
+        </div>
+        <div class="business-item">
+          <div class="business-value">商家工具</div>
+          <div class="business-label">商家按城市看订单、核销、优惠券和推荐位表现。</div>
+        </div>
+      </div>
+    </section>
+  </template>
+</div>
+
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/city-hub-page.js"></script>
+</body>
+</html>

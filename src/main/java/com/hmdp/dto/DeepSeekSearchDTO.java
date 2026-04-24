@@ -46,6 +46,11 @@ public class DeepSeekSearchDTO {
      * 店铺类型id
      */
     private Long typeId;
+
+    /**
+     * 鍩庡競adcode
+     */
+    private String cityCode;
     
     /**
      * 当前页

@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import static com.hmdp.utils.RedisConstants.LOGIN_CODE_KEY;
 import static com.hmdp.utils.RedisConstants.LOGIN_CODE_TTL;
 import static com.hmdp.utils.RedisConstants.LOGIN_USER_KEY;
+import static com.hmdp.utils.RedisConstants.LOGIN_USER_INDEX_KEY;
 import static com.hmdp.utils.RedisConstants.LOGIN_USER_TTL;
 import static com.hmdp.utils.RedisConstants.USER_SIGN_KEY;
 import static com.hmdp.utils.SystemConstants.USER_NICK_NAME_PREFIX;
@@ -44,6 +45,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private MerchantAuthService merchantAuthService;
 
     @Override
     public Result sendCode(String phone, HttpSession session) {
@@ -184,17 +187,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     private String createLoginToken(User user) {
+        Long userId = user.getId();
+        String userIndexKey = LOGIN_USER_INDEX_KEY + userId;
+        String previousToken = stringRedisTemplate.opsForValue().get(userIndexKey);
+        if (StrUtil.isNotBlank(previousToken)) {
+            stringRedisTemplate.delete(LOGIN_USER_KEY + previousToken);
+            stringRedisTemplate.delete(userIndexKey);
+        }
+
         String token = UUID.randomUUID().toString(true);
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+        merchantAuthService.fillUserFlags(userDTO);
         Map<String, Object> map = BeanUtil.beanToMap(
                 userDTO,
                 new HashMap<>(),
                 CopyOptions.create()
                         .setIgnoreNullValue(true)
-                        .setFieldValueEditor((name, value) -> value.toString())
+                        .setFieldValueEditor((name, value) -> value == null ? null : value.toString())
         );
-        stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, map);
-        stringRedisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.MINUTES);
+        String tokenKey = LOGIN_USER_KEY + token;
+        stringRedisTemplate.opsForHash().putAll(tokenKey, map);
+        stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(userIndexKey, token, LOGIN_USER_TTL, TimeUnit.MINUTES);
         return token;
     }
 
@@ -209,7 +223,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public Result logout(String token) {
         if (StrUtil.isNotBlank(token)) {
-            stringRedisTemplate.delete(LOGIN_USER_KEY + token);
+            String tokenKey = LOGIN_USER_KEY + token;
+            Object userIdValue = stringRedisTemplate.opsForHash().get(tokenKey, "id");
+            stringRedisTemplate.delete(tokenKey);
+
+            Long userId = null;
+            if (userIdValue != null && StrUtil.isNotBlank(userIdValue.toString())) {
+                userId = Long.valueOf(userIdValue.toString());
+            } else if (UserHolder.getUser() != null) {
+                userId = UserHolder.getUser().getId();
+            }
+
+            if (userId != null) {
+                String userIndexKey = LOGIN_USER_INDEX_KEY + userId;
+                String currentToken = stringRedisTemplate.opsForValue().get(userIndexKey);
+                if (StrUtil.equals(currentToken, token)) {
+                    stringRedisTemplate.delete(userIndexKey);
+                }
+            }
         }
         UserHolder.removeUser();
         return Result.ok();

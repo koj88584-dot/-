@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>审核后台</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <style>
+    body { margin:0; background:#f7f8fc; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; color:#1f2937; }
+    .page { max-width:1160px; margin:0 auto; padding:18px 16px 40px; }
+    .header,.panel,.card { background:#fff; border-radius:24px; box-shadow:0 16px 40px rgba(15,23,42,.06); }
+    .header { display:flex; align-items:center; gap:14px; padding:18px; margin-bottom:16px; }
+    .panel { padding:18px; }
+    .list { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; margin-top:16px; }
+    .card { padding:18px; }
+    .back { width:42px; height:42px; border:none; border-radius:14px; background:#f8fafc; cursor:pointer; }
+    .title { flex:1; font-size:26px; font-weight:800; }
+    .meta { color:#64748b; line-height:1.8; font-size:14px; margin-top:10px; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    .image-section { margin-top:12px; }
+    .image-title { color:#334155; font-size:13px; font-weight:800; margin-bottom:8px; }
+    .image-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:10px; }
+    .image-thumb { width:100%; aspect-ratio:1/1; border:0; padding:0; border-radius:14px; overflow:hidden; background:#f1f5f9; cursor:pointer; box-shadow:inset 0 0 0 1px #e2e8f0; }
+    .image-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+    .image-preview { width:100%; max-height:72vh; object-fit:contain; border-radius:16px; background:#0f172a; }
+  </style>
+</head>
+<body>
+<div id="app" class="page">
+  <div class="header">
+    <button class="back" @click="goBack"><i class="el-icon-arrow-left"></i></button>
+    <div class="title">审核后台</div>
+  </div>
+  <div class="panel">
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <el-radio-group v-model="statusFilter" @change="reload">
+        <el-radio-button :label="0">待审核</el-radio-button>
+        <el-radio-button :label="1">已通过</el-radio-button>
+        <el-radio-button :label="2">已驳回</el-radio-button>
+      </el-radio-group>
+    </div>
+    <el-tabs v-model="activeTab">
+      <el-tab-pane label="商家资格" name="merchant">
+        <div class="list">
+          <div class="card" v-for="item in merchantApplications" :key="item.id">
+            <div style="font-weight:700;">{{ item.userNickName || ('用户 #' + item.userId) }}</div>
+            <div class="meta">
+              <div>状态：{{ item.statusText }}</div>
+              <div>联系人：{{ item.contactName }} · {{ item.contactPhone }}</div>
+              <div v-if="item.companyName">公司/门店：{{ item.companyName }}</div>
+              <div>提交时间：{{ item.createTime }}</div>
+              <div v-if="item.reviewRemark">审核备注：{{ item.reviewRemark }}</div>
+            </div>
+            <div class="image-section" v-if="splitImages(item.proofImages).length">
+              <div class="image-title">证明图片</div>
+              <div class="image-list">
+                <button class="image-thumb" v-for="(image, index) in splitImages(item.proofImages)" :key="image + index" @click="previewImage(image)">
+                  <img :src="resolveImage(image)" alt="证明图片">
+                </button>
+              </div>
+            </div>
+            <div class="actions" v-if="item.status === 0">
+              <el-button size="mini" type="primary" @click="approve('merchant', item.id)">通过</el-button>
+              <el-button size="mini" type="danger" @click="reject('merchant', item.id)">驳回</el-button>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+      <el-tab-pane label="认领店铺" name="claim">
+        <div class="list">
+          <div class="card" v-for="item in claimApplications" :key="item.id">
+            <div style="font-weight:700;">{{ item.shopName || ('店铺 #' + item.shopId) }}</div>
+            <div class="meta">
+              <div>申请人：{{ item.userNickName || ('用户 #' + item.userId) }}</div>
+              <div>状态：{{ item.statusText }}</div>
+              <div>提交时间：{{ item.createTime }}</div>
+              <div v-if="item.message">说明：{{ item.message }}</div>
+              <div v-if="item.reviewRemark">审核备注：{{ item.reviewRemark }}</div>
+            </div>
+            <div class="image-section" v-if="splitImages(item.proofImages).length">
+              <div class="image-title">证明图片</div>
+              <div class="image-list">
+                <button class="image-thumb" v-for="(image, index) in splitImages(item.proofImages)" :key="image + index" @click="previewImage(image)">
+                  <img :src="resolveImage(image)" alt="证明图片">
+                </button>
+              </div>
+            </div>
+            <div class="actions" v-if="item.status === 0">
+              <el-button size="mini" type="primary" @click="approve('claim', item.id)">通过</el-button>
+              <el-button size="mini" type="danger" @click="reject('claim', item.id)">驳回</el-button>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+      <el-tab-pane label="新建店铺" name="create">
+        <div class="list">
+          <div class="card" v-for="item in createApplications" :key="item.id">
+            <div style="font-weight:700;">{{ item.shopName }}</div>
+            <div class="meta">
+              <div>申请人：{{ item.userNickName || ('用户 #' + item.userId) }}</div>
+              <div>类型：{{ item.typeName || item.typeId }}</div>
+              <div>状态：{{ item.statusText }}</div>
+              <div>地址：{{ item.address }}</div>
+              <div>提交时间：{{ item.createTime }}</div>
+              <div v-if="item.reviewRemark">审核备注：{{ item.reviewRemark }}</div>
+            </div>
+            <div class="image-section" v-if="splitImages(item.images).length">
+              <div class="image-title">门店图片</div>
+              <div class="image-list">
+                <button class="image-thumb" v-for="(image, index) in splitImages(item.images)" :key="image + index" @click="previewImage(image)">
+                  <img :src="resolveImage(image)" alt="门店图片">
+                </button>
+              </div>
+            </div>
+            <div class="image-section" v-if="splitImages(item.proofImages).length">
+              <div class="image-title">证明图片</div>
+              <div class="image-list">
+                <button class="image-thumb" v-for="(image, index) in splitImages(item.proofImages)" :key="image + index" @click="previewImage(image)">
+                  <img :src="resolveImage(image)" alt="证明图片">
+                </button>
+              </div>
+            </div>
+            <div class="actions" v-if="item.status === 0">
+              <el-button size="mini" type="primary" @click="approve('create', item.id)">通过</el-button>
+              <el-button size="mini" type="danger" @click="reject('create', item.id)">驳回</el-button>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
+  </div>
+  <el-dialog :visible.sync="imagePreviewVisible" width="92%" append-to-body>
+    <img class="image-preview" :src="imagePreviewUrl" alt="图片预览">
+  </el-dialog>
+</div>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/admin-merchant-reviews-page.js"></script>
+</body>
+</html>

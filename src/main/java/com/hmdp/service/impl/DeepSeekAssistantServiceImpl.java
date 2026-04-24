@@ -1,7 +1,6 @@
 package com.hmdp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpRequest;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -11,57 +10,60 @@ import com.hmdp.dto.DeepSeekChatRequestDTO;
 import com.hmdp.dto.DeepSeekChatResponseDTO;
 import com.hmdp.dto.Result;
 import com.hmdp.service.IDeepSeekAssistantService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class DeepSeekAssistantServiceImpl implements IDeepSeekAssistantService {
 
     @Value("${deepseek.api-key:}")
     private String apiKey;
 
-    @Value("${deepseek.base-url:https://api.deepseek.com}")
+    @Value("${deepseek.base-url:https://fufu.iqach.top/v1}")
     private String baseUrl;
 
-    @Value("${deepseek.model:deepseek-chat}")
+    @Value("${deepseek.model:mimo-v2.5-pro}")
     private String model;
 
     @Override
     public Result chat(DeepSeekChatRequestDTO requestDTO) {
         if (requestDTO == null || StrUtil.isBlank(requestDTO.getMessage())) {
-            return Result.fail("请输入你想咨询的问题");
+            return Result.fail("\u8BF7\u8F93\u5165\u4F60\u60F3\u54A8\u8BE2\u7684\u95EE\u9898");
         }
 
         String userMessage = requestDTO.getMessage().trim();
-        List<AssistantActionDTO> actions = buildActions(userMessage);
+        AssistantRoutingSupport.AssistantIntent intent = AssistantRoutingSupport.analyzeIntent(userMessage);
+        List<AssistantActionDTO> actions = AssistantRoutingSupport.buildActions(intent);
+        String routedReply = AssistantRoutingSupport.buildRoutedReply(intent, actions);
 
         DeepSeekChatResponseDTO responseDTO = new DeepSeekChatResponseDTO();
         responseDTO.setActions(actions);
 
-        if (StrUtil.isBlank(apiKey)) {
-            responseDTO.setConfigured(false);
-            responseDTO.setReply(buildFallbackReply(userMessage, actions, true));
-            return Result.ok(responseDTO);
-        }
-
         try {
-            responseDTO.setReply(callDeepSeek(requestDTO));
+            String effectiveKey = StrUtil.blankToDefault(apiKey, "sk-no-key-required");
+            String aiReply = callAI(requestDTO, routedReply, effectiveKey);
+            responseDTO.setReply(StrUtil.blankToDefault(aiReply, routedReply));
             responseDTO.setConfigured(true);
             return Result.ok(responseDTO);
         } catch (Exception e) {
+            log.warn("AI assistant call failed, falling back to routed reply. Error: {}", e.getMessage(), e);
             responseDTO.setConfigured(false);
-            responseDTO.setReply(buildFallbackReply(userMessage, actions, false));
+            responseDTO.setReply(routedReply);
             return Result.ok(responseDTO);
         }
     }
 
-    private String callDeepSeek(DeepSeekChatRequestDTO requestDTO) {
+    private String callAI(DeepSeekChatRequestDTO requestDTO, String routedReply, String effectiveKey) throws Exception {
         JSONArray messages = new JSONArray();
         messages.add(JSONUtil.createObj()
                 .set("role", "system")
@@ -84,147 +86,98 @@ public class DeepSeekAssistantServiceImpl implements IDeepSeekAssistantService {
 
         messages.add(JSONUtil.createObj()
                 .set("role", "user")
-                .set("content", buildUserPrompt(requestDTO)));
+                .set("content", buildUserPrompt(requestDTO, routedReply)));
 
         JSONObject body = JSONUtil.createObj()
                 .set("model", model)
                 .set("messages", messages)
                 .set("stream", false)
-                .set("temperature", 0.6);
+                .set("temperature", 0.4);
 
-        String responseText = HttpRequest.post(normalizeBaseUrl() + "/chat/completions")
-                .header("Authorization", "Bearer " + apiKey)
-                .header("Content-Type", "application/json")
-                .body(body.toString())
-                .timeout(20000)
-                .execute()
-                .body();
+        String endpoint = normalizeBaseUrl() + "/chat/completions";
+        log.info("AI request: model={}, endpoint={}, msgCount={}", model, endpoint, messages.size());
+
+        // Use standard Java HttpURLConnection instead of hutool HttpRequest
+        // to avoid proxy/SNI issues with hutool
+        URL url = new URL(endpoint);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+        conn.setRequestProperty("Authorization", "Bearer " + effectiveKey);
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(60000);
+
+        byte[] bodyBytes = body.toString().getBytes(StandardCharsets.UTF_8);
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(bodyBytes);
+            os.flush();
+        }
+
+        int statusCode = conn.getResponseCode();
+        log.info("AI response status={}", statusCode);
+
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(
+                        statusCode >= 400 ? conn.getErrorStream() : conn.getInputStream(),
+                        StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        }
+
+        String responseText = sb.toString();
+        log.info("AI response received, length={}", responseText.length());
+
+        if (statusCode >= 400) {
+            log.error("AI API returned HTTP {}: {}", statusCode, responseText);
+            throw new IllegalStateException("AI API returned HTTP " + statusCode);
+        }
 
         JSONObject response = JSONUtil.parseObj(responseText);
         if (response.containsKey("error")) {
-            throw new IllegalStateException(response.getByPath("error.message", String.class));
+            String errorMsg = response.getByPath("error.message", String.class);
+            log.error("AI API returned error: {}", errorMsg);
+            throw new IllegalStateException(errorMsg);
         }
 
         JSONArray choices = response.getJSONArray("choices");
         if (choices == null || choices.isEmpty()) {
-            throw new IllegalStateException("DeepSeek 未返回有效结果");
+            throw new IllegalStateException("AI did not return valid results");
         }
 
         JSONObject firstChoice = choices.getJSONObject(0);
         JSONObject message = firstChoice.getJSONObject("message");
         if (message == null || StrUtil.isBlank(message.getStr("content"))) {
-            throw new IllegalStateException("DeepSeek 返回内容为空");
+            throw new IllegalStateException("AI returned empty content");
         }
-        return message.getStr("content").trim();
+        String content = message.getStr("content").trim();
+        log.info("AI reply: {}", content.length() > 100 ? content.substring(0, 100) + "..." : content);
+        return content;
     }
 
     private String buildSystemPrompt() {
-        return "你是 HMDP 本地生活应用里的智能助手。"
-                + "你需要用简洁自然的中文回答用户问题，并优先给出可执行建议。"
-                + "这个应用支持搜索店铺和笔记、查看附近商铺、领取优惠券、下单支付、发布探店笔记、查看消息、收藏和浏览历史。"
-                + "如果问题涉及应用内操作，请告诉用户应该先进入哪个页面，再完成哪一步。"
-                + "不要编造不存在的功能，不要输出 Markdown 标题，不要写得太长。";
+        return "\u4F60\u662F HMDP \u672C\u5730\u751F\u6D3B\u5E94\u7528\u5185\u7684\u667A\u80FD\u52A9\u624B\u3002"
+                + "\u8BF7\u7528\u7B80\u6D01\u81EA\u7136\u7684\u4E2D\u6587\u76F4\u63A5\u56DE\u590D\u7528\u6237\uFF0C\u8BED\u6C14\u50CF\u4E00\u4E2A\u4F1A\u5E2E\u7528\u6237\u529E\u4E8B\u7684\u5E94\u7528\u5185\u52A9\u7406\u3002"
+                + "\u5982\u679C\u7CFB\u7EDF\u5DF2\u7ECF\u7ED9\u51FA\u4E86\u660E\u786E\u7684\u4E0B\u4E00\u6B65\u52A8\u4F5C\uFF0C\u8BF7\u4F18\u5148\u987A\u7740\u8FD9\u4E2A\u52A8\u4F5C\u56DE\u590D\u3002"
+                + "\u4E0D\u8981\u8F93\u51FA Markdown \u6807\u9898\uFF0C\u4E0D\u8981\u7F16\u9020\u4E0D\u5B58\u5728\u7684\u9875\u9762\u548C\u529F\u80FD\uFF0C\u4E5F\u4E0D\u8981\u8F93\u51FA JSON\u3002";
     }
 
-    private String buildUserPrompt(DeepSeekChatRequestDTO requestDTO) {
+    private String buildUserPrompt(DeepSeekChatRequestDTO requestDTO, String routedReply) {
         StringBuilder builder = new StringBuilder();
         if (StrUtil.isNotBlank(requestDTO.getScene())) {
-            builder.append("当前页面场景：").append(requestDTO.getScene().trim()).append('\n');
+            builder.append("\u5F53\u524D\u9875\u9762\u573A\u666F\uFF1A").append(requestDTO.getScene().trim()).append('\n');
         }
-        builder.append("用户问题：").append(requestDTO.getMessage().trim());
+        builder.append("\u7528\u6237\u95EE\u9898\uFF1A").append(requestDTO.getMessage().trim()).append('\n');
+        builder.append("\u5EFA\u8BAE\u56DE\u590D\u65B9\u5411\uFF1A").append(routedReply).append('\n');
+        builder.append("\u8BF7\u7528\u4E00\u53E5\u7B80\u6D01\u4E2D\u6587\u56DE\u7B54\uFF0C\u4E0D\u8981\u8D85\u8FC7\u4E24\u53E5\u8BDD\u3002");
         return builder.toString();
-    }
-
-    private String buildFallbackReply(String userMessage, List<AssistantActionDTO> actions, boolean missingApiKey) {
-        StringBuilder builder = new StringBuilder();
-        if (containsAny(userMessage, "优惠券", "领券", "秒杀")) {
-            builder.append("你可以先去优惠券页面领取可用的券，再到订单页完成支付、核销或退款。");
-        } else if (containsAny(userMessage, "订单", "支付", "退款", "核销")) {
-            builder.append("订单相关操作已经接到订单页里了，你可以先打开“我的订单”，根据状态继续支付、取消、核销或退款。");
-        } else if (containsAny(userMessage, "笔记", "发布", "评论", "blog")) {
-            builder.append("如果你想发笔记，可以先去发布页；如果是查看别人的笔记，详情页已经支持评论、回复和点赞。");
-        } else if (containsAny(userMessage, "消息", "通知")) {
-            builder.append("消息中心适合查看店铺动态和提醒；如果你想让助手帮你规划下一步，也可以继续描述你的目标。");
-        } else if (containsAny(userMessage, "搜索", "附近", "店", "美食", "火锅", "咖啡", "ktv")) {
-            builder.append("你可以告诉我想找什么类型的店、预算和距离要求，我会帮你整理成更明确的找店建议。");
-        } else {
-            builder.append("我可以帮你梳理找店、领券、下单、发笔记、查看消息这些操作。你可以直接说出想做的事情，例如“帮我找附近评分高的火锅”或“我想发布一篇探店笔记”。");
-        }
-
-        if (missingApiKey) {
-            builder.append("\n\n当前还没有配置 DeepSeek API Key，所以我先用本地兜底助手回答。配置 `DEEPSEEK_API_KEY` 后，这里会自动切换到 DeepSeek 对话能力。");
-        } else {
-            builder.append("\n\nDeepSeek 接口暂时不可用，我已经先切换到本地兜底助手，避免你现在无法继续操作。");
-        }
-
-        if (actions != null && !actions.isEmpty()) {
-            builder.append("\n\n你也可以直接点下面的快捷入口继续。");
-        }
-        return builder.toString();
-    }
-
-    private List<AssistantActionDTO> buildActions(String userMessage) {
-        List<AssistantActionDTO> actions = new ArrayList<>();
-
-        if (containsAny(userMessage, "优惠券", "领券", "秒杀")) {
-            actions.add(action("去领优惠券", "打开可领取优惠券页面", "/pages/misc/vouchers.html"));
-            actions.add(action("查看订单", "查看券订单状态", "/pages/order/orders.html"));
-        }
-        if (containsAny(userMessage, "订单", "支付", "退款", "核销")) {
-            actions.add(action("我的订单", "继续支付、退款或核销", "/pages/order/orders.html"));
-        }
-        if (containsAny(userMessage, "笔记", "发布", "探店", "评论", "blog")) {
-            actions.add(action("发布笔记", "去发布新的探店内容", "/pages/blog/blog-edit.html"));
-        }
-        if (containsAny(userMessage, "消息", "通知")) {
-            actions.add(action("消息中心", "查看动态和通知", "/pages/misc/messages.html"));
-        }
-        if (containsAny(userMessage, "收藏", "浏览历史")) {
-            actions.add(action("我的收藏", "查看收藏的店铺和笔记", "/pages/misc/favorites.html"));
-            actions.add(action("浏览历史", "查看最近访问记录", "/pages/misc/history.html"));
-        }
-        if (containsAny(userMessage, "搜索", "附近", "店", "美食", "火锅", "咖啡", "ktv")) {
-            actions.add(action("智能搜索", "带着关键词去搜索页", "/pages/misc/search.html?keyword=" + encodeKeyword(userMessage)));
-        }
-
-        if (actions.isEmpty()) {
-            actions.add(action("回到首页", "先去首页继续浏览", "/pages/index-new.html"));
-            actions.add(action("智能搜索", "去搜索页输入你的需求", "/pages/misc/search.html"));
-        }
-        return actions;
-    }
-
-    private AssistantActionDTO action(String label, String description, String path) {
-        AssistantActionDTO dto = new AssistantActionDTO();
-        dto.setLabel(label);
-        dto.setDescription(description);
-        dto.setPath(path);
-        return dto;
-    }
-
-    private boolean containsAny(String text, String... keywords) {
-        String lowerCaseText = StrUtil.blankToDefault(text, "").toLowerCase();
-        for (String keyword : keywords) {
-            if (lowerCaseText.contains(keyword.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private String encodeKeyword(String keyword) {
-        if (StrUtil.isBlank(keyword)) {
-            return "";
-        }
-        try {
-            return URLEncoder.encode(keyword.trim(), StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            return keyword.trim();
-        }
     }
 
     private String normalizeBaseUrl() {
-        String normalized = StrUtil.blankToDefault(baseUrl, "https://api.deepseek.com").trim();
+        String normalized = StrUtil.blankToDefault(baseUrl, "https://fufu.iqach.top/v1").trim();
         if (normalized.endsWith("/")) {
             return normalized.substring(0, normalized.length() - 1);
         }

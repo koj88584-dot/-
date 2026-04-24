@@ -27,6 +27,12 @@ public class VoucherController {
      */
     @PostMapping
     public Result addVoucher(@RequestBody Voucher voucher) {
+        if (voucher.getStatus() == null) {
+            voucher.setStatus(1);
+        }
+        if (voucher.getStock() == null || voucher.getStock() <= 0) {
+            voucher.setStock(100);
+        }
         voucherService.save(voucher);
         return Result.ok(voucher.getId());
     }
@@ -51,6 +57,9 @@ public class VoucherController {
      */
     @PostMapping("seckill")
     public Result addSeckillVoucher(@RequestBody Voucher voucher) {
+        if (voucher.getStatus() == null) {
+            voucher.setStatus(1);
+        }
         voucherService.addSeckillVoucher(voucher);
         return Result.ok(voucher.getId());
     }

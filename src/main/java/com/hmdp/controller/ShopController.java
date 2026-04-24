@@ -45,28 +45,28 @@ public class ShopController {
             @RequestParam("typeId") Integer typeId,
             @RequestParam(value = "current", defaultValue = "1") Integer current,
             @RequestParam(value = "x", required = false) Double x,
-            @RequestParam(value = "y", required = false) Double y
+            @RequestParam(value = "y", required = false) Double y,
+            @RequestParam(value = "cityCode", required = false) String cityCode
     ) {
-        return shopService.queryShopByType(typeId, current, x, y);
+        return shopService.queryShopByType(typeId, current, x, y, cityCode);
     }
 
     @GetMapping("/of/name")
     public Result queryShopByName(
             @RequestParam(value = "name", required = false) String name,
-            @RequestParam(value = "current", defaultValue = "1") Integer current
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "cityCode", required = false) String cityCode
     ) {
-        Page<Shop> page = shopService.query()
-                .like(StrUtil.isNotBlank(name), "name", name)
-                .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
-        return Result.ok(page.getRecords());
+        return shopService.searchShopsByName(name, current, cityCode);
     }
 
     @GetMapping("/of/cache")
     public Result queryShopForAssociation(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "x", required = false) Double x,
-            @RequestParam(value = "y", required = false) Double y
+            @RequestParam(value = "y", required = false) Double y,
+            @RequestParam(value = "cityCode", required = false) String cityCode
     ) {
-        return shopService.searchShopsForAssociation(name, x, y);
+        return shopService.searchShopsForAssociation(name, x, y, cityCode);
     }
 }

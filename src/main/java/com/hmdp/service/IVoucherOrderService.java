@@ -91,4 +91,8 @@ public interface IVoucherOrderService extends IService<VoucherOrder> {
      * @return {@link Result}
      */
     Result receiveVoucher(Long voucherId);
+
+    Result queryMerchantOrders(Long shopId, Integer status, Integer current);
+
+    Result verifyOrderByCode(Long shopId, String verifyCode);
 }

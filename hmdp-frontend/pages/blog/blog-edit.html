@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -9,15 +9,6 @@
   <link href="/css/blog-edit.css" rel="stylesheet">
 </head>
 <body>
-<script>
-  (function () {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("请先登录");
-      location.href = "/pages/auth/login.html";
-    }
-  })();
-</script>
 
 <div id="app" v-show="pageReady" style="display:none;">
   <div class="header">
@@ -89,168 +80,8 @@
 <script src="/js/axios.min.js"></script>
 <script src="/js/element.js"></script>
 <script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
 <script src="/js/footer.js"></script>
-<script>
-  new Vue({
-    el: "#app",
-    data() {
-      return {
-        util,
-        fileList: [],
-        params: {
-          title: "",
-          content: ""
-        },
-        showDialog: false,
-        shops: [],
-        shopName: "",
-        selectedShop: {},
-        pageReady: false,
-        shopLoading: false,
-        currentCity: "当前定位"
-      };
-    },
-    created() {
-      this.checkLogin();
-      this.loadCurrentCity();
-      this.queryShops();
-    },
-    methods: {
-      loadCurrentCity() {
-        const savedCity = localStorage.getItem("currentCity");
-        if (!savedCity) {
-          return;
-        }
-        try {
-          const parsed = JSON.parse(savedCity);
-          this.currentCity = parsed && parsed.name ? parsed.name : savedCity;
-        } catch (e) {
-          this.currentCity = savedCity;
-        }
-      },
-      queryShops() {
-        const params = {};
-        const keyword = (this.shopName || "").trim();
-        if (keyword) {
-          params.name = keyword;
-        }
-        const location = this.getCachedLocation();
-        if (location) {
-          params.x = location.x;
-          params.y = location.y;
-        }
-        this.shopLoading = true;
-        axios.get("/shop/of/cache", { params })
-          .then(({ data }) => {
-            this.shops = Array.isArray(data) ? data : [];
-          })
-          .catch(err => this.$message.error(this.getErrorMessage(err)))
-          .finally(() => {
-            this.shopLoading = false;
-          });
-      },
-      selectShop(shop) {
-        this.selectedShop = shop;
-        this.showDialog = false;
-      },
-      submitBlog() {
-        const data = {
-          ...this.params,
-          title: (this.params.title || "").trim(),
-          content: (this.params.content || "").trim(),
-          images: this.fileList.join(",")
-        };
-        if (!data.content) {
-          this.$message.error("请先填写笔记内容");
-          return;
-        }
-        if (this.selectedShop.id) {
-          data.shopId = this.selectedShop.id;
-        }
-        axios.post("/blog", data)
-          .then(() => {
-            this.$message.success("发布成功");
-            setTimeout(() => {
-              location.href = "/pages/user/info.html";
-            }, 200);
-          })
-          .catch(err => this.$message.error(this.getErrorMessage(err)));
-      },
-      openFileDialog() {
-        this.$refs.fileInput.click();
-      },
-      fileSelected() {
-        const file = this.$refs.fileInput.files[0];
-        if (!file) {
-          return;
-        }
-        const formData = new FormData();
-        formData.append("file", file);
-        axios.post("/upload/blog", formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        }).then(({ data }) => {
-          const imagePath = data && data.startsWith("/imgs") ? data : "/imgs" + data;
-          this.fileList.push(imagePath);
-          this.$refs.fileInput.value = "";
-        }).catch(err => this.$message.error(this.getErrorMessage(err)));
-      },
-      deletePic(index) {
-        axios.get("/upload/blog/delete", {
-          params: { name: this.fileList[index] }
-        }).then(() => {
-          this.fileList.splice(index, 1);
-        }).catch(err => this.$message.error(this.getErrorMessage(err)));
-      },
-      checkLogin() {
-        axios.get("/user/me")
-          .then(() => {
-            this.pageReady = true;
-          })
-          .catch(err => {
-            this.$message.error(this.getErrorMessage(err));
-            setTimeout(() => {
-              location.href = "/pages/auth/login.html";
-            }, 200);
-          });
-      },
-      getCachedLocation() {
-        const savedLocation = localStorage.getItem("userLocation");
-        if (!savedLocation) {
-          return null;
-        }
-        try {
-          const parsed = JSON.parse(savedLocation);
-          if (parsed && parsed.x && parsed.y) {
-            return parsed;
-          }
-        } catch (e) {
-          return null;
-        }
-        return null;
-      },
-      normalizeImageUrl(path) {
-        if (!path) {
-          return "/imgs/icons/default-icon.png";
-        }
-        if (path.startsWith("http")) {
-          return path;
-        }
-        if (path.startsWith(util.commonURL)) {
-          return path;
-        }
-        return util.commonURL + (path.startsWith("/") ? path : "/" + path);
-      },
-      getErrorMessage(err) {
-        if (typeof err === "string") {
-          return err;
-        }
-        return err?.response?.data?.errorMsg || err?.message || "操作失败";
-      },
-      goBack() {
-        history.back();
-      }
-    }
-  });
-</script>
+<script src="/js/blog-edit-page.js"></script>
 </body>
 </html>

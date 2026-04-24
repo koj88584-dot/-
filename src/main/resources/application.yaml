@@ -1,17 +1,17 @@
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}
 spring:
   application:
     name: hmdp
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/hmdp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: "123456"
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/hmdp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:123456}
   redis:
-    host: 192.168.206.128
-    port: 6379
-    password: "123456"
+    host: ${REDIS_HOST:192.168.206.128}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:123456}
     lettuce:
       pool:
         max-active: 10
@@ -19,15 +19,22 @@ spring:
         min-idle: 1
         time-between-eviction-runs: 10s
   jackson:
-    default-property-inclusion: non_null # JSON处理时忽略非空字段
+    default-property-inclusion: non_null
+  servlet:
+    multipart:
+      max-file-size: ${UPLOAD_MAX_FILE_SIZE:5MB}
+      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:20MB}
 mybatis-plus:
-  type-aliases-package: com.hmdp.entity # 别名扫描
+  type-aliases-package: com.hmdp.entity
 logging:
   level:
-    com.hmdp: debug
+    com.hmdp: ${APP_LOG_LEVEL:info}
+    com.baomidou.mybatisplus.core.toolkit.support.ReflectLambdaMeta: ERROR
 amap:
-  key: 3ca0a2f25ab8827c53379129c07ac77e
+  key: ${AMAP_KEY:3ca0a2f25ab8827c53379129c07ac77e}
+  web-key: ${AMAP_WEB_KEY:ee216a99d8b649b4ee30239b1d6b7b44}
+  security-js-code: ${AMAP_SECURITY_JS_CODE:f6568b403165a5b880f461f1d2f4346e}
 deepseek:
   api-key: ${DEEPSEEK_API_KEY:sk-92e4ae3b0d44a6dd57de0da311b42214dd42af96036c65a824d89cf07b67094d}
-  base-url: ${DEEPSEEK_BASE_URL:https://api.qnaigc.com/v1}
-  model: ${DEEPSEEK_MODEL:deepseek-v3}
+  base-url: ${DEEPSEEK_BASE_URL:https://fufu.iqach.top/v1}
+  model: ${DEEPSEEK_MODEL:mimo-v2.5-pro}

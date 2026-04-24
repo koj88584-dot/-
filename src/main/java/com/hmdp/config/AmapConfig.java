@@ -15,4 +15,8 @@ public class AmapConfig {
      * 高德地图Web服务Key
      */
     private String key;
+
+    private String webKey;
+
+    private String securityJsCode;
 }

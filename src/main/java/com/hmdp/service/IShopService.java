@@ -39,9 +39,13 @@ public interface IShopService extends IService<Shop> {
      * @param y       y
      * @return {@link Result}
      */
-    Result queryShopByType(Integer typeId, Integer current, Double x, Double y);
+    Result queryShopByType(Integer typeId, Integer current, Double x, Double y, String cityCode);
 
-    Result searchShopsForAssociation(String name, Double x, Double y);
+    Result searchShopsByName(String name, Integer current, String cityCode);
+
+    Result searchShopsForAssociation(String name, Double x, Double y, String cityCode);
 
     Shop ensureShopExists(Long shopId);
+
+    void refreshShopSearchCache(Shop shop);
 }

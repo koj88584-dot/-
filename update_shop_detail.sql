@@ -81,7 +81,7 @@ CREATE TABLE `tb_shop_extend` (
     `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE INDEX `uk_shop_id`(`shop_id`) USING BTREE,
-    INDEX `idx_amap_poi_id`(`amap_poi_id`) USING BTREE
+    UNIQUE INDEX `uk_amap_poi_id`(`amap_poi_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '店铺扩展信息表' ROW_FORMAT = Compact;
 
 -- 插入一些示例评价标签

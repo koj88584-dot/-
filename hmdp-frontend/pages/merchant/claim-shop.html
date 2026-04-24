@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>认领已有店铺</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0; background: #FDFBF9;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      color: #3A3432; -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { display: none; }
+    .page { max-width: 390px; margin: 0 auto; padding: 0 0 40px; }
+    .header {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: rgba(253,251,249,0.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+    .header, .panel, .card {
+      border-radius: 0;
+    }
+    .panel, .card {
+      background: #fff; border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(255,122,69,0.06);
+      margin: 12px 12px 0; padding: 18px;
+    }
+    .back {
+      width: 36px; height: 36px; border: none; border-radius: 50%;
+      background: rgba(255,122,69,0.10); color: #FF7A45; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .title { flex: 1; font-size: 17px; font-weight: 700; }
+    .meta { color: #8A817C; line-height: 1.8; font-size: 13px; }
+    .tips { color: #8A817C; line-height: 1.8; margin-bottom: 16px; font-size: 13px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .shop-card {
+      padding: 14px; border: 1px solid #F0ECE8; border-radius: 14px;
+      margin-top: 10px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .shop-card:active { transform: scale(0.98); }
+    .shop-card.active {
+      border-color: #FF7A45;
+      background: linear-gradient(180deg, #FFF8F4 0%, #FFF 100%);
+      box-shadow: 0 6px 16px rgba(255,122,69,0.10);
+    }
+    .image-section { margin-top: 10px; }
+    .image-title { color: #3A3432; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .image-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; margin-top: 8px; }
+    .image-thumb {
+      width: 100%; aspect-ratio: 1/1; border: 0; padding: 0;
+      border-radius: 12px; overflow: hidden; background: #F9F6F0; cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+    }
+    .image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .image-preview { width: 100%; max-height: 72vh; object-fit: contain; border-radius: 16px; background: #0f172a; }
+    .upload-card {
+      border: 1px dashed #E8E2D9; border-radius: 16px; padding: 14px;
+      background: linear-gradient(180deg, #FDFBF9 0%, #FFF 100%);
+    }
+    .upload-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .upload-hint { color: #B5AFA6; font-size: 12px; }
+    .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
+    .image-item { position: relative; border-radius: 12px; overflow: hidden; background: #F9F6F0; aspect-ratio: 1/1; }
+    .image-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .image-remove {
+      position: absolute; right: 5px; top: 5px; width: 22px; height: 22px;
+      border: none; border-radius: 50%;
+      background: rgba(58,52,50,0.6); color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 10px;
+    }
+    .coord-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .coord-help { margin-top: 6px; color: #B5AFA6; font-size: 11px; line-height: 1.6; }
+    .coord-input .el-input__inner { padding-left: 12px; padding-right: 12px; }
+    .el-form-item__label { font-size: 13px; font-weight: 600; color: #3A3432; }
+    .el-input__inner, .el-textarea__inner { border-radius: 12px; }
+    @media (max-width: 520px) {
+      .coord-row { grid-template-columns: 1fr; gap: 8px; }
+      .upload-actions { align-items: flex-start; }
+      .upload-actions .el-button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div id="app" class="page">
+  <div class="header">
+    <button class="back" @click="goBack"><i class="el-icon-arrow-left"></i></button>
+    <div class="title">认领已有店铺</div>
+  </div>
+  <div class="panel">
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <el-input v-model.trim="keyword" placeholder="搜索店铺名" style="width:260px;" @keyup.enter.native="searchShops"></el-input>
+      <el-button @click="searchShops">搜索</el-button>
+    </div>
+
+    <div v-if="loading" style="padding:26px 0; text-align:center;">
+      <i class="el-icon-loading"></i>
+    </div>
+
+    <div v-else>
+      <div v-for="shop in shops" :key="shop.id" class="shop-card" :class="{ active: selectedShopId === shop.id }" @click="selectedShopId = shop.id">
+        <div style="font-weight:700;">{{ shop.name }}</div>
+        <div class="meta">{{ shop.address || '暂无地址' }}</div>
+      </div>
+      <div v-if="!shops.length" class="meta" style="margin-top:18px;">没有找到可认领的店铺，换个关键词试试。</div>
+    </div>
+
+    <el-form :model="form" label-width="92px" style="margin-top:20px;">
+      <el-form-item label="认领说明">
+        <el-input v-model.trim="form.message" type="textarea" :rows="3" placeholder="可填写门店关系、经营情况等"></el-input>
+      </el-form-item>
+      <el-form-item label="证明图片">
+        <div class="upload-card">
+          <input ref="proofInput" type="file" accept="image/*" multiple style="display:none" @change="handleProofChange">
+          <div class="upload-actions">
+            <el-button type="primary" plain icon="el-icon-picture-outline" @click="triggerProofPicker">从手机相册选择</el-button>
+            <div class="upload-hint">支持 1-3 张证明图片，最多 5MB/张</div>
+          </div>
+          <div v-if="proofImageList.length" class="image-grid">
+            <div v-for="(item, index) in proofImageList" :key="item + index" class="image-item">
+              <img :src="resolveImage(item)" alt="证明图片">
+              <button class="image-remove" type="button" @click="removeProofImage(index)">
+                <i class="el-icon-close"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" :loading="loading" @click="submit">提交认领申请</el-button>
+        <el-button @click="goProgress">查看进度</el-button>
+      </el-form-item>
+    </el-form>
+  </div>
+</div>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/merchant-claim-shop-page.js"></script>
+</body>
+</html>

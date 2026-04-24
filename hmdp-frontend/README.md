@@ -57,6 +57,12 @@ const BASE_URL = '';
 2. 确保Redis服务已启动
 3. 确保MySQL数据库已配置
 
+## Figma 重建设计文档
+
+- `docs/figma-handoff.md`
+- `docs/figma-page-inventory.md`
+- `docs/figma-build-checklist.md`
+
 ## 后端项目
 
 后端项目地址：`../src/`

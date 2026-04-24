@@ -24,9 +24,34 @@ public class SearchResultDTO {
     private List<String> suggestions;
     
     /**
-     * 总数
+     * 兼容旧字段：当前页结果数
      */
     private Long total;
+
+    /**
+     * 当前页结果数
+     */
+    private Long currentCount;
+
+    /**
+     * 总命中数
+     */
+    private Long totalHits;
+
+    /**
+     * 是否还有下一页
+     */
+    private Boolean hasMore;
+
+    /**
+     * 当前页码
+     */
+    private Integer currentPage;
+
+    /**
+     * 每页大小
+     */
+    private Integer pageSize;
     
     /**
      * 搜索耗时(ms)

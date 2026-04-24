@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -59,6 +60,31 @@ public class Shop implements Serializable {
     private String address;
 
     /**
+     * 鍩庡競缂栫爜
+     */
+    private String cityCode;
+
+    /**
+     * 鐪?
+     */
+    private String province;
+
+    /**
+     * 鍩庡競
+     */
+    private String city;
+
+    /**
+     * 鍖?
+     */
+    private String district;
+
+    /**
+     * 琛屾斂鍖哄垝缂栫爜
+     */
+    private String adcode;
+
+    /**
      * 经度
      */
     private Double x;
@@ -106,6 +132,15 @@ public class Shop implements Serializable {
 
     @TableField(exist = false)
     private Double distance;
+
+    @TableField(exist = false)
+    private String amapPoiId;
+
+    @TableField(exist = false)
+    private List<String> sceneTags;
+
+    @TableField(exist = false)
+    private String decisionReason;
 
     public void setPhone(String s) {
     }

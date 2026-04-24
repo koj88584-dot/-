@@ -73,6 +73,21 @@ public class VoucherOrder implements Serializable {
     private LocalDateTime refundTime;
 
     /**
+     * 券码
+     */
+    private String verifyCode;
+
+    /**
+     * 生效时间
+     */
+    private LocalDateTime effectiveTime;
+
+    /**
+     * 失效时间
+     */
+    private LocalDateTime expireTime;
+
+    /**
      * 更新时间
      */
     private LocalDateTime updateTime;

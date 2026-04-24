@@ -43,21 +43,30 @@ public class RateLimiterAspect {
 
     @Around("@annotation(rateLimiter)")
     public Object around(ProceedingJoinPoint point, RateLimiter rateLimiter) throws Throwable {
-        String key = buildKey(point, rateLimiter);
-        int time = rateLimiter.time();
-        int count = rateLimiter.count();
+        try {
+            String key = buildKey(point, rateLimiter);
+            int time = rateLimiter.time();
+            int count = rateLimiter.count();
 
-        // 执行Lua脚本
-        Long currentCount = stringRedisTemplate.execute(
-                LIMIT_SCRIPT,
-                Collections.singletonList(key),
-                String.valueOf(count),
-                String.valueOf(time)
-        );
+            // 执行Lua脚本
+            Long currentCount = stringRedisTemplate.execute(
+                    LIMIT_SCRIPT,
+                    Collections.singletonList(key),
+                    String.valueOf(count),
+                    String.valueOf(time)
+            );
 
-        if (currentCount != null && currentCount == 0) {
-            log.warn("限流触发: key={}, time={}, count={}", key, time, count);
-            throw new RuntimeException(rateLimiter.message());
+            if (currentCount != null && currentCount == 0) {
+                log.warn("限流触发: key={}, time={}, count={}", key, time, count);
+                throw new RuntimeException(rateLimiter.message());
+            }
+        } catch (RuntimeException e) {
+            // Re-throw rate limit violations
+            if (e.getMessage() != null && e.getMessage().contains("频繁")) {
+                throw e;
+            }
+            // Redis unavailable — skip rate limiting, allow request through
+            log.warn("Rate limiter skipped due to Redis unavailability: {}", e.getMessage());
         }
 
         return point.proceed();

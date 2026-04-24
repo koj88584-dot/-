@@ -1,4 +1,4 @@
-import com.hmdp.HmDianPingApplication;
+import com.hmdp.zhouxuanDianPingApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -6,7 +6,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import javax.annotation.Resource;
 import java.util.Set;
 
-@SpringBootTest(classes = HmDianPingApplication.class)
+@SpringBootTest(classes = zhouxuanDianPingApplication.class)
 public class RedisCleanupTest {
 
     @Resource

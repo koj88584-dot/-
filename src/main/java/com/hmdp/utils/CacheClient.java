@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +46,20 @@ public class CacheClient {
      */
     public void set(String key, Object value, Long time, TimeUnit unit) {
         stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(value), time, unit);
+    }
+
+    /**
+     * 店铺详情缓存统一使用物理 TTL，并增加抖动避免同时失效。
+     *
+     * @param shopId 店铺 ID
+     * @param value  店铺数据
+     */
+    public void setShopCache(Long shopId, Object value) {
+        if (shopId == null || value == null) {
+            return;
+        }
+        long ttlMinutes = CACHE_SHOP_TTL + ThreadLocalRandom.current().nextLong(CACHE_SHOP_TTL_JITTER + 1);
+        this.set(CACHE_SHOP_KEY + shopId, value, ttlMinutes, TimeUnit.MINUTES);
     }
 
     /**
@@ -105,6 +120,34 @@ public class CacheClient {
         //数据库存在 写入redis
         this.set(key, r, time, unit);
         //返回
+        return r;
+    }
+
+    /**
+     * 店铺详情缓存统一走物理 TTL，避免与逻辑过期策略混用。
+     *
+     * @param shopId 店铺 ID
+     * @param type 结果类型
+     * @param dbFallback DB 查询函数
+     * @return 查询结果
+     * @param <R> 结果类型
+     */
+    public <R> R queryShopWithPassThrough(Long shopId, Class<R> type, Function<Long, R> dbFallback) {
+        String key = CACHE_SHOP_KEY + shopId;
+        String json = stringRedisTemplate.opsForValue().get(key);
+        if (StringUtils.isNotEmpty(json)) {
+            return JSONUtil.toBean(json, type);
+        }
+        if ("".equals(json)) {
+            return null;
+        }
+
+        R r = dbFallback.apply(shopId);
+        if (r == null) {
+            this.set(key, "", CACHE_NULL_TTL, TimeUnit.SECONDS);
+            return null;
+        }
+        this.setShopCache(shopId, r);
         return r;
     }
 

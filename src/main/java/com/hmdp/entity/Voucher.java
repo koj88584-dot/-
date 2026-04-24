@@ -69,25 +69,23 @@ public class Voucher implements Serializable {
     private Integer type;
 
     /**
-     * 优惠券类型
+     * 状态：0-草稿 1-上架 2-下架 3-过期
      */
     private Integer status;
+
     /**
-     * 库存
+     * 库存（普通券直接使用；秒杀券作为同步镜像）
      */
-    @TableField(exist = false)
     private Integer stock;
 
     /**
      * 生效时间
      */
-    @TableField(exist = false)
     private LocalDateTime beginTime;
 
     /**
      * 失效时间
      */
-    @TableField(exist = false)
     private LocalDateTime endTime;
 
     /**
@@ -101,5 +99,10 @@ public class Voucher implements Serializable {
      */
     private LocalDateTime updateTime;
 
+    @TableField(exist = false)
+    private String shopName;
+
+    @TableField(exist = false)
+    private String shopImages;
 
 }

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>商家管理中心</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --mc-primary: #FF7A45;
+      --mc-primary-soft: rgba(255, 122, 69, 0.10);
+      --mc-bg: #FDFBF9;
+      --mc-surface: #FFFFFF;
+      --mc-text: #3A3432;
+      --mc-sub: #8A817C;
+      --mc-muted: #B5AFA6;
+      --mc-border: #F0ECE8;
+      --mc-shadow: 0 8px 24px rgba(255, 122, 69, 0.06);
+      --mc-radius: 20px;
+    }
+    body {
+      margin: 0; min-height: 100vh;
+      background: var(--mc-bg);
+      color: var(--mc-text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { display: none; }
+
+    .merchant-page {
+      position: relative; max-width: 390px; min-height: 100vh;
+      margin: 0 auto; padding: 0 0 32px; overflow-x: hidden;
+    }
+
+    /* — Header — */
+    .topbar {
+      position: sticky; top: 0; z-index: 3000;
+      padding: 12px 16px;
+      background: rgba(253, 251, 249, 0.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+    .topbar-main { display: flex; align-items: center; gap: 10px; }
+    .back-btn {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border: none; border-radius: 50%;
+      background: var(--mc-primary-soft); color: var(--mc-primary);
+      font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-title {
+      margin: 0; flex: 1; color: var(--mc-text);
+      font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+    }
+    .topbar-action {
+      width: 36px; height: 36px; border: none; border-radius: 50%;
+      background: var(--mc-primary-soft); color: var(--mc-primary);
+      font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .page-title { display: none; }
+
+    /* — Role Badge — */
+    .role-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+    .role-badge i { font-size: 12px; }
+    .role-badge.role-admin {
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+      color: #6366f1;
+    }
+    .role-badge.role-merchant {
+      background: var(--mc-primary-soft);
+      color: var(--mc-primary);
+    }
+    .role-badge.role-user {
+      background: rgba(156,163,175,0.12);
+      color: #9ca3af;
+    }
+
+    /* — Admin Banner — */
+    .admin-banner {
+      margin: 12px 12px 0; padding: 14px 16px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: var(--mc-radius);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(99,102,241,0.25);
+    }
+    .admin-banner-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    }
+    .admin-banner-icon {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .admin-banner-title { font-size: 15px; font-weight: 700; }
+    .admin-banner-desc {
+      font-size: 12px; opacity: 0.85; margin-bottom: 12px; line-height: 1.5;
+    }
+    .admin-banner-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .admin-banner-btn {
+      border: none; border-radius: 10px; padding: 8px 16px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .admin-banner-btn:active { transform: scale(0.96); }
+    .admin-banner-btn.primary {
+      background: #fff; color: #6366f1;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .admin-banner-btn.secondary {
+      background: rgba(255,255,255,0.2); color: #fff;
+    }
+
+    /* — Shop count hint for admin — */
+    .shop-hint {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 8px; padding: 6px 10px;
+      border-radius: 10px; font-size: 11px; font-weight: 600;
+    }
+    .shop-hint.admin-hint {
+      background: rgba(99,102,241,0.08); color: #6366f1;
+    }
+    .shop-hint.merchant-hint {
+      background: var(--mc-primary-soft); color: var(--mc-primary);
+    }
+    .shop-hint i { font-size: 13px; }
+
+    /* — Shop Selector Card — */
+    .shop-card {
+      margin: 12px 12px 0; padding: 14px;
+      background: var(--mc-surface); border-radius: var(--mc-radius);
+      box-shadow: var(--mc-shadow);
+    }
+    .shop-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .shop-avatar {
+      width: 48px; height: 48px; border-radius: 14px; object-fit: cover;
+      background: linear-gradient(135deg, #FFF3ED 0%, #FFE8DC 100%);
+      flex-shrink: 0;
+    }
+    .shop-info { flex: 1; min-width: 0; }
+    .shop-name { font-size: 16px; font-weight: 700; color: var(--mc-text); }
+    .shop-id { font-size: 11px; color: var(--mc-muted); margin-top: 2px; }
+
+    .search-input { margin-bottom: 10px; }
+    .search-input .el-input__inner,
+    .shop-select .el-input__inner,
+    .verify-input .el-input__inner {
+      height: 42px; border: 0; border-radius: 12px;
+      background: rgba(0,0,0,0.03); color: var(--mc-text); font-weight: 500;
+    }
+    .shop-select { width: 100%; }
+    .shop-option-row {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--mc-text); font-size: 14px; font-weight: 600;
+    }
+    .shop-option-icon {
+      width: 24px; height: 24px; border-radius: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--mc-primary-soft); color: var(--mc-primary);
+      font-size: 12px; font-weight: 700;
+    }
+    .shop-empty {
+      margin-top: 10px; color: var(--mc-muted); font-size: 13px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* — Content — */
+    .content-card {
+      background: var(--mc-surface); border-radius: var(--mc-radius);
+      box-shadow: var(--mc-shadow); margin: 12px 12px 0; padding: 14px;
+    }
+
+    /* Tabs */
+    .segmented-tabs {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+      margin-bottom: 12px; padding: 3px;
+      background: rgba(0,0,0,0.03); border-radius: 14px;
+    }
+    .segmented-tab {
+      border: none; border-radius: 12px; padding: 9px 10px;
+      background: transparent; color: var(--mc-sub); font-weight: 600;
+      font-size: 13px; cursor: pointer; transition: all 0.25s ease;
+    }
+    .segmented-tab.active {
+      background: #fff; color: var(--mc-primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+
+    /* Filters */
+    .filter-row {
+      display: flex; gap: 6px; overflow-x: auto;
+      margin-bottom: 10px; padding-bottom: 2px;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-pill {
+      flex: 0 0 auto; border: 1px solid var(--mc-border); border-radius: 10px;
+      background: #fff; padding: 5px 10px; color: var(--mc-sub);
+      font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .filter-pill.active {
+      border-color: var(--mc-primary); background: var(--mc-primary-soft);
+      color: var(--mc-primary);
+    }
+
+    /* — REDESIGNED Voucher Card with Shop Image — */
+    .voucher-list { display: grid; gap: 10px; }
+    .voucher-card {
+      padding: 14px; border-radius: 16px; background: #fff;
+      border: 1px solid var(--mc-border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      transition: transform 0.2s ease;
+    }
+    .voucher-card:active { transform: scale(0.98); }
+
+    .voucher-top { display: flex; gap: 12px; }
+    .voucher-cover {
+      width: 80px; height: 80px; flex-shrink: 0;
+      border-radius: 12px; object-fit: cover;
+      background: linear-gradient(135deg, #FFF3ED, #FFE8DC);
+    }
+    .voucher-body { flex: 1; min-width: 0; }
+    .voucher-title { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 3px; }
+    .voucher-sub { font-size: 12px; color: var(--mc-sub); margin-bottom: 4px; }
+    .voucher-price-row {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .voucher-pay { color: var(--mc-primary); font-size: 18px; font-weight: 800; }
+    .voucher-pay small { font-size: 12px; }
+    .voucher-actual { color: var(--mc-muted); font-size: 12px; text-decoration: line-through; }
+    .voucher-status-tag {
+      display: inline-block; padding: 2px 8px; border-radius: 6px;
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
+    .voucher-status-tag.online { background: rgba(5,150,105,0.10); color: #059669; }
+    .voucher-status-tag.offline { background: rgba(156,163,175,0.10); color: #9ca3af; }
+    .voucher-status-tag.draft { background: rgba(217,119,6,0.10); color: #d97706; }
+    .voucher-status-tag.ended { background: rgba(156,163,175,0.10); color: #9ca3af; }
+
+    .voucher-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid var(--mc-border);
+    }
+    .voucher-stats { display: flex; gap: 10px; }
+    .voucher-stat { font-size: 11px; color: var(--mc-sub); font-weight: 500; }
+    .voucher-stat b { color: var(--mc-text); font-weight: 700; }
+    .voucher-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .voucher-actions .el-button { border-radius: 10px; font-size: 12px; font-weight: 600; padding: 6px 12px; }
+
+    /* Order cards */
+    .order-card {
+      display: flex; gap: 12px; padding: 14px;
+      border-radius: 16px; background: #fff;
+      border: 1px solid var(--mc-border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+    .order-cover {
+      width: 64px; height: 64px; flex-shrink: 0;
+      border-radius: 12px; object-fit: cover;
+      background: linear-gradient(135deg, #FFF3ED, #FFE8DC);
+    }
+    .order-body { flex: 1; min-width: 0; }
+    .order-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .order-meta { color: var(--mc-sub); font-size: 12px; line-height: 1.6; }
+    .order-actions { margin-top: 6px; }
+
+    .verify-box { display: grid; gap: 8px; margin-bottom: 12px; }
+    .empty-state {
+      text-align: center; padding: 28px 12px;
+      color: var(--mc-muted); font-size: 13px;
+    }
+    .empty-state h3 { margin: 0 0 8px; color: var(--mc-text); font-size: 16px; }
+    .empty-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .loading-state { padding: 30px 0; text-align: center; color: var(--mc-primary); font-size: 22px; }
+    .dialog-form .el-input__inner,
+    .dialog-form .el-textarea__inner { border-radius: 12px; }
+    .quick-actions { display: none; }
+    .shop-links {
+      display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end;
+    }
+    .shop-link {
+      border: none; background: none; padding: 4px 0;
+      color: var(--mc-primary); font-size: 12px; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 3px;
+    }
+    .shop-link:active { opacity: 0.6; }
+    .shop-link i { font-size: 13px; }
+  </style>
+</head>
+<body>
+<div id="app" class="merchant-page">
+  <div class="topbar">
+    <div class="topbar-main">
+      <button class="back-btn" @click="goBack" aria-label="返回">
+        <i class="el-icon-arrow-left"></i>
+      </button>
+      <h1 class="topbar-title">{{ isAdmin ? '管理员中心' : '商家中心' }}</h1>
+      <span v-if="merchantProfile" class="role-badge" :class="{'role-admin': isAdmin, 'role-merchant': isMerchant, 'role-user': !isAdmin && !isMerchant}">
+        <i :class="isAdmin ? 'el-icon-s-check' : 'el-icon-s-custom'"></i>
+        {{ roleLabel }}
+      </span>
+      <button class="topbar-action" @click="goToProgress" title="查看进度">
+        <i class="el-icon-document"></i>
+      </button>
+      <button class="topbar-action" v-if="isAdmin" @click="goToAdminReview" title="审核后台" style="background:rgba(99,102,241,0.12);color:#6366f1;">
+        <i class="el-icon-s-operation"></i>
+      </button>
+      <button class="topbar-action" @click="openCreateDialog" title="新建优惠券">
+        <i class="el-icon-plus"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Admin Banner (only for admin) -->
+  <section v-if="isAdmin" class="admin-banner">
+    <div class="admin-banner-header">
+      <div class="admin-banner-icon"><i class="el-icon-s-check"></i></div>
+      <div class="admin-banner-title">平台管理员</div>
+    </div>
+    <div class="admin-banner-desc">你拥有最高权限，可管理所有店铺、审核商家申请和店铺认领请求。</div>
+    <div class="admin-banner-actions">
+      <button class="admin-banner-btn primary" @click="goToAdminReview"><i class="el-icon-s-operation"></i> 进入审核后台</button>
+      <button class="admin-banner-btn secondary" @click="goToProgress"><i class="el-icon-data-analysis"></i> 管理员概览</button>
+    </div>
+  </section>
+
+  <!-- Shop Selector with image -->
+  <section class="shop-card">
+    <div class="shop-header" v-if="selectedShop">
+      <img class="shop-avatar" :src="getShopImage()" alt="">
+      <div class="shop-info">
+        <div class="shop-name">{{ selectedShop.name }}</div>
+        <div class="shop-id">ID: {{ selectedShop.id }}</div>
+      </div>
+    </div>
+    <el-input
+      class="search-input"
+      v-model.trim="shopKeyword"
+      prefix-icon="el-icon-search"
+      placeholder="搜索要管理的店铺"
+      clearable
+      @keyup.enter.native="loadShops"
+      @clear="loadShops"
+    ></el-input>
+    <el-select
+      class="shop-select"
+      v-model="selectedShopId"
+      placeholder="请选择店铺"
+      @change="handleShopChange"
+      :disabled="!shops.length"
+    >
+      <el-option v-for="shop in shops" :key="shop.id" :label="shop.name" :value="shop.id">
+        <div class="shop-option-row">
+          <span class="shop-option-icon">店</span>
+          <span>{{ shop.name }}</span>
+        </div>
+      </el-option>
+    </el-select>
+    <div v-if="!shops.length && !loading" class="shop-empty">
+      <i class="el-icon-warning-outline"></i>
+      <span>还没有可管理店铺</span>
+    </div>
+    <!-- Role-specific shop hints -->
+    <div v-if="isAdmin && shops.length" class="shop-hint admin-hint">
+      <i class="el-icon-s-check"></i>
+      <span>管理员模式 · 可管理平台全部 {{ shops.length }} 家店铺</span>
+    </div>
+    <div v-else-if="isMerchant && shops.length" class="shop-hint merchant-hint">
+      <i class="el-icon-s-shop"></i>
+      <span>商家模式 · 已认领 {{ shops.length }} 家店铺</span>
+    </div>
+    <div class="shop-links" v-if="!isAdmin">
+      <button class="shop-link" @click="goToClaimShop"><i class="el-icon-link"></i> 认领已有店铺</button>
+      <button class="shop-link" @click="goToCreateShop"><i class="el-icon-circle-plus-outline"></i> 新建店铺</button>
+    </div>
+  </section>
+
+  <!-- Empty state: no shops -->
+  <section v-if="!shops.length && !loading" class="content-card">
+    <div class="empty-state">
+      <h3>先绑定一家店铺</h3>
+      <div>商家资格已开通后，需要认领已有店铺或提交新建店铺申请。审核通过后，就可以管理优惠券和核销订单。</div>
+      <div class="empty-actions">
+        <el-button type="primary" @click="goToClaimShop">认领店铺</el-button>
+        <el-button @click="goToCreateShop">新建店铺</el-button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main content -->
+  <section v-else class="content-card">
+    <div class="segmented-tabs">
+      <button class="segmented-tab" :class="{active: activeTab === 'vouchers'}" @click="switchTab('vouchers')">优惠券管理</button>
+      <button class="segmented-tab" :class="{active: activeTab === 'orders'}" @click="switchTab('orders')">订单核销</button>
+    </div>
+
+    <div v-if="loading" class="loading-state"><i class="el-icon-loading"></i></div>
+
+    <!-- Vouchers Tab -->
+    <template v-else-if="activeTab === 'vouchers'">
+      <div class="filter-row">
+        <button v-for="item in voucherStatusOptions" :key="item.key" class="filter-pill" :class="{active: voucherStatusFilter === item.value}" @click="setVoucherStatus(item.value)">
+          {{ item.label }}
+        </button>
+      </div>
+
+      <div v-if="!merchantVouchers.length" class="empty-state">当前店铺还没有优惠券，点击右上角 + 新建一张吧。</div>
+      <div v-else class="voucher-list">
+        <div v-for="voucher in merchantVouchers" :key="voucher.id" class="voucher-card">
+          <div class="voucher-top">
+            <img class="voucher-cover" :src="getShopImage()" alt="">
+            <div class="voucher-body">
+              <div class="voucher-title">{{ voucher.title }}</div>
+              <div class="voucher-sub">{{ voucher.subTitle || '到店消费可使用' }}</div>
+              <div class="voucher-price-row">
+                <span class="voucher-pay"><small>¥</small>{{ toYuan(voucher.payValue) }}</span>
+                <span class="voucher-actual">¥{{ toYuan(voucher.actualValue) }}</span>
+                <span class="voucher-status-tag" :class="{online: voucher.status===1, offline: voucher.status===2, draft: voucher.status===0, ended: voucher.status===3}">
+                  {{ voucher.statusText || getVoucherStatusText(voucher.status) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="voucher-bottom">
+            <div class="voucher-stats">
+              <span class="voucher-stat">库存 <b>{{ voucher.stock || 0 }}</b></span>
+              <span class="voucher-stat">领取 <b>{{ voucher.receivedCount || 0 }}</b></span>
+              <span class="voucher-stat">支付 <b>{{ voucher.paidCount || 0 }}</b></span>
+              <span class="voucher-stat">核销 <b>{{ voucher.verifiedCount || 0 }}</b></span>
+            </div>
+            <div class="voucher-actions">
+              <el-button size="mini" @click="editVoucher(voucher)">编辑</el-button>
+              <el-button v-if="voucher.status !== 1 && voucher.status !== 3" size="mini" type="primary" @click="publishVoucher(voucher)">上架</el-button>
+              <el-button v-if="voucher.status === 1" size="mini" type="warning" @click="unpublishVoucher(voucher)">下架</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Orders Tab -->
+    <template v-else>
+      <div class="verify-box">
+        <el-input class="verify-input" v-model.trim="verifyCode" placeholder="输入用户出示的券码，例如 VC123ABC"></el-input>
+        <el-button type="primary" @click="verifyByCode">核销券码</el-button>
+      </div>
+
+      <div class="filter-row">
+        <button v-for="item in orderStatusOptions" :key="item.key" class="filter-pill" :class="{active: orderStatusFilter === item.value}" @click="setOrderStatus(item.value)">
+          {{ item.label }}
+        </button>
+      </div>
+
+      <div v-if="!merchantOrders.length" class="empty-state">当前没有可展示的优惠券订单。</div>
+      <div v-else class="voucher-list">
+        <div v-for="order in merchantOrders" :key="order.id" class="order-card">
+          <img class="order-cover" :src="getShopImage()" alt="">
+          <div class="order-body">
+            <div class="order-title">{{ order.voucherTitle || '优惠券订单' }}</div>
+            <div class="order-meta">
+              <div>{{ order.statusText || getOrderStatusText(order.status) }} · 券码：{{ order.verifyCode || '待生成' }}</div>
+              <div>{{ formatDateTime(order.effectiveTime) || '支付后生效' }} - {{ formatDateTime(order.expireTime) || '长期有效' }}</div>
+            </div>
+            <div class="order-actions">
+              <el-button v-if="order.status === 2 && order.verifyCode" size="mini" type="success" @click="fillVerifyCode(order.verifyCode)">填入核销框</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <!-- Quick-actions removed: role-specific actions are now inline above -->
+
+  <el-dialog :title="dialogMode === 'create' ? '新建优惠券' : '编辑优惠券'" :visible.sync="dialogVisible" width="92%">
+    <el-form class="dialog-form" :model="form" label-width="88px">
+      <el-form-item label="所属店铺">
+        <el-select v-model="form.shopId" placeholder="请选择店铺" style="width:100%;">
+          <el-option v-for="shop in shops" :key="shop.id" :label="shop.name" :value="shop.id"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="优惠券标题">
+        <el-input v-model.trim="form.title" maxlength="24" show-word-limit></el-input>
+      </el-form-item>
+      <el-form-item label="副标题">
+        <el-input v-model.trim="form.subTitle" maxlength="40" show-word-limit></el-input>
+      </el-form-item>
+      <el-form-item label="使用规则">
+        <el-input v-model.trim="form.rules" type="textarea" :rows="3"></el-input>
+      </el-form-item>
+      <el-form-item label="券类型">
+        <el-radio-group v-model="form.type">
+          <el-radio :label="0">普通券</el-radio>
+          <el-radio :label="1">秒杀券</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="支付金额">
+        <el-input v-model.trim="form.payValueYuan" placeholder="例如 45"></el-input>
+      </el-form-item>
+      <el-form-item label="抵扣金额">
+        <el-input v-model.trim="form.actualValueYuan" placeholder="例如 50"></el-input>
+      </el-form-item>
+      <el-form-item label="库存">
+        <el-input-number v-model="form.stock" :min="1" :max="99999"></el-input-number>
+      </el-form-item>
+      <el-form-item label="开始时间">
+        <el-date-picker v-model="form.beginTime" type="datetime" placeholder="开始时间" style="width:100%;"></el-date-picker>
+      </el-form-item>
+      <el-form-item label="结束时间">
+        <el-date-picker v-model="form.endTime" type="datetime" placeholder="结束时间" style="width:100%;"></el-date-picker>
+      </el-form-item>
+    </el-form>
+    <div slot="footer">
+      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="saveVoucher">保存</el-button>
+    </div>
+  </el-dialog>
+</div>
+
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/merchant-vouchers-page.js"></script>
+</body>
+</html>

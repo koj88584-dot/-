@@ -1,19 +1,23 @@
 package com.hmdp.controller;
 
+import cn.hutool.core.util.StrUtil;
+import com.hmdp.dto.DeepSeekSearchDTO;
 import com.hmdp.dto.Result;
-import com.hmdp.entity.Blog;
-import com.hmdp.entity.Shop;
-import com.hmdp.service.IAmapService;
-import com.hmdp.service.IBlogService;
-import com.hmdp.service.IShopService;
+import com.hmdp.service.IDeepSeekSearchService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Map;
 
 /**
- * 搜索控制器
+ * 兼容旧版搜索入口，内部统一委托给智能搜索服务
  */
 @Slf4j
 @RestController
@@ -21,162 +25,28 @@ import java.util.*;
 public class SearchController {
 
     @Resource
-    private IShopService shopService;
-
-    @Resource
-    private IBlogService blogService;
-
-    @Resource
-    private IAmapService amapService;
+    private IDeepSeekSearchService deepSeekSearchService;
 
     /**
-     * 综合搜索（店铺+博客）
+     * 综合搜索（兼容旧入口）
      */
     @PostMapping("")
     public Result search(@RequestBody Map<String, Object> request) {
-        String keyword = (String) request.get("keyword");
-        String type = (String) request.getOrDefault("type", "all");
-        String sortBy = (String) request.getOrDefault("sortBy", "relevance");
-        Integer current = (Integer) request.getOrDefault("current", 1);
-        Double longitude = (Double) request.get("longitude");
-        Double latitude = (Double) request.get("latitude");
-        
-        log.info("搜索请求 - keyword: {}, type: {}, sortBy: {}, current: {}, longitude: {}, latitude: {}",
-                keyword, type, sortBy, current, longitude, latitude);
+        DeepSeekSearchDTO dto = new DeepSeekSearchDTO();
+        dto.setKeyword(stringValue(request.get("keyword")));
+        dto.setType(StrUtil.blankToDefault(stringValue(request.get("type")), "all"));
+        dto.setSortBy(StrUtil.blankToDefault(stringValue(request.get("sortBy")), "relevance"));
+        dto.setCurrent(intValue(request.get("current"), 1));
+        dto.setLongitude(doubleValue(request.get("longitude")));
+        dto.setLatitude(doubleValue(request.get("latitude")));
+        dto.setTypeId(longValue(request.get("typeId")));
+        dto.setMinPrice(longValue(request.get("minPrice")));
+        dto.setMaxPrice(longValue(request.get("maxPrice")));
+        dto.setCityCode(stringValue(request.get("cityCode")));
 
-        Map<String, Object> result = new HashMap<>();
-        List<Shop> shops = new ArrayList<>();
-        List<Blog> blogs = new ArrayList<>();
-
-        // 搜索店铺
-        if ("all".equals(type) || "shop".equals(type)) {
-            shops = searchShops(keyword, sortBy, longitude, latitude);
-        }
-
-        // 搜索博客
-        if ("all".equals(type) || "blog".equals(type)) {
-            blogs = searchBlogs(keyword);
-        }
-
-        result.put("shops", shops);
-        result.put("blogs", blogs);
-        result.put("total", shops.size() + blogs.size());
-
-        return Result.ok(result);
-    }
-
-    /**
-     * 搜索店铺
-     */
-    private List<Shop> searchShops(String keyword, String sortBy, Double longitude, Double latitude) {
-        List<Shop> shops = new ArrayList<>();
-
-        // 如果有位置信息，优先从高德地图搜索
-        if (longitude != null && latitude != null) {
-            log.info("直接从高德地图搜索关键词: {}, 位置: {}, {}", keyword, longitude, latitude);
-            try {
-                if (amapService instanceof com.hmdp.service.impl.AmapServiceImpl) {
-                    com.hmdp.service.impl.AmapServiceImpl amapServiceImpl = (com.hmdp.service.impl.AmapServiceImpl) amapService;
-                    shops = amapServiceImpl.searchNearbyShops(null, keyword, longitude, latitude, 5000);
-                }
-            } catch (Exception e) {
-                log.error("调用高德地图API异常", e);
-            }
-        } else {
-            // 没有位置信息时，搜索本地数据库
-            log.info("从本地数据库搜索关键词: {}", keyword);
-            shops = shopService.lambdaQuery()
-                    .like(Shop::getName, keyword)
-                    .or()
-                    .like(Shop::getAddress, keyword)
-                    .last("LIMIT 20")  // 限制返回数量
-                    .list();
-        }
-
-        // 计算距离
-        if (longitude != null && latitude != null) {
-            for (Shop shop : shops) {
-                if (shop.getX() != null && shop.getY() != null) {
-                    double distance = calculateDistance(longitude, latitude, shop.getX(), shop.getY());
-                    shop.setDistance(distance);
-                }
-            }
-        }
-
-        // 排序
-        switch (sortBy) {
-            case "distance":
-                // 按距离排序
-                if (longitude != null && latitude != null) {
-                    shops.sort(Comparator.comparingDouble(s -> s.getDistance() != null ? s.getDistance() : Double.MAX_VALUE));
-                }
-                break;
-            case "rating":
-                // 按评分排序
-                shops.sort((s1, s2) -> {
-                    int score1 = s1.getScore() != null ? s1.getScore() : 0;
-                    int score2 = s2.getScore() != null ? s2.getScore() : 0;
-                    return Integer.compare(score2, score1);
-                });
-                break;
-            case "relevance":
-            default:
-                // 按相关度排序（综合名称匹配度、评分、销量）
-                shops.sort((s1, s2) -> {
-                    double score1 = calculateRelevanceScore(s1, keyword);
-                    double score2 = calculateRelevanceScore(s2, keyword);
-                    return Double.compare(score2, score1);  // 降序排列
-                });
-                break;
-        }
-
-        return shops;
-    }
-
-    /**
-     * 计算相关度得分
-     * 权重：名称匹配(40%) + 评分(30%) + 销量(20%) + 评论数(10%)
-     */
-    private double calculateRelevanceScore(Shop shop, String keyword) {
-        double score = 0;
-        String name = shop.getName() != null ? shop.getName() : "";
-
-        // 名称匹配度（最高50分）
-        if (name.contains(keyword)) {
-            score += 40;
-            if (name.startsWith(keyword)) {
-                score += 10; // 前缀匹配额外加分
-            }
-        }
-
-        // 评分权重（0-30分）
-        if (shop.getScore() != null) {
-            score += (shop.getScore() / 50.0) * 30;
-        }
-
-        // 销量权重（0-20分）
-        if (shop.getSold() != null) {
-            score += Math.min(shop.getSold() / 1000.0, 1.0) * 20;
-        }
-
-        // 评论数权重（0-10分）
-        if (shop.getComments() != null) {
-            score += Math.min(shop.getComments() / 500.0, 1.0) * 10;
-        }
-
-        return score;
-    }
-
-    /**
-     * 搜索博客
-     */
-    private List<Blog> searchBlogs(String keyword) {
-        return blogService.lambdaQuery()
-                .like(Blog::getTitle, keyword)
-                .or()
-                .like(Blog::getContent, keyword)
-                .orderByDesc(Blog::getCreateTime)
-                .list();
+        log.info("Legacy /shop-search request delegated to /search service - keyword: {}, type: {}, sortBy: {}, current: {}",
+                dto.getKeyword(), dto.getType(), dto.getSortBy(), dto.getCurrent());
+        return deepSeekSearchService.search(dto);
     }
 
     /**
@@ -184,25 +54,7 @@ public class SearchController {
      */
     @GetMapping("/hot")
     public Result getHotSearches() {
-        // 返回预设的热门搜索
-        List<Map<String, Object>> hotSearches = Arrays.asList(
-                createHotSearch("美食", 1),
-                createHotSearch("KTV", 2),
-                createHotSearch("火锅", 3),
-                createHotSearch("按摩", 4),
-                createHotSearch("健身", 5),
-                createHotSearch("烧烤", 6),
-                createHotSearch("酒吧", 7),
-                createHotSearch("美容", 8)
-        );
-        return Result.ok(hotSearches);
-    }
-
-    private Map<String, Object> createHotSearch(String keyword, int rank) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("keyword", keyword);
-        map.put("rank", rank);
-        return map;
+        return deepSeekSearchService.getHotSearch();
     }
 
     /**
@@ -210,9 +62,7 @@ public class SearchController {
      */
     @GetMapping("/history")
     public Result getSearchHistory() {
-        // 实际项目中应该从Redis或数据库获取用户的搜索历史
-        // 这里返回空列表
-        return Result.ok(new ArrayList<>());
+        return deepSeekSearchService.getSearchHistory();
     }
 
     /**
@@ -220,9 +70,7 @@ public class SearchController {
      */
     @PostMapping("/history")
     public Result recordSearchHistory(@RequestParam("keyword") String keyword) {
-        // 实际项目中应该保存到Redis或数据库
-        log.info("记录搜索历史: {}", keyword);
-        return Result.ok();
+        return deepSeekSearchService.recordSearchHistory(keyword);
     }
 
     /**
@@ -230,22 +78,67 @@ public class SearchController {
      */
     @DeleteMapping("/history")
     public Result clearSearchHistory() {
-        // 实际项目中应该清除Redis或数据库中的记录
-        log.info("清空搜索历史");
-        return Result.ok();
+        return deepSeekSearchService.clearSearchHistory();
     }
 
-    /**
-     * 计算两点之间的距离（米）
-     */
-    private double calculateDistance(double lng1, double lat1, double lng2, double lat2) {
-        double radLat1 = Math.toRadians(lat1);
-        double radLat2 = Math.toRadians(lat2);
-        double a = radLat1 - radLat2;
-        double b = Math.toRadians(lng1) - Math.toRadians(lng2);
-        double s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) +
-                Math.cos(radLat1) * Math.cos(radLat2) * Math.pow(Math.sin(b / 2), 2)));
-        s = s * 6378137; // 地球半径（米）
-        return s;
+    private String stringValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        return String.valueOf(value).trim();
+    }
+
+    private Integer intValue(Object value, Integer defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        String text = String.valueOf(value).trim();
+        if (StrUtil.isBlank(text)) {
+            return defaultValue;
+        }
+        try {
+            return Integer.valueOf(text);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    private Long longValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        String text = String.valueOf(value).trim();
+        if (StrUtil.isBlank(text)) {
+            return null;
+        }
+        try {
+            return Long.valueOf(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Double doubleValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        String text = String.valueOf(value).trim();
+        if (StrUtil.isBlank(text)) {
+            return null;
+        }
+        try {
+            return Double.valueOf(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

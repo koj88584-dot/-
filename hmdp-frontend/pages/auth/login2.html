@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -8,21 +8,62 @@
   <link href="/css/main.css" rel="stylesheet">
   <link href="/css/login.css" rel="stylesheet">
   <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
     html, body {
       height: 100%;
       margin: 0;
+      overflow-x: hidden;
       background: linear-gradient(180deg, #fff6f1 0%, #fff 35%, #f7f8fa 100%);
     }
 
+    #app {
+      width: calc(100vw - 8px);
+      max-width: 390px;
+      min-height: 100%;
+      margin: 0 auto;
+      overflow-x: hidden;
+    }
+
     .login-container {
+      width: 100%;
+      max-width: 100%;
       min-height: 100%;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .header {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding-right: 12px;
+    }
+
+    .header-back-btn {
+      flex: 0 0 40px;
+      width: 40px;
+    }
+
+    .header-title {
+      width: auto;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 40px;
     }
 
     .content {
       flex: 1;
-      padding: 24px 18px 20px;
+      width: 100%;
+      padding: 14px 16px 24px;
       background: transparent;
       justify-content: flex-start;
       gap: 16px;
@@ -30,7 +71,7 @@
 
     .auth-panel {
       width: 100%;
-      max-width: 460px;
+      max-width: 100%;
       margin: 0 auto;
       padding: 28px 22px 24px;
       border-radius: 24px;
@@ -68,8 +109,10 @@
 
     .helper-link {
       margin-top: 10px;
-      text-align: right;
+      display: flex;
+      justify-content: flex-end;
       font-size: 13px;
+      width: 100%;
     }
 
     .helper-link a,
@@ -78,11 +121,31 @@
       text-decoration: none;
     }
 
+    .helper-link a {
+      margin-left: auto;
+      text-align: right;
+    }
+
     .switch-links {
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      gap: 12px;
       margin-top: 14px;
       font-size: 14px;
+    }
+
+    .switch-links a {
+      flex: 1;
+      white-space: nowrap;
+    }
+
+    .switch-links a:first-child {
+      text-align: left;
+    }
+
+    .switch-links a:last-child {
+      text-align: right;
     }
 
     .agreement {
@@ -91,11 +154,11 @@
       margin: 0 auto;
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      padding: 0 6px;
+      gap: 8px;
+      padding: 0 4px;
       color: #667085;
       font-size: 13px;
-      line-height: 1.8;
+      line-height: 1.7;
     }
 
     .agreement a {
@@ -103,8 +166,100 @@
       text-decoration: none;
     }
 
+    .agreement-check {
+      position: relative;
+      flex: 0 0 18px;
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+
     .agreement input[type="radio"] {
-      margin-top: 3px;
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .agreement-indicator {
+      display: block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ff6633;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .agreement input[type="radio"]:checked + .agreement-indicator::after {
+      content: "";
+      display: block;
+      width: 8px;
+      height: 8px;
+      margin: 3px;
+      border-radius: 50%;
+      background: #ff6633;
+    }
+
+    .agreement-text {
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+    }
+
+    @media (max-width: 430px) {
+      #app {
+        width: 88vw;
+        max-width: 320px;
+      }
+
+      .header {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .content {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .auth-panel {
+        padding: 20px 12px 18px;
+      }
+    }
+
+    @media (max-width: 375px) {
+      .content {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .auth-panel {
+        padding: 24px 18px 22px;
+      }
+    }
+
+    @media (max-width: 340px) {
+      .content {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .auth-panel {
+        padding: 22px 16px 20px;
+        border-radius: 20px;
+      }
+
+      .auth-title {
+        font-size: 24px;
+      }
+
+      .auth-desc,
+      .agreement {
+        font-size: 12px;
+      }
     }
   </style>
 </head>
@@ -134,11 +289,11 @@
       </div>
 
       <div class="agreement">
-        <div>
+        <label class="agreement-check" for="agree-password-login">
           <input type="radio" id="agree-password-login" name="agree-password-login" v-model="radio" value="1">
-          <label for="agree-password-login"></label>
-        </div>
-        <div>
+          <span class="agreement-indicator"></span>
+        </label>
+        <div class="agreement-text">
           我已阅读并同意
           <a href="javascript:void(0)">《用户服务协议》</a>
           和
@@ -153,64 +308,6 @@
 <script src="/js/element.js"></script>
 <script src="/js/common.js"></script>
 <script src="/js/auth.js"></script>
-<script>
-  new Vue({
-    el: "#app",
-    data: {
-      radio: "",
-      redirectTarget: window.authHelper.normalizeRedirectPath(util.getUrlParam("redirect") || "/pages/index-new.html"),
-      form: {
-        phone: "",
-        password: ""
-      }
-    },
-    computed: {
-      registerUrl() {
-        return "/pages/auth/register.html?redirect=" + encodeURIComponent(this.redirectTarget);
-      },
-      codeLoginUrl() {
-        return "/pages/auth/login.html?redirect=" + encodeURIComponent(this.redirectTarget);
-      }
-    },
-    async mounted() {
-      await window.authHelper.redirectIfLoggedIn(this.redirectTarget);
-    },
-    methods: {
-      showError(err) {
-        const msg = typeof err === "string" ? err : (err && err.message) || "操作失败，请稍后重试";
-        this.$message.error(msg);
-      },
-      validateAgreement() {
-        if (!this.radio) {
-          this.$message.error("请先勾选用户协议");
-          return false;
-        }
-        return true;
-      },
-      async login() {
-        if (!this.validateAgreement()) {
-          return;
-        }
-        if (!this.form.phone || !this.form.password) {
-          this.$message.error("请输入手机号和密码");
-          return;
-        }
-        try {
-          const res = await axios.post("/user/login", this.form);
-          const token = res.data;
-          if (token) {
-            localStorage.setItem("token", token);
-          }
-          location.replace(this.redirectTarget);
-        } catch (err) {
-          this.showError(err);
-        }
-      },
-      goBack() {
-        history.back();
-      }
-    }
-  });
-</script>
+<script src="/js/password-login-page.js"></script>
 </body>
 </html>

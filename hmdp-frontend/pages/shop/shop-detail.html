@@ -9,21 +9,22 @@
   <link href="/css/main.css" rel="stylesheet">
   <style>
     :root {
-      --primary: #ff6b35;
-      --primary-light: #ff8c61;
-      --primary-dark: #e55a2b;
-      --bg: #f8f9fa;
-      --surface: #ffffff;
-      --text-primary: #1a1a1a;
-      --text-secondary: #666666;
-      --text-tertiary: #999999;
+      --primary: #FF7A45;
+      --primary-light: #FF9C6E;
+      --primary-dark: #E55A2B;
+      --bg: #FDFBF9;
+      --surface: #FFFFFF;
+      --text-primary: #3A3432;
+      --text-secondary: #8A817C;
+      --text-tertiary: #B5AFA6;
       --border: #f0f0f0;
-      --shadow: 0 4px 20px rgba(0,0,0,0.08);
-      --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+      --shadow: 0 4px 20px rgba(0,0,0,0.04);
+      --shadow-sm: 0 4px 12px rgba(255, 122, 69, 0.04);
+      --shadow-lg: 0 16px 40px rgba(0,0,0,0.12);
       --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-xl: 24px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
     }
 
     * {
@@ -37,14 +38,23 @@
       background: var(--bg);
       color: var(--text-primary);
       line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    #app {
+      width: min(100%, 390px);
+      min-height: 100vh;
+      margin: 0 auto;
+      position: relative;
     }
 
     /* Header */
     .header {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(calc(100vw - 32px), 358px);
       height: 56px;
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
       display: flex;
@@ -53,6 +63,7 @@
       padding: 0 16px;
       z-index: 1000;
       box-shadow: var(--shadow);
+      border-radius: var(--radius-lg);
     }
 
     .header-back-btn {
@@ -99,21 +110,26 @@
 
     /* Main Content */
     .main-content {
-      padding-top: 56px;
-      padding-bottom: 80px;
+      padding-top: 0;
+      padding-bottom: 108px;
     }
 
     /* Hero Section */
     .hero-section {
-      position: relative;
-      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      height: 280px;
+      background: transparent;
+      padding: 0;
     }
 
     .shop-images-carousel {
       width: 100%;
-      height: 280px;
+      height: 100%;
       overflow: hidden;
       position: relative;
+      border-radius: 0;
     }
 
     .shop-images-carousel img {
@@ -134,13 +150,15 @@
     }
 
     .shop-info-card {
-      padding: 20px 16px;
+      padding: 20px 16px 18px;
       background: var(--surface);
-      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-      margin-top: -20px;
+      border-radius: var(--radius-xl);
+      margin-top: -24px;
       position: relative;
       z-index: 10;
-    }
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+     border-radius: 24px 24px 0 0; padding-top: 32px;}
 
     .shop-title {
       font-size: 24px;
@@ -231,8 +249,8 @@
     .action-bar {
       display: flex;
       gap: 12px;
-      padding: 0 16px 16px;
-      background: var(--surface);
+      padding: 12px 16px 0;
+      background: transparent;
     }
 
     .action-btn {
@@ -262,12 +280,58 @@
     }
 
     .action-btn.secondary {
-      background: var(--bg);
+      background: var(--surface);
       color: var(--text-primary);
+      border: 1px solid var(--border);
     }
 
     .action-btn.secondary:hover {
       background: #f0f0f0;
+    }
+
+    .city-worth-section {
+      background: var(--surface);
+      margin: 12px 16px 0;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,107,53,0.12);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .city-worth-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .city-worth-title i {
+      color: var(--primary);
+    }
+
+    .city-worth-copy {
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+
+    .city-worth-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .city-worth-tag {
+      padding: 6px 9px;
+      border-radius: 8px;
+      color: var(--primary);
+      background: rgba(255,107,53,0.08);
+      font-size: 12px;
+      font-weight: 700;
     }
 
     /* Info Section */
@@ -275,6 +339,11 @@
       background: var(--surface);
       margin-top: 12px;
       padding: 16px;
+      border-radius: 20px;
+      margin-left: 16px;
+      margin-right: 16px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
     }
 
     .info-item {
@@ -329,6 +398,11 @@
       background: var(--surface);
       margin-top: 12px;
       padding: 20px 16px;
+      border-radius: 20px;
+      margin-left: 16px;
+      margin-right: 16px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
     }
 
     .section-header {
@@ -627,6 +701,16 @@
       color: var(--primary);
     }
 
+    .comment-empty {
+      padding: 24px 16px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, #fffaf6 0%, #fff 100%);
+      color: var(--text-secondary);
+      font-size: 14px;
+      text-align: center;
+      border: 1px dashed rgba(255, 107, 53, 0.18);
+    }
+
     .view-all-comments {
       display: flex;
       align-items: center;
@@ -648,7 +732,7 @@
     /* Copyright */
     .copyright {
       text-align: center;
-      padding: 30px 16px;
+      padding: 24px 16px 12px;
       color: var(--text-tertiary);
       font-size: 12px;
       background: var(--bg);
@@ -658,15 +742,17 @@
     .bottom-bar {
       position: fixed;
       bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--surface);
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(100%, 390px);
+      background: rgba(253, 251, 249, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 32px 32px 0 0; padding-bottom: calc(12px + env(safe-area-inset-bottom));
       padding: 12px 16px;
       display: flex;
       align-items: center;
       gap: 16px;
       box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
       z-index: 1000;
+      border-top: 1px solid var(--border);
     }
 
     .bottom-actions {
@@ -694,6 +780,7 @@
     }
 
     .bottom-btn {
+      transition: var(--transition-smooth);
       flex: 1;
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
       color: white;
@@ -736,6 +823,10 @@
       .bottom-actions {
         justify-content: space-around;
       }
+
+      .header {
+        width: calc(100vw - 24px);
+      }
     }
   </style>
 </head>
@@ -774,9 +865,9 @@
         </div>
 
         <div class="shop-tags">
-          <span class="shop-tag">口味 4.9</span>
-          <span class="shop-tag">环境 4.8</span>
-          <span class="shop-tag">服务 4.7</span>
+          <span class="shop-tag">口味 {{shopTagScores.taste}}</span>
+          <span class="shop-tag">环境 {{shopTagScores.env}}</span>
+          <span class="shop-tag">服务 {{shopTagScores.service}}</span>
         </div>
 
         <div class="shop-rank">
@@ -789,7 +880,7 @@
 
     <!-- Action Bar -->
     <div class="action-bar">
-      <button class="action-btn secondary" @click="goToMap">
+      <button class="action-btn secondary" @click="goToMap('preview')">
         <i class="el-icon-map-location"></i>
         查看地图
       </button>
@@ -797,6 +888,17 @@
         <i class="el-icon-phone"></i>
         联系商家
       </button>
+    </div>
+
+    <div class="city-worth-section" v-if="cityEditionEnabled">
+      <div class="city-worth-title">
+        <i class="el-icon-location-information"></i>
+        为什么在{{cityProfile.cityName}}值得来
+      </div>
+      <div class="city-worth-copy">{{cityWorthReason}}</div>
+      <div class="city-worth-tags">
+        <span class="city-worth-tag" v-for="tag in cityReasonTags" :key="tag">{{tag}}</span>
+      </div>
     </div>
 
     <!-- Info Section -->
@@ -831,12 +933,12 @@
           <div class="section-title-icon"></div>
           优惠券
         </div>
-        <div class="section-more">
-          全部优惠 <i class="el-icon-arrow-right"></i>
+        <div class="section-more" @click="toggleAllVouchers">
+          {{ showAllVouchers ? '收起优惠' : '全部优惠' }} <i :class="showAllVouchers ? 'el-icon-arrow-up' : 'el-icon-arrow-right'"></i>
         </div>
       </div>
 
-      <div class="voucher-card" v-for="v in vouchers" :key="v.id" v-if="!isEnd(v)">
+      <div class="voucher-card" v-for="v in visibleVouchers" :key="v.id">
         <div class="seckill-badge" v-if="v.type === 1">限时秒杀</div>
         
         <div class="voucher-header">
@@ -873,61 +975,60 @@
       <div class="section-header">
         <div class="section-title">
           <div class="section-title-icon"></div>
-          网友评价 <span style="color: var(--text-tertiary); font-weight: 400;">(119)</span>
+          网友评价 <span style="color: var(--text-tertiary); font-weight: 400;">({{commentTotal}})</span>
         </div>
         <div class="section-more">
-          <i class="el-icon-s-data"></i> 好评率 98%
+          <i class="el-icon-s-data"></i> 好评率 {{commentGoodRate}}%
         </div>
       </div>
 
-      <div class="comment-tags">
-        <span class="comment-tag active">全部</span>
-        <span class="comment-tag">口味赞(19)</span>
-        <span class="comment-tag">食材新鲜(16)</span>
-        <span class="comment-tag">菜品不错(11)</span>
-        <span class="comment-tag">回头客(4)</span>
-        <span class="comment-tag">分量足(4)</span>
+      <div class="comment-tags" v-if="commentTagOptions.length">
+        <span
+          v-for="tag in commentTagOptions"
+          :key="tag.key"
+          :class="['comment-tag', { active: activeCommentFilter === tag.key }]"
+          @click="activeCommentFilter = tag.key"
+        >{{tag.label}}({{tag.count}})</span>
       </div>
 
       <div class="comment-list">
-        <div class="comment-item" v-for="i in 3" :key="i">
-          <img src="https://p0.meituan.net/userheadpicbackend/57e44d6eba01aad0d8d711788f30a126549507.jpg%4048w_48h_1e_1c_1l%7Cwatermark%3D0" class="comment-avatar" alt="头像">
+        <div class="comment-item" v-for="comment in filteredComments" :key="comment.id">
+          <img :src="resolveImageUrl(comment.userIcon)" class="comment-avatar" alt="头像" @error="handleImageError">
           <div class="comment-content">
             <div class="comment-header">
               <span class="comment-user">
-                叶小七
-                <span class="user-level">Lv5</span>
+                {{comment.userName || '匿名用户'}}
+                <span class="user-level">{{comment.userLevel || 'Lv1'}}</span>
               </span>
             </div>
             <div class="comment-rate">
-              <el-rate disabled :value="4.5" text-color="#ff6b35"></el-rate>
-              <span style="color: var(--text-tertiary); font-size: 13px;">2024-01-15</span>
+              <el-rate disabled :value="(comment.score || 50) / 10" text-color="#ff6b35"></el-rate>
+              <span style="color: var(--text-tertiary); font-size: 13px;">{{formatCommentDate(comment.createTime)}}</span>
             </div>
             <div class="comment-text">
-              团购来的，价格很合适。虽然优惠力度大，但店里一点也没有偷工减料，味道很稳，环境也舒服，服务态度也很好，下次还会再来。
+              {{comment.content || '这位用户还没有留下文字评价。'}}
             </div>
-            <div class="comment-images">
-              <img src="https://qcloud.dpfile.com/pc/6T7MfXzx7USPIkSy7jzm40qZSmlHUF2jd-FZUL6WpjE9byagjLlrseWxnl1LcbuSGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
-              <img src="https://qcloud.dpfile.com/pc/sZ5q-zgglv4VXEWU71xCFjnLM_jUHq-ylq0GKivtrz3JksWQ1f7oBWZsxm1DWgcaGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
-              <img src="https://qcloud.dpfile.com/pc/xZy6W4NwuRFchlOi43DVLPFsx7KWWvPqifE1JTe_jreqdsBYA9CFkeSm2ZlF0OVmGybIjx5eX6WNgCPvcASYAw.jpg" alt="">
+            <div class="comment-images" v-if="comment.imageList && comment.imageList.length">
+              <img v-for="(img, idx) in comment.imageList.slice(0, 3)" :key="idx" :src="resolveImageUrl(img)" alt="" @error="handleImageError">
             </div>
             <div class="comment-footer">
-              <span>浏览 641</span>
+              <span>{{comment.tasteScore ? ('口味 ' + (comment.tasteScore / 10).toFixed(1)) : '真实评价'}}</span>
               <div class="comment-actions">
                 <span class="comment-action">
-                  <i class="el-icon-thumb"></i> 12
+                  <i class="el-icon-thumb"></i> {{comment.liked || 0}}
                 </span>
                 <span class="comment-action">
-                  <i class="el-icon-chat-dot-round"></i> 5
+                  <i class="el-icon-picture-outline"></i> {{comment.imageList ? comment.imageList.length : 0}}
                 </span>
               </div>
             </div>
           </div>
         </div>
+        <div v-if="!filteredComments.length" class="comment-empty">还没有真实评价，欢迎成为第一个点评的人。</div>
       </div>
 
-      <div class="view-all-comments">
-        查看全部 119 条评价 <i class="el-icon-arrow-right"></i>
+      <div class="view-all-comments" v-if="commentTotal > filteredComments.length">
+        共 {{commentTotal}} 条真实评价 <i class="el-icon-arrow-right"></i>
       </div>
     </div>
 
@@ -949,7 +1050,7 @@
         <span>分享</span>
       </div>
     </div>
-    <button class="bottom-btn" @click="goToMap">
+    <button class="bottom-btn" @click="goToMap('navigation')">
       <i class="el-icon-map-location"></i> 导航到店
     </button>
   </div>
@@ -959,170 +1060,6 @@
 <script src="/js/axios.min.js"></script>
 <script src="/js/element.js"></script>
 <script src="/js/common.js"></script>
-<script>
-  const app = new Vue({
-    el: "#app",
-    data: {
-      util,
-      shop: {},
-      vouchers: [],
-      isFavorite: false,
-      fallbackImage: '/imgs/blogs/blog1.jpg'
-    },
-    created() {
-      let shopId = util.getUrlParam("id");
-      this.queryShopById(shopId);
-      this.queryVoucher(shopId);
-      this.checkFavorite(shopId);
-    },
-    methods: {
-      goBack() {
-        history.back();
-      },
-      goToMap() {
-        if (this.shop.id) {
-          location.href = `../map/map.html?targetId=${this.shop.id}&targetName=${encodeURIComponent(this.shop.name)}&targetAddress=${encodeURIComponent(this.shop.address)}&targetX=${this.shop.x}&targetY=${this.shop.y}`;
-        }
-      },
-      callShop() {
-        this.$message.info('拨打电话功能开发中...');
-      },
-      queryShopById(shopId) {
-        axios.get("/shop/" + shopId)
-        .then(({data}) => {
-          data.images = (data.images ? data.images.split(",") : []).map(img => this.resolveImageUrl(img))
-          this.shop = data
-        })
-        .catch(err => this.$message.error(this.getErrorMessage(err)))
-      },
-      queryVoucher(shopId) {
-        axios.get("/voucher/list/" + shopId)
-        .then(({data}) => {
-          this.vouchers = data;
-        })
-        .catch(err => this.$message.error(this.getErrorMessage(err)))
-      },
-      checkFavorite(shopId) {
-        if (!this.hasToken()) return;
-        axios.get(`/favorites/is/1/${shopId}`)
-        .then(({data}) => {
-          this.isFavorite = data;
-        })
-        .catch(() => {
-          this.isFavorite = false;
-        })
-      },
-      toggleFavorite() {
-        if (!this.hasToken()) {
-          this.$message.error("请先登录")
-          setTimeout(() => {
-            location.href = "../auth/login.html"
-          }, 200);
-          return;
-        }
-        if (!this.shop.id) return;
-        if (this.isFavorite) {
-          axios.delete(`/favorites/1/${this.shop.id}`)
-          .then(() => {
-            this.isFavorite = false;
-            this.$message.success("已取消收藏");
-          })
-          .catch(err => this.$message.error(this.getErrorMessage(err)))
-        } else {
-          axios.post(`/favorites/1/${this.shop.id}`)
-          .then(() => {
-            this.isFavorite = true;
-            this.$message.success("收藏成功");
-          })
-          .catch(err => this.$message.error(this.getErrorMessage(err)))
-        }
-      },
-      formatTime(v){
-        let b = new Date(v.beginTime);
-        let e = new Date(v.endTime);
-        return b.getMonth() + 1 + "月" + b.getDate() + "日"
-          + b.getHours() + ":" + this.formatMinutes(b.getMinutes())
-          + " ~ "
-          + e.getHours() + ":" + this.formatMinutes(e.getMinutes());
-      },
-      formatMinutes(m){
-        if(m < 10) m = "0" + m
-        return m;
-      },
-      isNotBegin(v){
-        return new Date(v.beginTime).getTime() > new Date().getTime();
-      },
-      isEnd(v){
-        if (!v.endTime) return false;
-        return new Date(v.endTime).getTime() < new Date().getTime();
-      },
-      seckill(v){
-        if(!this.hasToken()){
-          this.$message.error("请先登录")
-          setTimeout(() => {
-            location.href = "../auth/login.html"
-          }, 200);
-          return;
-        }
-        if(v.type !== 1){
-          axios.post("/voucher-order/receive/" + v.id)
-          .then(() => {
-            this.$message.success("领取成功");
-            if (typeof v.stock === "number" && v.stock > 0) {
-              v.stock--;
-            }
-          })
-          .catch(err => this.$message.error(this.getErrorMessage(err)))
-          return;
-        }
-        if(this.isNotBegin(v)){
-          this.$message.error("优惠券抢购尚未开始")
-          return;
-        }
-        if(this.isEnd(v)){
-          this.$message.error("优惠券抢购已经结束")
-          return;
-        }
-        if(v.stock < 1){
-          this.$message.error("库存不足，请刷新后重试")
-          return;
-        }
-        let id = v.id;
-        axios.post("/voucher-order/seckill/" + id)
-        .then(({data}) => {
-          this.$message.success("抢购成功，订单id：" + data)
-        })
-        .catch(err => this.$message.error(this.getErrorMessage(err)))
-      },
-      hasToken() {
-        return !!localStorage.getItem("token");
-      },
-      resolveImageUrl(path) {
-        if (!path) {
-          return this.fallbackImage;
-        }
-        if (path.startsWith("http") || path.startsWith("data:")) {
-          return path;
-        }
-        if (path.startsWith(util.commonURL)) {
-          return path;
-        }
-        return util.commonURL + (path.startsWith("/") ? path : "/" + path);
-      },
-      handleImageError(event) {
-        if (!event || !event.target) return;
-        if (event.target.dataset.fallbackApplied === '1') return;
-        event.target.dataset.fallbackApplied = '1';
-        event.target.src = this.fallbackImage;
-      },
-      getErrorMessage(err) {
-        if (typeof err === "string") {
-          return err;
-        }
-        return err?.response?.data?.errorMsg || err?.message || "操作失败";
-      }
-    }
-  })
-</script>
+<script src="/js/shop-detail-page.js"></script>
 </body>
 </html>

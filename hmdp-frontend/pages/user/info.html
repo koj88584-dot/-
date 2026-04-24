@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -9,22 +9,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #ff6b35;
-      --primary-light: #ff8c61;
-      --primary-dark: #e55a2b;
-      --secondary: #2d3436;
-      --bg: #f8f9fa;
-      --surface: #ffffff;
-      --text-primary: #2d3436;
-      --text-secondary: #636e72;
-      --text-muted: #b2bec3;
-      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-      --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
-      --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 20px;
-      --radius-xl: 28px;
+      --primary: #FF7A45;
+      --primary-light: #FF9C6E;
+      --primary-dark: #E55A2B;
+      --bg: #FDFBF9;
+      --surface: #FFFFFF;
+      --text-primary: #3A3432;
+      --text-secondary: #8A817C;
+      --text-muted: #B5AFA6;
+      --shadow-sm: 0 4px 12px rgba(255, 122, 69, 0.04);
+      --shadow-md: 0 8px 24px rgba(255, 122, 69, 0.08);
+      --shadow-lg: 0 16px 40px rgba(255, 122, 69, 0.12);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
     }
 
     * {
@@ -40,21 +39,31 @@
       color: var(--text-primary);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    #app {
+      width: min(100%, 390px);
+      min-height: 100vh;
+      margin: 0 auto;
+      position: relative;
+      padding-bottom: 104px;
     }
 
     /* 顶部导航 */
     .header {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-      padding: 16px;
+      background: transparent;
+      width: 100%;
+      margin: 0;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: sticky;
+      position: absolute;
       top: 0;
       z-index: 100;
       color: #fff;
     }
-
     .header-back-btn {
       width: 40px;
       height: 40px;
@@ -103,7 +112,10 @@
       color: #fff;
       position: relative;
       overflow: hidden;
-    }
+      margin: 0;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+     border-radius: 0 0 24px 24px; padding-top: 60px; padding-bottom: 60px;}
 
     .profile-card::before {
       content: '';
@@ -211,9 +223,11 @@
     .stats-bar {
       display: flex;
       justify-content: space-around;
-      padding: 20px;
+      padding: 24px 20px;
       background: var(--surface);
-      margin: -20px 16px 16px;
+      margin: -32px 0 16px;
+      border-radius: 32px 32px 24px 24px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.03);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-md);
       position: relative;
@@ -319,6 +333,7 @@
     .icon-coupon { background: linear-gradient(135deg, #fa8c16 0%, #ffc53d 100%); color: #fff; }
     .icon-order { background: linear-gradient(135deg, #722ed1 0%, #b37feb 100%); color: #fff; }
     .icon-map { background: linear-gradient(135deg, #13c2c2 0%, #5cdbd3 100%); color: #fff; }
+    .icon-merchant { background: linear-gradient(135deg, #2f54eb 0%, #69c0ff 100%); color: #fff; }
     .icon-setting { background: linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%); color: #fff; }
     .icon-logout { background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%); color: #fff; }
 
@@ -498,8 +513,9 @@
     .bottom-nav {
       position: fixed;
       bottom: 16px;
-      left: 16px;
-      right: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(calc(100vw - 24px), 358px);
       height: 64px;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
@@ -632,6 +648,10 @@
 
     /* 响应式优化 */
     @media (max-width: 375px) {
+      .header {
+        width: calc(100% - 20px);
+      }
+
       .feature-grid {
         gap: 8px;
         padding: 16px 12px;
@@ -759,6 +779,30 @@
       </div>
       <div class="feature-label">附近地图</div>
     </div>
+    <div v-if="user.merchantEnabled" class="feature-item" @click="toMerchantCenter">
+      <div class="feature-icon icon-merchant">
+        <i class="el-icon-s-shop"></i>
+      </div>
+      <div class="feature-label">商家中心</div>
+    </div>
+    <div v-else-if="user.merchantApplicationStatus === 'PENDING' || user.merchantApplicationStatus === 'REJECTED'" class="feature-item" @click="toMerchantProgress">
+      <div class="feature-icon icon-merchant">
+        <i class="el-icon-document-checked"></i>
+      </div>
+      <div class="feature-label">申请进度</div>
+    </div>
+    <div v-else class="feature-item" @click="toMerchantApply">
+      <div class="feature-icon icon-merchant">
+        <i class="el-icon-s-check"></i>
+      </div>
+      <div class="feature-label">申请商家</div>
+    </div>
+    <div v-if="user.admin" class="feature-item" @click="toAdminReview">
+      <div class="feature-icon icon-setting">
+        <i class="el-icon-s-custom"></i>
+      </div>
+      <div class="feature-label">审核后台</div>
+    </div>
     <div class="feature-item" @click="toPrivacy">
       <div class="feature-icon icon-setting">
         <i class="el-icon-setting"></i>
@@ -879,191 +923,6 @@
 <script src="/js/element.js"></script>
 <script src="/js/common.js"></script>
 <script src="/js/auth.js"></script>
-<script>
-  new Vue({
-    el: "#app",
-    data: {
-      user: {},
-      info: {},
-      blogs: [],
-      blogs2: [],
-      activeTab: 'notes',
-      followCount: 0,
-      followerCount: 0,
-      unreadCount: 0,
-      pageReady: true,
-      params: {
-        minTime: 0,
-        offset: 0,
-      },
-    },
-    created() {
-      this.bootstrap();
-    },
-    methods: {
-      async bootstrap() {
-        const ok = await window.authHelper.ensureLogin(location.pathname + location.search);
-        if (!ok) {
-          return;
-        }
-        this.pageReady = true;
-        this.queryUser();
-      },
-      queryUser() {
-        axios.get("/user/me")
-          .then((result) => {
-            // common.js 拦截器返回的是整个 Result 对象，需要取 data 部分
-            if (!result.data || !result.data.id) {
-              window.authHelper.clearAuth();
-              location.replace(window.authHelper.buildLoginUrl(location.pathname + location.search));
-              return;
-            }
-            this.user = result.data;
-            // 检查本地存储是否有更新的昵称和头像
-            const savedNickName = localStorage.getItem('userNickName');
-            const savedIcon = localStorage.getItem('userIcon');
-            if (savedNickName) {
-              this.user.nickName = savedNickName;
-            }
-            if (savedIcon) {
-              this.user.icon = savedIcon;
-            }
-            this.queryUserInfo();
-            this.queryBlogs();
-            if (this.user.id) {
-              this.queryFollowStats(this.user.id);
-            }
-          })
-          .catch(() => {
-            window.authHelper.clearAuth();
-            location.replace(window.authHelper.buildLoginUrl(location.pathname + location.search));
-          });
-      },
-      queryUserInfo() {
-        axios.get("/user/info/" + this.user.id)
-          .then((result) => {
-            if (result.data) this.info = result.data;
-          })
-          .catch(err => this.$message.error(err));
-      },
-      queryBlogs() {
-        axios.get("/blog/of/me")
-          .then((result) => {
-            this.blogs = result.data || [];
-          })
-          .catch(this.$message.error);
-      },
-      queryBlogsOfFollow(clear) {
-        if (clear) {
-          this.params.offset = 0;
-          this.params.minTime = new Date().getTime() + 1;
-        }
-        let {minTime, offset: os} = this.params;
-        axios.get("/blog/of/follow", {
-            params: {offset: os, lastId: minTime || new Date().getTime() + 1}
-          })
-          .then((result) => {
-            if (!result.data) return;
-            let {list, ...params} = result.data;
-            list.forEach(b => b.img = b.images.split(",")[0]);
-            this.blogs2 = clear ? list : this.blogs2.concat(list);
-            this.params = params;
-          })
-          .catch(e => console.log(e));
-      },
-      queryFollowStats(userId) {
-        axios.get(`/follow/list/${userId}?current=1`)
-          .then((result) => {
-            this.followCount = result.data ? result.data.length : 0;
-          });
-        axios.get(`/follow/followers/${userId}?current=1`)
-          .then((result) => {
-            this.followerCount = result.data ? result.data.length : 0;
-          });
-        axios.get('/message/unread-count')
-          .then((result) => {
-            this.unreadCount = result.data || 0;
-          })
-          .catch(() => {});
-      },
-      addLike(b) {
-        axios.put("/blog/like/" + b.id)
-          .then(() => {
-            b.isLike = !b.isLike;
-            b.liked = (b.liked || 0) + (b.isLike ? 1 : -1);
-          })
-          .catch(err => this.$message.error(err));
-      },
-      toFollowList(tab) {
-        location.href = `../misc/follow-list.html?tab=${tab}`;
-      },
-      toBlogDetail(b) {
-        location.href = `../blog/blog-detail.html?id=${b.id}`;
-      },
-      goBack() {
-        history.back();
-      },
-      getImageUrl(icon) {
-        if (!icon) {
-          return '/imgs/icons/default-icon.png';
-        }
-        // 如果已经是完整URL，直接返回
-        if (icon.startsWith('http')) {
-          return icon;
-        }
-        // 拼接完整URL，添加 /imgs 前缀
-        return util.commonURL + '/imgs' + icon;
-      },
-      goHome() {
-        location.href = '../index-new.html';
-      },
-      goProfile() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      },
-      toEdit() {
-        location.href = 'info-edit.html';
-      },
-      logout() {
-        this.$confirm('确定要退出登录吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          axios.post("/user/logout")
-            .then(() => {
-              localStorage.removeItem("token");
-              this.$message.success('已退出登录');
-              location.href = "../index-new.html";
-            })
-            .catch(this.$message.error);
-        }).catch(() => {});
-      },
-      publish() {
-        location.href = '../blog/blog-edit.html';
-      },
-      toFavorites() {
-        location.href = '../misc/favorites.html';
-      },
-      toHistory() {
-        location.href = '../misc/history.html';
-      },
-      toMessages() {
-        location.href = '../misc/messages.html';
-      },
-      toVouchers() {
-        location.href = '../misc/vouchers.html';
-      },
-      toOrders() {
-        location.href = '../order/orders.html';
-      },
-      toMap() {
-        location.href = '../map/map.html';
-      },
-      toPrivacy() {
-        location.href = '../misc/privacy.html';
-      }
-    }
-  });
-</script>
+<script src="/js/user-info-page.js"></script>
 </body>
 </html>

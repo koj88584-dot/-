@@ -7,26 +7,27 @@
   <link rel="stylesheet" href="/css/element.css">
   <link href="/css/main.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #ff6b35;
-      --primary-light: #ff8c61;
-      --primary-dark: #e55a2b;
-      --secondary: #2d3436;
-      --accent: #00b894;
-      --bg: #f8f9fa;
-      --surface: #ffffff;
-      --text-primary: #2d3436;
-      --text-secondary: #636e72;
-      --text-muted: #b2bec3;
-      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-      --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
-      --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 20px;
-      --radius-xl: 28px;
+      --primary: #FF7A45;
+      --primary-light: #FF9C6E;
+      --primary-dark: #E55A2B;
+      --primary-gradient: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      --bg: #FDFBF9;
+      --surface: #FFFFFF;
+      --text-primary: #3A3432;
+      --text-secondary: #8A817C;
+      --text-muted: #B5AFA6;
+      
+      --shadow-sm: 0 4px 12px rgba(255, 122, 69, 0.04);
+      --shadow-md: 0 8px 24px rgba(255, 122, 69, 0.08);
+      --shadow-lg: 0 16px 40px rgba(255, 122, 69, 0.12);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
     }
 
     * { 
@@ -37,31 +38,43 @@
     }
 
     body { 
-      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text-primary);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
     }
 
-    /* 顶部导航栏 - 玻璃拟态效果 */
+    #app {
+      width: min(100%, 390px);
+      min-height: 100vh;
+      margin: 0 auto;
+    }
+
+    /* 椤堕儴瀵艰埅鏍?- 鐜荤拑鎷熸€佹晥鏋?*/
     .header {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      width: calc(100% - 24px);
+      margin: 12px auto 0;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       gap: 12px;
       position: sticky;
-      top: 0;
+      top: 12px;
       z-index: 100;
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: var(--radius-xl);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03), 0 1px 3px rgba(0,0,0,0.02);
     }
 
     .header.scrolled {
-      box-shadow: var(--shadow-md);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+      transform: translateY(-2px);
     }
 
     .logo {
@@ -77,7 +90,7 @@
     .logo-icon {
       width: 36px;
       height: 36px;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      background: var(--primary-gradient);
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;
@@ -135,15 +148,17 @@
 
     .search-input {
       width: 100%;
-      height: 40px;
-      background: var(--bg);
+      height: 44px;
+      background: #F1F5F9;
       border: 2px solid transparent;
       border-radius: var(--radius-xl);
-      padding: 0 44px 0 16px;
+      padding: 0 44px 0 20px;
       font-size: 14px;
+      font-weight: 500;
       outline: none;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       font-family: inherit;
+      color: var(--text-primary);
     }
 
     .search-input:focus {
@@ -186,12 +201,12 @@
       transform: translateY(-50%) scale(0.95);
     }
 
-    /* 分类网格 - 新拟态设计 */
+    /* 鍒嗙被缃戞牸 - 鏂版嫙鎬佽璁?*/
     .category-section {
       background: var(--surface);
       padding: 20px 12px;
       margin-bottom: 16px;
-      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      border-radius: var(--radius-lg);
       box-shadow: var(--shadow-sm);
     }
 
@@ -199,20 +214,187 @@
       margin-bottom: 14px;
     }
 
+    .city-hero {
+      margin-bottom: 14px;
+      padding: 20px 16px;
+      border-radius: 8px;
+      color: #fff;
+      background:
+        linear-gradient(135deg, var(--primary-dark) 0%, rgba(27, 77, 62, 0.92) 48%, var(--primary) 100%);
+      box-shadow: 0 14px 34px rgba(27, 77, 62, 0.18);
+      overflow: hidden;
+    }
+
+    .city-hero-kicker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      margin-bottom: 12px;
+    }
+
+    .city-hero-kicker button,
+    .city-hero-actions button,
+    .city-scene-card,
+    .city-route-chip,
+    .city-hot-tag {
+      border-radius: 8px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .city-hero-kicker button {
+      border: 1px solid rgba(255,255,255,0.28);
+      color: #fff;
+      background: rgba(255,255,255,0.12);
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+
+    .city-hero h1 {
+      font-size: 26px;
+      line-height: 1.25;
+      letter-spacing: 0;
+      margin: 0;
+    }
+
+    .city-hero p {
+      margin-top: 10px;
+      color: rgba(255,255,255,0.84);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .city-hero-tags,
+    .city-hot-tags,
+    .city-route-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .city-hero-tag {
+      padding: 6px 9px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.13);
+      color: rgba(255,255,255,0.9);
+      font-size: 12px;
+    }
+
+    .city-hero-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .city-hero-actions button {
+      border: none;
+      min-height: 40px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .city-primary-action {
+      background: #fff;
+      color: var(--primary-dark);
+    }
+
+    .city-secondary-action {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+    }
+
+    .city-panel {
+      margin-bottom: 16px;
+      padding: 16px 12px;
+      background: var(--surface);
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .city-section-subtitle {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: -6px;
+      margin-bottom: 12px;
+    }
+
+    .city-scene-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .city-scene-card {
+      min-height: 108px;
+      padding: 12px;
+      background: linear-gradient(180deg, var(--city-bg, #fff8f4), #fff);
+      border: 1px solid rgba(255,107,53,0.12);
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .city-scene-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,107,53,0.32);
+    }
+
+    .city-scene-title {
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .city-scene-desc {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .city-scene-meta {
+      margin-top: auto;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .city-route-chip,
+    .city-hot-tag {
+      border: 1px solid rgba(255,107,53,0.18);
+      background: #fff;
+      color: var(--text-primary);
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .city-route-chip {
+      background: var(--city-bg, #fff8f4);
+    }
+
     .assistant-shell {
       display: grid;
       grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
       gap: 18px;
       align-items: stretch;
-      padding: 20px;
-      border-radius: 24px;
-      background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.24), transparent 35%),
-        linear-gradient(135deg, #102542 0%, #0f3a61 48%, #ff7a45 100%);
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
       color: #fff;
-      box-shadow: 0 18px 40px rgba(16, 37, 66, 0.22);
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
       overflow: hidden;
       position: relative;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
     .assistant-shell::after {
@@ -363,10 +545,10 @@
     .category-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 16px 12px;
+      gap: 20px 12px;
     }
 
-    /* 响应式分类网格 */
+    /* 鍝嶅簲寮忓垎绫荤綉鏍?*/
     @media (min-width: 768px) {
       .category-grid {
         grid-template-columns: repeat(5, 1fr);
@@ -408,19 +590,17 @@
     }
 
     .category-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: var(--radius-md);
+      width: 54px;
+      height: 54px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
+      font-size: 28px;
       position: relative;
       overflow: hidden;
-      transition: all 0.3s ease;
-      box-shadow: 
-        8px 8px 16px rgba(0,0,0,0.08),
-        -8px -8px 16px rgba(255,255,255,0.8);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.06), inset 0 2px 4px rgba(255,255,255,0.4);
     }
 
     .category-item:hover .category-icon {
@@ -451,7 +631,7 @@
       color: var(--text-primary);
     }
 
-    /* 分类图标渐变 */
+    /* 鍒嗙被鍥炬爣娓愬彉 */
     .cat-food { background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%); }
     .cat-scenic { background: linear-gradient(135deg, #4ecdc4 0%, #7eddd6 100%); }
     .cat-hotel { background: linear-gradient(135deg, #45b7d1 0%, #74c7e3 100%); }
@@ -463,7 +643,7 @@
     .cat-fitness { background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%); }
     .cat-massage { background: linear-gradient(135deg, #d63031 0%, #ff7675 100%); }
 
-    /* 内容区块标题 */
+    /* 鍐呭鍖哄潡鏍囬 */
     .section-header {
       display: flex;
       align-items: center;
@@ -506,26 +686,29 @@
       background: rgba(255, 107, 53, 0.08);
     }
 
-    /* 推荐笔记 - 瀑布流卡片 */
+    /* 鎺ㄨ崘绗旇 - 鐎戝竷娴佸崱鐗?*/
     .content-section {
       padding: 0 12px;
     }
 
     .waterfall {
-      column-count: 2;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      align-items: start;
       column-gap: 12px;
+      row-gap: 16px;
     }
 
     .note-card {
       break-inside: avoid;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       background: var(--surface);
-      border-radius: var(--radius-md);
+      border-radius: 16px;
       overflow: hidden;
       cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       box-shadow: var(--shadow-sm);
-      position: relative;
+      border: 1px solid rgba(0,0,0,0.03);
     }
 
     .note-card::before {
@@ -579,7 +762,7 @@
     }
 
     .note-content {
-      padding: 12px;
+      padding: 14px 12px;
     }
 
     .note-title {
@@ -630,13 +813,15 @@
       font-size: 14px;
     }
 
-    /* 附近店铺列表 */
+    /* 闄勮繎搴楅摵鍒楄〃 */
     .shop-section {
       background: var(--surface);
       margin-top: 16px;
       padding: 0 12px 20px;
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      border-radius: var(--radius-lg);
       box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
     }
 
     .shop-list-new {
@@ -645,7 +830,24 @@
       gap: 16px;
     }
 
-    /* 响应式店铺列表 */
+    .nearby-load-more {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 4px 0 0;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .nearby-load-more i {
+      color: var(--primary);
+      font-size: 14px;
+    }
+
+    /* 鍝嶅簲寮忓簵閾哄垪琛?*/
     @media (min-width: 768px) {
       .shop-section {
         padding: 0 12px 24px;
@@ -669,14 +871,15 @@
     .shop-card {
       display: flex;
       gap: 14px;
-      padding: 14px;
-      background: var(--bg);
-      border-radius: var(--radius-md);
+      padding: 16px;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid transparent;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1px solid rgba(0,0,0,0.03);
       position: relative;
       overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
 
     .shop-card::before {
@@ -692,10 +895,9 @@
     }
 
     .shop-card:hover {
-      background: var(--surface);
-      border-color: rgba(255, 107, 53, 0.2);
-      box-shadow: var(--shadow-md);
-      transform: translateX(4px);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-4px);
+      border-color: rgba(255, 107, 53, 0.15);
     }
 
     .shop-card:hover::before {
@@ -708,11 +910,11 @@
     }
 
     .shop-image {
-      width: 100px;
-      height: 100px;
-      border-radius: var(--radius-sm);
+      width: 110px;
+      height: 110px;
+      border-radius: var(--radius-md);
       object-fit: cover;
-      transition: transform 0.3s ease;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .shop-card:hover .shop-image {
@@ -826,12 +1028,42 @@
       margin-top: 6px;
     }
 
-    /* 底部导航 - 悬浮设计 */
+    .shop-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .shop-card-actions button {
+      flex: 1;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 107, 53, 0.22);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .shop-map-btn {
+      background: #fff;
+      color: var(--primary);
+    }
+
+    .shop-nav-btn {
+      border-color: transparent;
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(255, 107, 53, 0.24);
+    }
+
+    /* 搴曢儴瀵艰埅 - 鎮诞璁捐 */
     .bottom-nav {
       position: fixed;
       bottom: 16px;
-      left: 16px;
-      right: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(calc(100vw - 24px), 358px);
       height: 64px;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
@@ -936,12 +1168,12 @@
       transform: scale(0.95);
     }
 
-    /* 内容区域底部留白 */
+    /* 鍐呭鍖哄煙搴曢儴鐣欑櫧 */
     .content-wrapper {
-      padding-bottom: 100px;
+      padding-bottom: 108px;
     }
 
-    /* 加载动画 */
+    /* 鍔犺浇鍔ㄧ敾 */
     .skeleton {
       background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
       background-size: 200% 100%;
@@ -954,7 +1186,7 @@
       100% { background-position: -200% 0; }
     }
 
-    /* 滚动条美化 */
+    /* 婊氬姩鏉＄編鍖?*/
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -973,7 +1205,7 @@
       background: rgba(0,0,0,0.25);
     }
 
-    /* 空状态 */
+    /* 绌虹姸鎬?*/
     .empty-state {
       text-align: center;
       padding: 40px 20px;
@@ -986,7 +1218,7 @@
       opacity: 0.5;
     }
 
-    /* 响应式优化 */
+    /* 鍝嶅簲寮忎紭鍖?*/
     @media (max-width: 375px) {
       .container {
         padding: 0 10px;
@@ -1007,7 +1239,7 @@
         height: 88px;
       }
       
-      /* 瀑布流响应式 */
+      /* 鐎戝竷娴佸搷搴斿紡 */
       .waterfall {
         column-count: 2;
         column-gap: 10px;
@@ -1022,7 +1254,123 @@
       }
     }
 
-    /* 瀑布流响应式布局 - 平板和桌面端 */
+    /* 鐎戝竷娴佸搷搴斿紡甯冨眬 - 骞虫澘鍜屾闈㈢ */
+    @media (min-width: 768px) {
+      .container {
+        padding: 0 16px;
+      }
+      
+      .waterfall {
+        column-count: 3;
+        column-gap: 14px;
+      }
+      
+      .note-card {
+        margin-bottom: 14px;
+      }
+      
+      .content-section {
+        padding: 0;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .container {
+        padding: 0 20px;
+      }
+      
+      .waterfall {
+        column-count: 4;
+        column-gap: 16px;
+      }
+      
+      .note-card {
+        margin-bottom: 16px;
+      }
+      
+
+    /* 鍔犺浇鍔ㄧ敾 */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* 婊氬姩鏉＄編鍖?*/
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.15);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,0,0,0.25);
+    }
+
+    /* 绌虹姸鎬?*/
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    /* 鍝嶅簲寮忎紭鍖?*/
+    @media (max-width: 375px) {
+      .container {
+        padding: 0 10px;
+      }
+      
+      .category-grid {
+        gap: 12px 8px;
+      }
+      
+      .category-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
+      }
+      
+      .shop-image {
+        width: 88px;
+        height: 88px;
+      }
+      
+      /* 鐎戝竷娴佸搷搴斿紡 */
+      .waterfall {
+        column-count: 2;
+        column-gap: 10px;
+      }
+      
+      .note-card {
+        margin-bottom: 10px;
+      }
+      
+      .content-section {
+        padding: 0;
+      }
+    }
+
+    /* 鐎戝竷娴佸搷搴斿紡甯冨眬 - 骞虫澘鍜屾闈㈢ */
     @media (min-width: 768px) {
       .container {
         padding: 0 16px;
@@ -1082,50 +1430,32 @@
         column-gap: 20px;
       }
       
-      .note-card {
-        margin-bottom: 20px;
-      }
+      .note-card { margin-bottom: 20px; }
     }
 
-    /* 页面加载动画 */
-    .fade-in {
-      animation: fadeIn 0.6s ease-out;
-    }
-
+    /* Page load animation */
+    .fade-in { animation: fadeIn 0.6s ease-out; }
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-
     .stagger-1 { animation-delay: 0.1s; }
     .stagger-2 { animation-delay: 0.2s; }
     .stagger-3 { animation-delay: 0.3s; }
     .stagger-4 { animation-delay: 0.4s; }
 
-    /* 居中容器 */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 16px;
-    }
+    /* ============================================
+       HOMEPAGE V3 — Clean, premium mobile layout
+       ============================================ */
+    ::-webkit-scrollbar { display: none !important; }
 
-    /* 内容区调整 */
-    .content-wrapper {
-      padding-bottom: 100px;
-    }
 
-    /* 分类区域调整 */
+    /* 鍒嗙被鍖哄煙璋冩暣 */
     .category-section {
       margin-bottom: 16px;
     }
 
-    /* 卡片密度调整 */
+    /* 鍗＄墖瀵嗗害璋冩暣 */
     .waterfall {
       column-gap: 12px;
     }
@@ -1137,11 +1467,11 @@
 </head>
 <body>
   <div id="app">
-    <!-- 顶部导航 -->
+    <!-- 椤堕儴瀵艰埅 -->
     <header class="header" :class="{ scrolled: isScrolled }">
       <el-dropdown class="city-selector" trigger="click" @command="handleCityCommand">
         <span class="el-dropdown-link">
-          {{ currentCity }}<i class="el-icon-arrow-down el-icon--right"></i>
+          {{ citySelectorLabel }}<i class="el-icon-arrow-down el-icon--right"></i>
         </span>
         <el-dropdown-menu slot="dropdown" class="city-dropdown-menu">
           <el-dropdown-item command="current" divided>
@@ -1172,8 +1502,53 @@
 
     <div class="container">
       <div class="content-wrapper">
-        <!-- 分类网格 -->
+        <section class="city-hero fade-in" v-if="cityEditionEnabled">
+          <div class="city-hero-kicker">
+            <span>{{ cityBrandClaim }}</span>
+            <button @click="goCityHub">全国城市馆</button>
+          </div>
+          <h1>{{ cityProfile.heroTitle }}</h1>
+          <p>{{ cityProfile.cityTagline }}</p>
+          <div class="city-hero-tags">
+            <span class="city-hero-tag" v-for="tag in cityHeroTags" :key="tag">{{ tag }}</span>
+          </div>
+          <div class="city-hot-tags" v-if="cityHotSearches.length">
+            <button class="city-hot-tag" v-for="keyword in cityHotSearches" :key="keyword" @click="searchCityHotKeyword(keyword)">
+              {{ keyword }}
+            </button>
+          </div>
+          <div class="city-hero-actions">
+            <button class="city-primary-action" @click="goMap">城市玩法地图</button>
+            <button class="city-secondary-action" @click="openAssistantWithPrompt('我在' + currentCity + '，今天适合去哪吃喝玩乐？', currentCity + '城市决策')">问问本城助手</button>
+          </div>
+        </section>
+
+        <section class="city-panel fade-in" v-if="cityEditionEnabled">
+          <div class="section-header">
+            <h2 class="section-title">{{ currentCity }}主场景</h2>
+            <span class="section-more" @click="goCityHub">城市矩阵 <i class="el-icon-arrow-right"></i></span>
+          </div>
+          <p class="city-section-subtitle">按本城文化、商圈和消费节奏先给你缩小选择范围。</p>
+          <div class="city-scene-grid">
+            <button class="city-scene-card" v-for="scene in citySceneCards" :key="scene.id || scene.sceneId || scene.sceneName || scene.name" @click="openCityScene(scene)">
+              <span class="city-scene-title">{{ scene.title || scene.sceneTitle || scene.sceneName || scene.name }}</span>
+              <span class="city-scene-desc">{{ scene.subtitle || scene.decisionHint || scene.sceneDescription || scene.targetUser || cityProfile.priceTone }}</span>
+              <span class="city-scene-meta">{{ scene.districtHint || scene.district || currentCity }}</span>
+            </button>
+          </div>
+          <div class="city-route-list" v-if="cityFeaturedRoutes.length">
+            <button class="city-route-chip" v-for="route in cityFeaturedRoutes" :key="route" @click="openCityRoute(route)">
+              {{ route }}
+            </button>
+          </div>
+        </section>
+
+        <!-- 鍒嗙被缃戞牸 -->
         <section class="category-section fade-in">
+        <div class="section-header">
+          <h2 class="section-title">{{ categorySectionTitle }}</h2>
+          <span class="section-more">{{ categorySectionMeta }}</span>
+        </div>
         <div class="category-grid">
           <div class="category-item" 
                v-for="(cat, index) in categories" 
@@ -1189,7 +1564,7 @@
         </div>
       </section>
 
-      <!-- 推荐笔记 -->
+      <!-- 鎺ㄨ崘绗旇 -->
       <section class="assistant-showcase fade-in">
         <div class="assistant-shell">
           <div class="assistant-copy">
@@ -1249,11 +1624,11 @@
         </div>
       </section>
 
-      <!-- 附近好店 -->
-      <section class="shop-section">
+      <!-- 闄勮繎濂藉簵 -->
+      <section class="shop-section" ref="nearbySection">
         <div class="section-header">
           <h2 class="section-title">
-            附近好店
+            {{ currentCity }}今日值得去
             <i v-if="isLocating" class="el-icon-loading" style="font-size: 14px; margin-left: 8px; color: #999;"></i>
           </h2>
           <div style="display: flex; gap: 12px;">
@@ -1268,7 +1643,7 @@
         <div class="shop-list-new">
           <div class="shop-card fade-in" 
                v-for="(shop, index) in nearbyShops" 
-               :key="shop.id" 
+               :key="shop.id || (shop.name + '-' + shop.address + '-' + index)"
                @click="goToShop(shop)"
                :style="{ animationDelay: (index * 0.1) + 's' }">
             <div class="shop-image-wrapper">
@@ -1290,7 +1665,7 @@
                      class="el-icon-star-on" 
                      :style="{ color: n <= Math.round(shop.score) ? '#ffc107' : '#e0e0e0' }"></i>
                 </span>
-                <span class="shop-price">人均¥{{ shop.avgPrice }}</span>
+                <span class="shop-price">人均 ¥{{ shop.avgPrice }}</span>
               </div>
               <div class="shop-tags">
                 <span class="shop-tag" v-for="tag in shop.tags" :key="tag">{{ tag }}</span>
@@ -1299,43 +1674,59 @@
                 <i class="el-icon-office-building"></i>
                 <span>{{ shop.address }}</span>
               </div>
+              <div class="shop-location" v-if="shop.decisionReason">
+                <i class="el-icon-star-off"></i>
+                <span>{{ shop.decisionReason }}</span>
+              </div>
+              <div class="shop-card-actions">
+                <button class="shop-map-btn" @click.stop="goToShop(shop)">查看详情</button>
+                <button class="shop-nav-btn" @click.stop="navigateNearbyShop(shop)">导航去</button>
+              </div>
             </div>
           </div>
           
-          <!-- 空状态 -->
+          <!-- 绌虹姸鎬?-->
           <div class="empty-state" v-if="nearbyShops.length === 0 && !isLoading">
             <div class="empty-icon">🏪</div>
             <p>暂无附近店铺</p>
+          </div>
+          <div class="nearby-load-more" v-if="nearbyLoadingMore">
+            <i class="el-icon-loading"></i>
+            <span>加载更多...</span>
+          </div>
+          <div class="nearby-load-more" v-else-if="nearbyShops.length > 0 && !nearbyHasMore">
+            <span>已经到底了</span>
           </div>
         </div>
       </section>
       </div>
     </div>
 
-    <!-- 底部导航 -->
-    <nav class="bottom-nav">
-      <div class="nav-item active" @click="goHome">
-        <i class="el-icon-s-home nav-icon"></i>
-        <span class="nav-text">首页</span>
+    <!-- 搴曢儴瀵艰埅 -->
+    <!-- 底部导航 (App-like Glassmorphism Tab Bar) -->
+    <nav class="foot">
+      <div class="foot-box active" @click="goHome">
+        <i class="el-icon-s-home foot-view"></i>
+        <span class="foot-text">首页</span>
       </div>
-      <div class="nav-item" @click="goMap">
-        <i class="el-icon-map-location nav-icon"></i>
-        <span class="nav-text">地图</span>
+      <div class="foot-box tap-effect" @click="goMap">
+        <i class="el-icon-map-location foot-view"></i>
+        <span class="foot-text">地图</span>
       </div>
-      <div class="nav-add" @click="publish">
+      <div class="add-btn tap-effect" @click="publish">
         <i class="el-icon-plus"></i>
       </div>
-      <div class="nav-item" @click="goMessages">
-        <i class="el-icon-chat-dot-round nav-icon"></i>
-        <span class="nav-text">消息</span>
+      <div class="foot-box tap-effect" @click="goMessages">
+        <i class="el-icon-chat-dot-round foot-view"></i>
+        <span class="foot-text">消息</span>
       </div>
-      <div class="nav-item" @click="goProfile">
-        <i class="el-icon-user nav-icon"></i>
-        <span class="nav-text">我的</span>
+      <div class="foot-box tap-effect" @click="goProfile">
+        <i class="el-icon-user foot-view"></i>
+        <span class="foot-text">我的</span>
       </div>
     </nav>
 
-    <!-- 城市选择对话框 -->
+    <!-- 鍩庡競閫夋嫨瀵硅瘽妗?-->
     <el-dialog
       title="选择城市"
       :visible.sync="showCityDialog"
@@ -1355,8 +1746,8 @@
         <h4 class="city-section-title">当前定位</h4>
         <div class="city-current" @click="useCurrentLocation">
           <i class="el-icon-location-information"></i>
-          <span>{{ currentCity }}</span>
-          <small style="color: #999; margin-left: 8px;">点击使用当前位置</small>
+          <span>{{ locationDisplay }}</span>
+          <small style="color: #999; margin-left: 8px;">点击重新定位</small>
         </div>
       </div>
 
@@ -1395,729 +1786,7 @@
   <script src="/js/element.js"></script>
   <script src="/js/common.js"></script>
   <script src="/js/auth.js"></script>
-  <script>
-    const NEARBY_CACHE_KEY = 'hmdp_nearby_shops_cache';
-    const NEARBY_CACHE_TTL = 10 * 60 * 1000;
-    const LOCATION_CHANGE_THRESHOLD = 200;
-
-    new Vue({
-      el: '#app',
-      data: {
-        currentCity: '长沙',
-        searchKeyword: '',
-        isSearchFocused: false,
-        isScrolled: false,
-        isLoading: true,
-        showCityDialog: false,  // 显示城市选择对话框
-        citySearchKeyword: '',  // 城市搜索关键词
-        hotCities: ['北京', '上海', '广州', '深圳', '杭州', '南京', '成都', '武汉', '西安', '重庆', '长沙', '天津'],
-        cityList: [],
-        categories: [
-          { id: 1, name: '美食', icon: '🍜', class: 'cat-food' },
-          { id: 2, name: 'KTV', icon: '🎤', class: 'cat-ktv' },
-          { id: 3, name: '丽人·美发', icon: '💇', class: 'cat-beauty' },
-          { id: 4, name: '健身运动', icon: '🏃', class: 'cat-fitness' },
-          { id: 5, name: '按摩·足疗', icon: '💆', class: 'cat-massage' },
-          { id: 6, name: '美容SPA', icon: '✨', class: 'cat-spa' },
-          { id: 7, name: '亲子游乐', icon: '👶', class: 'cat-kids' },
-          { id: 8, name: '酒吧', icon: '🍺', class: 'cat-bar' },
-          { id: 9, name: '轰趴馆', icon: '🎉', class: 'cat-party' },
-          { id: 10, name: '美睫·美甲', icon: '💅', class: 'cat-nail' },
-        ],
-        notes: [],  // 推荐笔记，从后端获取
-        nearbyShops: [],
-        currentLocation: null,  // 当前坐标
-        noteFallbackImage: '/imgs/blogs/blog1.jpg',
-        avatarFallbackImage: '/imgs/icons/default-icon.png',
-        isLocating: false       // 是否正在定位
-      },
-      mounted() {
-        // 优先尝试获取当前定位
-        this.autoLocateAndLoad();
-        // 加载推荐笔记
-        this.loadHotNotes();
-        this.handleScroll();
-        window.addEventListener('scroll', this.handleScroll);
-      },
-      beforeDestroy() {
-        window.removeEventListener('scroll', this.handleScroll);
-      },
-
-      methods: {
-        readNearbyCache() {
-          const raw = localStorage.getItem(NEARBY_CACHE_KEY);
-          if (!raw) {
-            return null;
-          }
-          try {
-            const parsed = JSON.parse(raw);
-            if (!parsed || !parsed.location || !Array.isArray(parsed.shops)) {
-              return null;
-            }
-            if (Date.now() - (parsed.ts || 0) > NEARBY_CACHE_TTL) {
-              return null;
-            }
-            return parsed;
-          } catch (e) {
-            return null;
-          }
-        },
-        restoreNearbyCache() {
-          const cached = this.readNearbyCache();
-          if (!cached) {
-            return false;
-          }
-          this.nearbyShops = cached.shops;
-          this.currentLocation = cached.location;
-          if (cached.city) {
-            this.currentCity = cached.city;
-          }
-          this.isLoading = false;
-          return true;
-        },
-        saveNearbyCache() {
-          if (!this.currentLocation || !Array.isArray(this.nearbyShops)) {
-            return;
-          }
-          const payload = {
-            ts: Date.now(),
-            location: this.currentLocation,
-            city: this.currentCity,
-            shops: this.nearbyShops
-          };
-          localStorage.setItem(NEARBY_CACHE_KEY, JSON.stringify(payload));
-        },
-        isLocationChanged(newLocation, baseLocation) {
-          if (!newLocation || !baseLocation) {
-            return true;
-          }
-          const distance = this.calculateDistance(newLocation.x, newLocation.y, baseLocation.x, baseLocation.y);
-          return distance > LOCATION_CHANGE_THRESHOLD;
-        },
-        // 自动定位并加载
-        async autoLocateAndLoad() {
-          const savedCity = localStorage.getItem('currentCity');
-          if (savedCity) {
-            try {
-              const parsed = JSON.parse(savedCity);
-              if (parsed && parsed.name) {
-                this.currentCity = parsed.name;
-                localStorage.setItem('currentCity', parsed.name);
-              } else if (typeof parsed === 'object') {
-                this.currentCity = '定位中...';
-              } else {
-                this.currentCity = savedCity;
-              }
-            } catch (e) {
-              this.currentCity = savedCity;
-            }
-          } else {
-            this.currentCity = '定位中...';
-          }
-
-          const hasCache = this.restoreNearbyCache();
-
-          if (navigator.geolocation) {
-            this.isLocating = true;
-            navigator.geolocation.getCurrentPosition(
-              async (position) => {
-                const latestLocation = {
-                  x: position.coords.longitude,
-                  y: position.coords.latitude,
-                  accuracy: position.coords.accuracy
-                };
-
-                const locationChanged = this.isLocationChanged(latestLocation, this.currentLocation);
-                this.currentLocation = latestLocation;
-                localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
-
-                if (locationChanged || !hasCache) {
-                  await this.getCityByLocation(latestLocation.x, latestLocation.y);
-                  this.loadNearbyShops(true);
-                } else {
-                  this.isLocating = false;
-                }
-              },
-              (error) => {
-                console.log('自动定位失败，使用缓存位置:', error);
-                this.isLocating = false;
-                if (!hasCache) {
-                  this.getCurrentLocation();
-                }
-              },
-              {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000
-              }
-            );
-          } else if (!hasCache) {
-            this.getCurrentLocation();
-          }
-          return;
-          if (false) {
-          // 先恢复保存的城市名称（用于显示）
-          const savedCity = localStorage.getItem('currentCity');
-          if (savedCity) {
-            try {
-              const parsed = JSON.parse(savedCity);
-              if (parsed && parsed.name) {
-                this.currentCity = parsed.name;
-                localStorage.setItem('currentCity', parsed.name);
-              } else if (typeof parsed === 'object') {
-                this.currentCity = '定位中...';
-              } else {
-                this.currentCity = savedCity;
-              }
-            } catch (e) {
-              this.currentCity = savedCity;
-            }
-          } else {
-            this.currentCity = '定位中...';
-          }
-
-          // 尝试获取当前位置
-          if (navigator.geolocation) {
-            this.isLocating = true;
-            navigator.geolocation.getCurrentPosition(
-              async (position) => {
-                // 获取到位置
-                this.currentLocation = {
-                  x: position.coords.longitude,
-                  y: position.coords.latitude,
-                  accuracy: position.coords.accuracy
-                };
-
-                // 保存位置
-                localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
-
-                // 获取城市名称
-                await this.getCityByLocation(position.coords.longitude, position.coords.latitude);
-
-                this.isLocating = false;
-
-                // 加载附近店铺
-                this.loadNearbyShops();
-              },
-              (error) => {
-                // 定位失败，使用保存的位置或默认位置
-                console.log('自动定位失败，使用保存的位置:', error);
-                this.isLocating = false;
-                this.getCurrentLocation(); // 使用保存的位置或默认位置
-              },
-              {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000 // 5分钟缓存
-              }
-            );
-          } else {
-            // 浏览器不支持定位
-            this.getCurrentLocation();
-          }
-          }
-        },
-
-        // 处理滚动
-        handleScroll() {
-          this.isScrolled = window.scrollY > 10;
-        },
-
-        // 加载热门笔记
-        async loadHotNotes() {
-          try {
-            const res = await axios.get('/blog/hot', {
-              params: { current: 1 }
-            });
-            // common.js 拦截器返回的是 Result 对象，数据在 res.data 中
-            const result = res.data;
-            if (result && Array.isArray(result)) {
-              this.notes = result.map(blog => ({
-                id: blog.id,
-                title: blog.title,
-                image: this.extractFirstImage(blog.images),
-                authorAvatar: blog.icon || '/imgs/icons/default-icon.png',
-                authorName: blog.name || '匿名用户',
-                likes: blog.liked || 0
-              }));
-            }
-          } catch (e) {
-            console.error('加载推荐笔记失败:', e);
-            this.notes = [];
-          }
-        },
-
-        // 获取当前位置
-        getCurrentLocation(forceRefresh = false) {
-          this.isLocating = true;
-
-          // 如果不是强制刷新，先尝试从本地存储获取上次的位置
-          if (!forceRefresh) {
-            const savedLocation = localStorage.getItem('userLocation');
-            if (savedLocation) {
-              try {
-                this.currentLocation = JSON.parse(savedLocation);
-                console.log('使用保存的位置:', this.currentLocation);
-                this.loadNearbyShops();
-                this.isLocating = false;
-                return;
-              } catch (e) {
-                console.log('解析保存位置失败');
-              }
-            }
-          }
-
-          // 使用浏览器 Geolocation API 获取当前位置
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                this.currentLocation = {
-                  x: position.coords.longitude,  // 经度
-                  y: position.coords.latitude,   // 纬度
-                  accuracy: position.coords.accuracy
-                };
-                console.log('获取到当前位置:', this.currentLocation);
-
-                // 通过高德API反查城市名称
-                this.getCityByLocation(position.coords.longitude, position.coords.latitude);
-
-                // 保存到本地存储
-                localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
-
-                this.isLocating = false;
-                this.loadNearbyShops();
-              },
-              (error) => {
-                console.error('获取位置失败:', error);
-                this.$message.warning('无法获取您的位置，使用默认位置');
-
-                // 使用默认坐标（长沙市中心）
-                this.currentLocation = {
-                  x: 112.938814,  // 长沙经度
-                  y: 28.228209    // 长沙纬度
-                };
-
-                this.isLocating = false;
-                this.loadNearbyShops();
-              },
-              {
-                enableHighAccuracy: true,  // 高精度
-                timeout: 10000,            // 10秒超时
-                maximumAge: 600000         // 缓存10分钟
-              }
-            );
-          } else {
-            this.$message.warning('您的浏览器不支持定位，使用默认位置');
-            this.currentLocation = {
-              x: 112.938814,
-              y: 28.228209
-            };
-            this.isLocating = false;
-            this.loadNearbyShops();
-          }
-        },
-
-        // 根据坐标获取城市名称
-        async getCityByLocation(lng, lat) {
-          try {
-            const url = `https://restapi.amap.com/v3/geocode/regeo?key=3ca0a2f25ab8827c53379129c07ac77e&location=${lng},${lat}&extensions=all`;
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.status === '1' && data.regeocode) {
-              const addressComponent = data.regeocode.addressComponent;
-              const city = addressComponent.city || addressComponent.province || '未知城市';
-              this.currentCity = city.replace(/市$/, ''); // 去掉"市"后缀
-              localStorage.setItem('currentCity', this.currentCity);
-              console.log('当前城市:', this.currentCity);
-            }
-          } catch (e) {
-            console.error('获取城市名称失败:', e);
-          }
-        },
-
-        // 刷新附近店铺（重新获取位置）
-        refreshNearbyShops() {
-          this.$message.info('正在刷新位置...');
-          // 清除保存的位置，强制重新获取
-          localStorage.removeItem('userLocation');
-          localStorage.removeItem(NEARBY_CACHE_KEY);
-          this.getCurrentLocation(true);
-        },
-
-        // 加载附近店铺
-        async loadNearbyShops(forceRefresh = false) {
-          if (!forceRefresh) {
-            const cached = this.readNearbyCache();
-            if (cached && (!this.currentLocation || !this.isLocationChanged(this.currentLocation, cached.location))) {
-              this.nearbyShops = cached.shops;
-              this.currentLocation = cached.location;
-              this.isLoading = false;
-              return;
-            }
-          }
-
-          this.isLoading = true;
-
-          try {
-            // 如果没有坐标，先获取
-            if (!this.currentLocation) {
-              this.getCurrentLocation(forceRefresh);
-              return;
-            }
-
-            const { x, y } = this.currentLocation;
-            console.log('加载附近店铺，坐标:', x, y);
-
-            // 并行请求多种类型的店铺
-          const requests = Array.from({ length: 10 }, (_, index) => index + 1).map(typeId =>
-            axios.get('/shop/of/type', {
-              params: { typeId, current: 1, x, y }
-            }).catch(() => ({ data: [] }))
-          );
-
-            const responses = await Promise.all(requests);
-            let allShops = [];
-
-            responses.forEach(res => {
-              // common.js 拦截器返回的是 Result 对象，数据在 res.data 中
-              const result = res.data;
-              if (result && Array.isArray(result)) {
-                // 为每个店铺添加距离信息
-                const shopsWithDistance = result.map(shop => {
-                  if (shop.x && shop.y) {
-                    shop.distance = this.calculateDistance(x, y, shop.x, shop.y);
-                  }
-                  return shop;
-                });
-                allShops = allShops.concat(shopsWithDistance);
-              }
-            });
-
-            // 按距离排序并取前20个
-            allShops.sort((a, b) => (a.distance || 999999) - (b.distance || 999999));
-
-            if (allShops.length > 0) {
-              this.nearbyShops = allShops.slice(0, 20).map(shop => ({
-                ...shop,
-                score: shop.score ? (shop.score / 10).toFixed(1) : '4.0',
-                image: this.resolveImageUrl(shop.images ? shop.images.split(',')[0] : ''),
-                tags: this.getShopTags(shop.typeId),
-                distanceText: shop.distance ? this.formatDistance(shop.distance) : ''
-              }));
-              this.saveNearbyCache();
-            } else {
-              this.nearbyShops = [];
-            }
-          } catch (e) {
-            console.error('加载店铺失败:', e);
-            this.nearbyShops = [];
-          } finally {
-            this.isLoading = false;
-          }
-        },
-
-        // 计算两点之间的距离（米）
-        calculateDistance(lng1, lat1, lng2, lat2) {
-          const R = 6371000; // 地球半径（米）
-          const dLat = (lat2 - lat1) * Math.PI / 180;
-          const dLng = (lng2 - lng1) * Math.PI / 180;
-          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          return Math.round(R * c);
-        },
-
-        // 格式化距离显示
-        formatDistance(distance) {
-          if (distance < 1000) {
-            return distance + 'm';
-          } else {
-            return (distance / 1000).toFixed(1) + 'km';
-          }
-        },
-        
-        // 根据店铺类型获取标签
-        getShopTags(typeId) {
-          const tagMap = {
-            1: ['口味赞', '环境好', '服务热情'],
-            2: ['音响好', '曲库全', '装修棒'],
-            3: ['技术好', '服务佳', '环境舒适'],
-            4: ['设备新', '教练专业', '环境好'],
-            5: ['手法好', '环境舒适', '服务热情'],
-            6: ['产品好', '技术专业', '环境优雅'],
-            7: ['好玩', '安全', '适合亲子'],
-            8: ['氛围好', '酒水全', '音乐棒'],
-            9: ['场地大', '设施全', '适合聚会'],
-            10: ['技术好', '产品优质', '服务细致']
-          };
-          const tags = tagMap[typeId] || ['推荐'];
-          return tags.slice(0, Math.floor(Math.random() * 3) + 1);
-        },
-
-        // 处理城市下拉菜单命令
-        handleCityCommand(command) {
-          if (command === 'current') {
-            // 重新定位（强制刷新）
-            this.$message.info('正在重新定位...');
-            // 清除保存的位置，强制重新获取
-            localStorage.removeItem('userLocation');
-            localStorage.removeItem(NEARBY_CACHE_KEY);
-            this.nearbyShops = [];
-            this.getCurrentLocation(true);
-          } else if (command === 'more') {
-            // 打开更多城市对话框
-            this.selectCity();
-          } else {
-            // 选择热门城市
-            this.selectCityByName(command);
-          }
-        },
-
-        // 选择城市（打开完整对话框）
-        selectCity() {
-          this.showCityDialog = true;
-          this.citySearchKeyword = '';
-          this.cityList = [];
-        },
-
-        // 使用当前定位
-        useCurrentLocation() {
-          this.showCityDialog = false;
-          localStorage.removeItem(NEARBY_CACHE_KEY);
-          this.nearbyShops = [];
-          this.$message.info('正在重新定位...');
-          this.getCurrentLocation();
-        },
-
-        // 根据城市名选择（使用预设坐标）
-        selectCityByName(cityName) {
-          // 预设城市坐标
-          const cityCoords = {
-            '北京': { x: 116.407526, y: 39.90403 },
-            '上海': { x: 121.473701, y: 31.230416 },
-            '广州': { x: 113.264435, y: 23.129163 },
-            '深圳': { x: 114.057868, y: 22.543099 },
-            '杭州': { x: 120.15507, y: 30.274084 },
-            '南京': { x: 118.796877, y: 32.060255 },
-            '成都': { x: 104.066541, y: 30.572269 },
-            '武汉': { x: 114.305393, y: 30.593099 },
-            '西安': { x: 108.93977, y: 34.341574 },
-            '重庆': { x: 106.551556, y: 29.563009 },
-            '长沙': { x: 112.938814, y: 28.228209 },
-            '天津': { x: 117.200983, y: 39.084158 }
-          };
-
-          const coords = cityCoords[cityName];
-          if (coords) {
-            this.currentCity = cityName;
-            this.currentLocation = { ...coords, city: cityName };
-
-            // 保存到本地存储
-            localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
-            localStorage.setItem('currentCity', cityName);
-            localStorage.removeItem(NEARBY_CACHE_KEY);
-            this.nearbyShops = [];
-
-            this.showCityDialog = false;
-            this.$message.success(`已切换到${cityName}`);
-
-            // 刷新附近店铺
-            this.loadNearbyShops(true);
-          }
-        },
-
-        // 根据搜索结果选择位置
-        selectCityByLocation(city) {
-          this.currentCity = city.name;
-          this.currentLocation = {
-            x: city.x,
-            y: city.y,
-            city: city.name
-          };
-
-          // 保存到本地存储
-          localStorage.setItem('userLocation', JSON.stringify(this.currentLocation));
-          localStorage.setItem('currentCity', city.name);
-          localStorage.removeItem(NEARBY_CACHE_KEY);
-          this.nearbyShops = [];
-
-          this.showCityDialog = false;
-          this.$message.success(`已切换到${city.name}`);
-
-          // 刷新附近店铺
-          this.loadNearbyShops(true);
-        },
-
-        // 搜索城市/地点
-        async searchCity() {
-          if (!this.citySearchKeyword.trim()) {
-            this.cityList = [];
-            return;
-          }
-
-          try {
-            // 使用高德地图API搜索地点
-            const keyword = this.citySearchKeyword.trim();
-            const url = `https://restapi.amap.com/v3/place/text?key=3ca0a2f25ab8827c53379129c07ac77e&keywords=${encodeURIComponent(keyword)}&citylimit=true&offset=10&page=1&extensions=all`;
-
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.status === '1' && data.pois && data.pois.length > 0) {
-              this.cityList = data.pois.map(poi => {
-                const location = poi.location.split(',');
-                return {
-                  name: poi.name,
-                  address: poi.address || poi.adname || '',
-                  x: parseFloat(location[0]),
-                  y: parseFloat(location[1])
-                };
-              });
-            } else {
-              this.cityList = [];
-              this.$message.warning('未找到相关地点');
-            }
-          } catch (e) {
-            console.error('搜索地点失败:', e);
-            this.$message.error('搜索失败，请重试');
-          }
-        },
-
-        // 搜索
-        search() {
-          if (this.searchKeyword.trim()) {
-            window.location.href = `misc/search.html?keyword=${encodeURIComponent(this.searchKeyword.trim())}`;
-          } else {
-            this.$message.warning('请输入搜索关键词');
-          }
-        },
-
-        // 分类点击
-        goToCategory(cat) {
-          const coords = this.currentLocation ? `&x=${this.currentLocation.x}&y=${this.currentLocation.y}` : '';
-          const name = cat.name ? `&name=${encodeURIComponent(cat.name)}` : '';
-          window.location.href = `shop/shop-list.html?type=${cat.id}${name}${coords}`;
-        },
-
-        // 查看更多笔记
-        viewMoreNotes() {
-          this.$message.info('查看更多笔记功能开发中');
-        },
-
-        // 查看笔记
-        viewNote(note) {
-          window.location.href = `blog/blog-detail.html?id=${note.id}`;
-        },
-
-        // 进入店铺
-        goToShop(shop) {
-          window.location.href = `shop/shop-detail.html?id=${shop.id}`;
-        },
-
-        // 导航
-        goHome() {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        },
-        goMap() {
-          window.location.href = 'map/map.html';
-        },
-        publish() {
-          window.location.href = 'blog/blog-edit.html';
-        },
-        goAssistant(scene = '首页') {
-          window.location.href = `misc/assistant.html?scene=${encodeURIComponent(scene)}`;
-        },
-        openAssistantWithPrompt(prompt, scene = '首页推荐') {
-          const query = `scene=${encodeURIComponent(scene)}&prompt=${encodeURIComponent(prompt)}`;
-          window.location.href = `misc/assistant.html?${query}`;
-        },
-        goMessages() {
-          window.location.href = 'misc/messages.html';
-        },
-        goProfile() {
-          window.location.href = 'user/info.html';
-        },
-
-        // 格式化距离
-        formatDistance(distance) {
-          if (!distance) return '';
-          if (distance < 1000) return Math.round(distance) + 'm';
-          return (distance / 1000).toFixed(1) + 'km';
-        },
-
-        // 格式化数字
-        formatNumber(num) {
-          if (num >= 10000) {
-            return (num / 10000).toFixed(1) + 'w';
-          } else if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'k';
-          }
-          return num;
-        },
-
-        extractFirstImage(images) {
-          if (!images) {
-            return this.noteFallbackImage;
-          }
-          const first = String(images).split(',').find(item => item && item.trim());
-          return first || this.noteFallbackImage;
-        },
-
-        normalizeImagePath(path) {
-          if (!path) {
-            return '';
-          }
-          const value = String(path).trim().replace(/^['"]+|['"]+$/g, '');
-          if (!value) {
-            return '';
-          }
-          if (value.startsWith('http') || value.startsWith('data:')) {
-            return value;
-          }
-          if (value.startsWith(util.commonURL)) {
-            return value;
-          }
-          if (value.startsWith('/blogs/')) {
-            return '/imgs' + value;
-          }
-          if (value.startsWith('blogs/')) {
-            return '/imgs/' + value;
-          }
-          if (value.startsWith('/icons/')) {
-            return '/imgs' + value;
-          }
-          if (value.startsWith('icons/')) {
-            return '/imgs/' + value;
-          }
-          return value.startsWith('/') ? value : '/' + value;
-        },
-
-        resolveImageUrl(path) {
-          const normalized = this.normalizeImagePath(path);
-          if (!normalized) {
-            return this.noteFallbackImage;
-          }
-          if (normalized.startsWith('http') || normalized.startsWith('data:')) {
-            return normalized;
-          }
-          return util.commonURL + normalized;
-        },
-
-        handleImageError(event, type) {
-          if (!event || !event.target) {
-            return;
-          }
-          if (event.target.dataset.fallbackApplied === '1') {
-            return;
-          }
-          event.target.dataset.fallbackApplied = '1';
-          event.target.src = type === 'avatar' ? this.avatarFallbackImage : this.noteFallbackImage;
-        }
-      }
-    });
-  </script>
+  <script src="/js/index-page.js"></script>
 
   <style>
     .city-dialog .el-dialog__body {
@@ -2193,6 +1862,81 @@
       font-size: 12px;
       color: #999;
     }
-  </style>
+
+
+    /* ============================================
+       HOMEPAGE V3 — Clean, premium mobile layout
+       ============================================ */
+    ::-webkit-scrollbar { display: none !important; }
+    .container { max-width: 390px; margin: 0 auto; padding: 0 12px; }
+    .content-wrapper { padding-bottom: 100px; }
+    .header { width: calc(100% - 20px); margin: 8px auto 0; padding: 8px 12px; border-radius: 20px; top: 8px; gap: 8px; }
+    .logo { display: none; }
+    .city-selector { padding: 6px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; background: rgba(255,122,69,0.08); color: var(--primary); }
+    .search-input { height: 38px; border-radius: 14px; padding: 0 40px 0 14px; font-size: 13px; background: rgba(0,0,0,0.04); }
+    .search-btn { width: 30px; height: 30px; right: 3px; font-size: 12px; border-radius: 10px; }
+    .city-hero { margin-bottom: 10px; padding: 16px 14px; border-radius: 16px; background: linear-gradient(135deg, #2D3436 0%, #636e72 50%, var(--primary) 100%); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .city-hero h1 { font-size: 18px; line-height: 1.3; }
+    .city-hero p { font-size: 12px; line-height: 1.5; margin-top: 6px; color: rgba(255,255,255,0.7); }
+    .city-hero-kicker { margin-bottom: 8px; font-size: 11px; }
+    .city-hero-kicker button { padding: 4px 8px; font-size: 11px; border-radius: 8px; }
+    .city-hero-tags { display: flex; flex-wrap: nowrap; gap: 6px; margin-top: 10px; overflow-x: auto; }
+    .city-hero-tags::-webkit-scrollbar { display: none !important; }
+    .city-hero-tag { padding: 4px 8px; font-size: 11px; white-space: nowrap; flex-shrink: 0; border-radius: 6px; }
+    .city-hot-tags { display: flex; flex-wrap: nowrap; gap: 6px; margin-top: 8px; overflow-x: auto; }
+    .city-hot-tags::-webkit-scrollbar { display: none !important; }
+    .city-hot-tag { white-space: nowrap; flex-shrink: 0; padding: 5px 10px; font-size: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2) !important; background: rgba(255,255,255,0.10) !important; color: rgba(255,255,255,0.85) !important; }
+    .city-hero-actions { margin-top: 12px; gap: 8px; }
+    .city-hero-actions button { min-height: 36px; font-size: 12px; font-weight: 700; border-radius: 10px; }
+    .city-primary-action { background: #fff !important; color: var(--primary-dark) !important; }
+    .city-panel { margin-bottom: 10px; padding: 12px; border-radius: 16px; }
+    .city-panel .section-header { padding: 6px 0 8px; }
+    .city-panel .section-title { font-size: 16px; }
+    .city-section-subtitle { font-size: 11px; margin-top: -4px; margin-bottom: 8px; color: var(--text-muted); }
+    .city-scene-grid { gap: 8px; }
+    .city-scene-card { min-height: 88px; padding: 10px; border-radius: 12px; gap: 4px; border: 1px solid rgba(0,0,0,0.04); background: linear-gradient(180deg, #FFF8F4 0%, #fff 100%); }
+    .city-scene-title { font-size: 13px; }
+    .city-scene-desc { font-size: 11px; }
+    .city-scene-meta { font-size: 11px; }
+    .city-route-list { margin-top: 8px; gap: 6px; flex-wrap: nowrap; overflow-x: auto; }
+    .city-route-list::-webkit-scrollbar { display: none !important; }
+    .city-route-chip { white-space: nowrap; flex-shrink: 0; padding: 5px 10px; font-size: 11px; border-radius: 8px; }
+    .category-section { margin-bottom: 10px; padding: 14px 12px; border-radius: 16px; }
+    .category-section .section-header { padding: 4px 0 10px; }
+    .category-section .section-title { font-size: 16px; }
+    .category-grid { gap: 14px 8px; }
+    .category-icon { width: 48px; height: 48px; border-radius: 16px; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .category-name { font-size: 11px; }
+    .assistant-shell { grid-template-columns: 1fr !important; padding: 16px !important; gap: 12px !important; border-radius: 16px !important; }
+    .assistant-copy h2 { font-size: 17px !important; margin-top: 10px !important; line-height: 1.35 !important; }
+    .assistant-copy p { font-size: 12px !important; margin-top: 6px !important; line-height: 1.5 !important; }
+    .assistant-eyebrow { font-size: 10px; padding: 4px 10px; }
+    .assistant-shortcuts { margin-top: 10px !important; gap: 6px !important; }
+    .assistant-shortcuts button { padding: 7px 12px !important; font-size: 12px !important; width: auto !important; }
+    .assistant-preview-card { padding: 12px !important; border-radius: 14px !important; }
+    .assistant-bubble { padding: 8px 12px !important; font-size: 12px !important; line-height: 1.5 !important; border-radius: 12px !important; }
+    .assistant-bubble + .assistant-bubble { margin-top: 6px !important; }
+    .assistant-enter { padding: 10px 16px !important; font-size: 13px !important; border-radius: 12px !important; }
+    .section-header { padding: 14px 0 8px; }
+    .section-title { font-size: 16px; gap: 6px; }
+    .section-title::before { width: 3px; height: 16px; }
+    .section-more { font-size: 12px; }
+    .content-section { padding: 0; }
+    .waterfall { column-gap: 10px; }
+    .note-card { margin-bottom: 10px; border-radius: 14px; }
+    .note-content { padding: 10px 10px 12px; }
+    .note-title { font-size: 13px; margin-bottom: 8px; line-height: 1.45; }
+    .author-avatar { width: 20px; height: 20px; }
+    .author-name { font-size: 11px; }
+    .note-likes { font-size: 11px; }
+    .note-likes i { font-size: 12px; }
+    .note-badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
+    .shop-section { margin-top: 10px; padding: 0 0 16px; border-radius: 16px; }
+    .shop-card { padding: 12px; border-radius: 14px; gap: 12px; }
+    .shop-image { width: 80px !important; height: 80px !important; border-radius: 12px !important; }
+    .shop-name { font-size: 14px !important; }
+    .bottom-nav { border-radius: 20px 20px 0 0; }
+    .nav-add { width: 48px; height: 48px; margin-top: -24px; font-size: 24px; border: 3px solid var(--bg); }
+</style>
 </body>
 </html>

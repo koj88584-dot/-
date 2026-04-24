@@ -1,363 +1,173 @@
 package com.hmdp.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.hmdp.config.AmapConfig;
+import com.hmdp.dto.AmapSearchResultDTO;
+import com.hmdp.dto.LocationContextDTO;
 import com.hmdp.entity.Shop;
 import com.hmdp.service.IAmapService;
-import com.hmdp.utils.RedisConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
-/**
- * 高德地图服务实现类
- */
 @Slf4j
 @Service
 public class AmapServiceImpl implements IAmapService {
 
+    private static final String AMAP_TEXT_SEARCH_URL = "https://restapi.amap.com/v3/place/text";
+    private static final String AMAP_REVERSE_GEOCODE_URL = "https://restapi.amap.com/v3/geocode/regeo";
+    private static final String AMAP_IP_LOCATION_URL = "https://restapi.amap.com/v3/ip";
+
     @Resource
     private AmapConfig amapConfig;
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
-
-    // 高德地图POI搜索API
-    private static final String AMAP_POI_SEARCH_URL = "https://restapi.amap.com/v3/place/around";
-
-    // 店铺类型与高德POI类型的映射（根据前端实际的typeId）
-    // 前端typeId: 1=美食, 2=KTV, 3=丽人/美发, 4=健身运动, 5=按摩/足疗, 6=美容SPA, 7=亲子游乐, 8=酒吧, 9=轰趴馆, 10=美睫美甲
-    // 高德地图POI分类编码来源: https://lbs.amap.com/api/webservice/guide/api/search
-    private static final String[] TYPE_MAPPING = {
-            "050000",   // 0-默认美食
-            "050000",   // 1-美食 (050000-餐饮相关)
-            "080302",   // 2-KTV (080302-KTV)
-            "071100",   // 3-丽人/美发 (071100-美容美发店)
-            "080111",   // 4-健身运动 (080111-健身中心)
-            "071400",   // 5-按摩/足疗 (071400-洗浴推拿场所)
-            "071100",   // 6-美容SPA (071100-美容美发店)
-            "080501",   // 7-亲子游乐 (080501-游乐场)
-            "080304",   // 8-酒吧 (080304-酒吧)
-            "080501",   // 9-轰趴馆 -> 使用游乐场(080501-游乐场)
-            "071100"    // 10-美睫美甲 (071100-美容美发店)
-    };
-
-
     @Override
     public List<Shop> searchNearbyShops(Integer typeId, Double x, Double y, Integer radius) {
-        return searchNearbyShops(typeId, null, x, y, radius, 1, 20);
+        return searchNearbyShopsWithMeta(typeId, null, x, y, radius, 1, 20).getShops();
     }
 
     @Override
     public List<Shop> searchNearbyShops(Integer typeId, String keyword, Double x, Double y, Integer radius) {
-        return searchNearbyShops(typeId, keyword, x, y, radius, 1, 20);
-        /*
-        log.info("开始搜索高德地图周边店铺 - typeId: {}, keyword: {}, x: {}, y: {}, radius: {}", typeId, keyword, x, y, radius);
-
-        List<Shop> shops = new ArrayList<>();
-
-        try {
-            // 构建请求参数
-            String location = x + "," + y;
-            String keywords = keyword != null ? keyword : getKeywordsByType(typeId);
-            String types = getAmapTypeByTypeId(typeId);
-
-            // 构建URL
-            StringBuilder urlBuilder = new StringBuilder(AMAP_POI_SEARCH_URL);
-            urlBuilder.append("?key=").append(amapConfig.getKey())
-                    .append("&location=").append(location)
-                    .append("&radius=").append(radius)
-                    .append("&keywords=").append(keywords)
-                    .append("&offset=20")
-                    .append("&page=1")
-                    .append("&extensions=all")
-                    .append("&output=JSON");
-            
-            // 只有当types不为空时才添加types参数
-            if (types != null && !types.isEmpty()) {
-                urlBuilder.append("&types=").append(types);
-            }
-            
-            String url = urlBuilder.toString();
-
-            log.debug("高德地图请求URL: {}", url);
-
-            // 发送请求
-            String response = HttpUtil.get(url);
-            log.debug("高德地图响应: {}", response);
-
-            // 解析响应
-            JSONObject jsonObject = JSONUtil.parseObj(response);
-            String status = jsonObject.getStr("status");
-
-            if (!"1".equals(status)) {
-                String info = jsonObject.getStr("info");
-                log.error("高德地图API调用失败: {}", info);
-                return shops;
-            }
-
-            // 解析POI列表
-            JSONArray pois = jsonObject.getJSONArray("pois");
-            if (pois == null || pois.isEmpty()) {
-                log.info("高德地图未找到周边店铺");
-                return shops;
-            }
-
-            log.info("高德地图返回 {} 个POI", pois.size());
-
-            for (int i = 0; i < pois.size(); i++) {
-                JSONObject poi = pois.getJSONObject(i);
-                Shop shop = convertPoiToShop(poi, typeId);
-                if (shop != null) {
-                    shops.add(shop);
-                    // 搜索时缓存，但TTL较短（5分钟），用于详情页查询
-                    cacheShopToRedis(shop);
-                }
-            }
-
-        } catch (Exception e) {
-            log.error("调用高德地图API异常", e);
-        }
-
-        log.info("成功转换 {} 个店铺", shops.size());
-        return shops;
-        */
+        return searchNearbyShopsWithMeta(typeId, keyword, x, y, radius, 1, 20).getShops();
     }
-
-    /**
-     * 将高德POI转换为店铺实体
-     */
 
     @Override
-    public List<Shop> searchNearbyShops(Integer typeId, String keyword, Double x, Double y, Integer radius, Integer page, Integer pageSize) {
-        log.info("AMap search nearby shops - typeId: {}, keyword: {}, x: {}, y: {}, radius: {}, page: {}, pageSize: {}", typeId, keyword, x, y, radius, page, pageSize);
+    public List<Shop> searchNearbyShops(Integer typeId, String keyword, Double x, Double y, Integer radius,
+                                        Integer page, Integer pageSize) {
+        return searchNearbyShopsWithMeta(typeId, keyword, x, y, radius, page, pageSize).getShops();
+    }
 
-        List<Shop> shops = new ArrayList<>();
+    @Override
+    public AmapSearchResultDTO searchNearbyShopsWithMeta(Integer typeId, String keyword, Double x, Double y,
+                                                         Integer radius, Integer page, Integer pageSize) {
+        AmapNearbySearchSupport.NearbySearchRequest request = AmapNearbySearchSupport.buildRequest(
+                amapConfig.getKey(), typeId, keyword, x, y, radius, page, pageSize
+        );
+        if (request.isMissingKey()) {
+            log.warn("AMap nearby search skipped, reason=missing_key, {}",
+                    AmapNearbySearchSupport.requestSummary(request));
+            return AmapSearchResultDTO.empty(request.getPage(), request.getPageSize());
+        }
+        return executeSearchRequest(
+                request.getUrl(),
+                typeId,
+                request.getPage(),
+                request.getPageSize(),
+                AmapNearbySearchSupport.requestSummary(request)
+        );
+    }
+
+    @Override
+    public AmapSearchResultDTO searchTextShopsWithMeta(Integer typeId, String keyword, Double x, Double y,
+                                                       Integer page, Integer pageSize) {
+        int safePage = page == null || page < 1 ? 1 : page;
+        int safePageSize = pageSize == null || pageSize < 1 ? 20 : Math.min(pageSize, 25);
+        String safeKeyword = StrUtil.isNotBlank(keyword)
+                ? keyword.trim()
+                : AmapNearbySearchSupport.getKeywordsByType(typeId);
+        AmapSearchResultDTO empty = AmapSearchResultDTO.empty(safePage, safePageSize);
+        if (StrUtil.isBlank(amapConfig.getKey()) || StrUtil.isBlank(safeKeyword)) {
+            log.warn("AMap text search skipped, reason={}, keyword={}, typeId={}",
+                    StrUtil.isBlank(amapConfig.getKey()) ? "missing_key" : "blank_keyword",
+                    safeKeyword,
+                    typeId);
+            return empty;
+        }
+
+        StringBuilder urlBuilder = new StringBuilder(AMAP_TEXT_SEARCH_URL);
+        urlBuilder.append("?key=").append(amapConfig.getKey())
+                .append("&keywords=").append(URLEncoder.encode(safeKeyword, StandardCharsets.UTF_8))
+                .append("&offset=").append(safePageSize)
+                .append("&page=").append(safePage)
+                .append("&extensions=all")
+                .append("&output=JSON");
+
+        String types = AmapNearbySearchSupport.getAmapTypeByTypeId(typeId);
+        if (StrUtil.isNotBlank(types)) {
+            urlBuilder.append("&types=").append(types);
+        }
+        if (x != null && y != null) {
+            urlBuilder.append("&location=").append(x).append(",").append(y)
+                    .append("&sortrule=distance");
+        }
+
+        String summary = "typeId=" + typeId + ", keyword=" + safeKeyword + ", page=" + safePage
+                + ", pageSize=" + safePageSize + ", mode=text";
+        return executeSearchRequest(urlBuilder.toString(), typeId, safePage, safePageSize, summary);
+    }
+
+    @Override
+    public LocationContextDTO reverseGeocode(Double longitude, Double latitude, Integer accuracy, String source) {
+        LocationContextDTO empty = emptyLocation(source, "none");
+        empty.setLongitude(longitude);
+        empty.setLatitude(latitude);
+        empty.setAccuracy(accuracy);
+        if (longitude == null || latitude == null || StrUtil.isBlank(amapConfig.getKey())) {
+            return empty;
+        }
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("key", amapConfig.getKey());
+        params.put("location", longitude + "," + latitude);
+        params.put("extensions", "all");
+        params.put("output", "JSON");
 
         try {
-            String location = x + "," + y;
-            String keywords = keyword != null ? keyword : getKeywordsByType(typeId);
-            String types = getAmapTypeByTypeId(typeId);
-            int safePage = page == null || page < 1 ? 1 : page;
-            int safePageSize = pageSize == null || pageSize < 1 ? 20 : Math.min(pageSize, 25);
-            int safeRadius = radius == null ? 5000 : Math.min(radius, 50000);
-
-            StringBuilder urlBuilder = new StringBuilder(AMAP_POI_SEARCH_URL);
-            urlBuilder.append("?key=").append(amapConfig.getKey())
-                    .append("&location=").append(location)
-                    .append("&radius=").append(safeRadius)
-                    .append("&keywords=").append(keywords)
-                    .append("&offset=").append(safePageSize)
-                    .append("&page=").append(safePage)
-                    .append("&extensions=all")
-                    .append("&output=JSON");
-
-            if (types != null && !types.isEmpty()) {
-                urlBuilder.append("&types=").append(types);
+            JSONObject jsonObject = callAmap(AMAP_REVERSE_GEOCODE_URL, params);
+            JSONObject regeocode = jsonObject.getJSONObject("regeocode");
+            if (regeocode == null) {
+                return empty;
             }
-
-            String url = urlBuilder.toString();
-            log.debug("AMap request URL: {}", url);
-
-            String response = HttpUtil.get(url);
-            log.debug("AMap response: {}", response);
-
-            JSONObject jsonObject = JSONUtil.parseObj(response);
-            String status = jsonObject.getStr("status");
-
-            if (!"1".equals(status)) {
-                String info = jsonObject.getStr("info");
-                log.error("AMap API failed: {}", info);
-                return shops;
-            }
-
-            JSONArray pois = jsonObject.getJSONArray("pois");
-            if (pois == null || pois.isEmpty()) {
-                log.info("AMap returned no nearby shops.");
-                return shops;
-            }
-
-            log.info("AMap returned {} pois.", pois.size());
-
-            for (int i = 0; i < pois.size(); i++) {
-                JSONObject poi = pois.getJSONObject(i);
-                Shop shop = convertPoiToShop(poi, typeId);
-                if (shop != null) {
-                    shops.add(shop);
-                    cacheShopToRedis(shop);
-                }
-            }
-
+            return buildRegeoLocation(regeocode, longitude, latitude, accuracy, source);
         } catch (Exception e) {
-            log.error("AMap API error", e);
+            log.warn("AMap reverse geocode failed, longitude={}, latitude={}", longitude, latitude, e);
+            return empty;
         }
-
-        log.info("AMap converted {} shops.", shops.size());
-        return shops;
     }
 
-    // Convert AMap POI to Shop entity
-    private Shop convertPoiToShop(JSONObject poi, Integer typeId) {
+    @Override
+    public LocationContextDTO locateByIp(String ip) {
+        LocationContextDTO empty = emptyLocation("ip", "low");
+        if (StrUtil.isBlank(amapConfig.getKey())) {
+            return empty;
+        }
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("key", amapConfig.getKey());
+        params.put("output", "JSON");
+        String publicIp = normalizePublicIp(ip);
+        if (StrUtil.isNotBlank(publicIp)) {
+            params.put("ip", publicIp);
+        }
+
         try {
-            Shop shop = new Shop();
-
-            // 使用POI的ID作为店铺ID（需要处理，避免与现有数据冲突）
-            String poiId = poi.getStr("id");
-            // 生成一个基于POI ID的正数ID（在Long范围内）
-            // 使用hashCode并确保为正数，加上一个大基数避免与本地数据冲突
-            long hash = Math.abs((long) poiId.hashCode());
-            shop.setId(9000000000L + hash % 1000000000L); // 9开头，10位数，避免与本地数据冲突
-
-            shop.setName(poi.getStr("name"));
-            shop.setTypeId(typeId != null ? Long.valueOf(typeId) : 1L); // 默认为美食类型
-            shop.setAddress(poi.getStr("address"));
-            shop.setArea(poi.getStr("adname")); // 区域名称
-
-            // 解析坐标
-            String location = poi.getStr("location");
-            if (location != null && location.contains(",")) {
-                String[] coords = location.split(",");
-                shop.setX(Double.valueOf(coords[0]));
-                shop.setY(Double.valueOf(coords[1]));
-            }
-
-            // 解析图片（取第一张）
-            JSONArray photos = poi.getJSONArray("photos");
-            if (photos != null && !photos.isEmpty()) {
-                StringBuilder images = new StringBuilder();
-                for (int i = 0; i < Math.min(photos.size(), 3); i++) {
-                    JSONObject photo = photos.getJSONObject(i);
-                    String url = photo.getStr("url");
-                    if (url != null) {
-                        if (images.length() > 0) {
-                            images.append(",");
-                        }
-                        images.append(url);
-                    }
-                }
-                shop.setImages(images.toString());
-            } else {
-                // 使用默认图片
-                shop.setImages("/imgs/shop/default.png");
-            }
-
-            // 解析评分（高德返回的是0-5分，转换为0-50分）
-            String bizExt = poi.getStr("biz_ext");
-            if (bizExt != null) {
-                JSONObject bizExtObj = JSONUtil.parseObj(bizExt);
-                String rating = bizExtObj.getStr("rating");
-                if (rating != null && !rating.isEmpty()) {
-                    try {
-                        double score = Double.parseDouble(rating) * 10;
-                        shop.setScore((int) score);
-                    } catch (NumberFormatException e) {
-                        shop.setScore(40); // 默认4分
-                    }
-                } else {
-                    shop.setScore(40);
-                }
-            } else {
-                shop.setScore(40);
-            }
-
-            // 解析电话
-            String tel = poi.getStr("tel");
-            if (tel != null && !tel.isEmpty()) {
-                shop.setPhone(tel.split(";")[0]); // 取第一个电话
-            } else {
-                shop.setPhone("");
-            }
-
-            // 解析营业时间
-            String businessTime = poi.getStr("business_time");
-            if (businessTime != null && !businessTime.isEmpty()) {
-                shop.setOpenHours(businessTime);
-            } else {
-                shop.setOpenHours("09:00-22:00");
-            }
-
-            // 解析均价
-            String cost = poi.getStr("cost");
-            if (cost != null && !cost.isEmpty()) {
-                try {
-                    shop.setAvgPrice(Long.valueOf(cost));
-                } catch (NumberFormatException e) {
-                    shop.setAvgPrice(null);
-                }
-            } else {
-                shop.setAvgPrice(null);
-            }
-            shop.setSold(0);
-
-            // 评论数
-            String commentNum = poi.getStr("comment_num");
-            if (commentNum != null && !commentNum.isEmpty()) {
-                try {
-                    shop.setComments(Integer.parseInt(commentNum));
-                } catch (NumberFormatException e) {
-                    shop.setComments((int) (Math.random() * 500) + 10);
-                }
-            } else {
-                shop.setComments((int) (Math.random() * 500) + 10);
-            }
-
-            return shop;
-
+            JSONObject jsonObject = callAmap(AMAP_IP_LOCATION_URL, params);
+            LocationContextDTO context = emptyLocation("ip", "low");
+            String province = cleanAmapText(jsonObject.getStr("province"));
+            String city = cleanAmapText(jsonObject.getStr("city"));
+            String adcode = cleanAmapText(jsonObject.getStr("adcode"));
+            context.setAmapAvailable(true);
+            context.setProvince(province);
+            context.setCity(StrUtil.blankToDefault(city, province));
+            context.setAdcode(adcode);
+            context.setCityCode(normalizeCityCode(adcode));
+            applyRectangleCenter(context, cleanAmapText(jsonObject.getStr("rectangle")));
+            return context;
         } catch (Exception e) {
-            log.error("转换POI到Shop异常: {}", poi, e);
-            return null;
+            log.warn("AMap IP location failed, ip={}", ip, e);
+            return empty;
         }
-    }
-
-    /**
-     * 根据类型ID获取搜索关键词
-     */
-    private String getKeywordsByType(Integer typeId) {
-        if (typeId == null) {
-            return "";
-        }
-        switch (typeId) {
-            case 1:
-                return "美食";
-            case 2:
-                return "KTV";
-            case 3:
-                return "美发";
-            case 4:
-                return "健身";
-            case 5:
-                return "按摩";
-            case 6:
-                return "美容";
-            case 7:
-                return "亲子";
-            case 8:
-                return "酒吧";
-            case 9:
-                return "轰趴";
-            case 10:
-                return "美甲";
-            default:
-                return "";
-        }
-    }
-
-    /**
-     * 根据类型ID获取高德POI类型编码
-     */
-    private String getAmapTypeByTypeId(Integer typeId) {
-        if (typeId == null || typeId < 0 || typeId >= TYPE_MAPPING.length) {
-            return ""; // typeId为null时返回空字符串，表示不限制类型
-        }
-        return TYPE_MAPPING[typeId];
     }
 
     @Override
@@ -368,23 +178,238 @@ public class AmapServiceImpl implements IAmapService {
         return null;
     }
 
-    /**
-     * 将高德地图店铺缓存到Redis（未收藏的店铺，使用短TTL 5分钟）
-     */
-    private void cacheShopToRedis(Shop shop) {
+    private LocationContextDTO emptyLocation(String source, String confidence) {
+        LocationContextDTO context = new LocationContextDTO();
+        context.setSource(StrUtil.blankToDefault(source, "unknown"));
+        context.setProvider("amap");
+        context.setAmapAvailable(false);
+        context.setConfidence(confidence);
+        context.setCityEditionEnabled(false);
+        return context;
+    }
+
+    private LocationContextDTO buildRegeoLocation(JSONObject regeocode, Double longitude, Double latitude,
+                                                 Integer accuracy, String source) {
+        LocationContextDTO context = emptyLocation(source, "high");
+        context.setAmapAvailable(true);
+        context.setLongitude(longitude);
+        context.setLatitude(latitude);
+        context.setAccuracy(accuracy);
+        context.setFormattedAddress(cleanAmapText(regeocode.getStr("formatted_address")));
+
+        JSONObject addressComponent = regeocode.getJSONObject("addressComponent");
+        if (addressComponent != null) {
+            String province = cleanAmapText(addressComponent.getStr("province"));
+            String city = cleanAmapText(addressComponent.getStr("city"));
+            String district = cleanAmapText(addressComponent.getStr("district"));
+            String adcode = cleanAmapText(addressComponent.getStr("adcode"));
+            context.setProvince(province);
+            context.setCity(StrUtil.blankToDefault(city, province));
+            context.setDistrict(district);
+            context.setAdcode(adcode);
+            context.setCityCode(normalizeCityCode(adcode));
+        }
+        return context;
+    }
+
+    private JSONObject callAmap(String url, Map<String, Object> params) {
+        String response = HttpUtil.get(url, params);
+        JSONObject jsonObject = JSONUtil.parseObj(response);
+        if (!"1".equals(jsonObject.getStr("status"))) {
+            throw new IllegalStateException(StrUtil.blankToDefault(jsonObject.getStr("info"), "AMap request failed"));
+        }
+        return jsonObject;
+    }
+
+    private String cleanAmapText(String value) {
+        String text = StrUtil.blankToDefault(value, "").trim();
+        if ("[]".equals(text) || "null".equalsIgnoreCase(text)) {
+            return "";
+        }
+        return text;
+    }
+
+    private String normalizeCityCode(String adcode) {
+        String code = cleanAmapText(adcode);
+        if (code.length() >= 6) {
+            return code.substring(0, 4) + "00";
+        }
+        return code;
+    }
+
+    private void applyRectangleCenter(LocationContextDTO context, String rectangle) {
+        if (context == null || StrUtil.isBlank(rectangle) || !rectangle.contains(";")) {
+            return;
+        }
         try {
-            if (shop != null && shop.getId() != null) {
-                String shopJson = JSONUtil.toJsonStr(shop);
+            String[] points = rectangle.split(";");
+            String[] leftBottom = points[0].split(",");
+            String[] rightTop = points[1].split(",");
+            double lng = (Double.parseDouble(leftBottom[0]) + Double.parseDouble(rightTop[0])) / 2;
+            double lat = (Double.parseDouble(leftBottom[1]) + Double.parseDouble(rightTop[1])) / 2;
+            context.setLongitude(lng);
+            context.setLatitude(lat);
+        } catch (Exception ignored) {
+        }
+    }
 
-                // 未收藏的店铺：只写缓存，不加入本地数据库，TTL设置短一点（5分钟）
-                // 统一使用 cache:shop 前缀，避免重复缓存
-                String shopKey = RedisConstants.CACHE_SHOP_KEY + shop.getId();
-                stringRedisTemplate.opsForValue().set(shopKey, shopJson, 5, TimeUnit.MINUTES);
+    private String normalizePublicIp(String ip) {
+        if (StrUtil.isBlank(ip)) {
+            return "";
+        }
+        String value = ip.split(",")[0].trim();
+        if ("127.0.0.1".equals(value) || "0:0:0:0:0:0:0:1".equals(value) || "localhost".equalsIgnoreCase(value)) {
+            return "";
+        }
+        if (value.startsWith("10.") || value.startsWith("192.168.") || value.startsWith("172.")) {
+            return "";
+        }
+        return value;
+    }
 
-                log.debug("缓存未收藏店铺到Redis（TTL 5分钟）: {}", shop.getId());
+    private AmapSearchResultDTO executeSearchRequest(String url, Integer typeId, Integer page, Integer pageSize,
+                                                     String requestSummary) {
+        AmapSearchResultDTO result = AmapSearchResultDTO.empty(page, pageSize);
+        try {
+            String response = HttpUtil.get(url);
+            JSONObject jsonObject = JSONUtil.parseObj(response);
+            String status = jsonObject.getStr("status");
+            if (!"1".equals(status)) {
+                log.warn("AMap search failed, reason=api_error, info={}, {}",
+                        jsonObject.getStr("info"),
+                        requestSummary);
+                return result;
             }
+
+            result.setSuccess(true);
+            JSONArray pois = jsonObject.getJSONArray("pois");
+            long totalHits = AmapNearbySearchSupport.parseTotalHits(
+                    jsonObject.getStr("count"),
+                    pois == null ? 0 : pois.size()
+            );
+            result.setTotalHits(totalHits);
+            result.setHasMore(AmapNearbySearchSupport.hasMore(totalHits, page, pageSize));
+
+            if (pois == null || pois.isEmpty()) {
+                log.info("AMap search returned empty result, {}", requestSummary);
+                return result;
+            }
+
+            List<Shop> shops = new ArrayList<>(pois.size());
+            for (int i = 0; i < pois.size(); i++) {
+                Shop shop = convertPoiToShop(pois.getJSONObject(i), typeId);
+                if (shop == null) {
+                    continue;
+                }
+                shops.add(shop);
+            }
+
+            result.setShops(shops);
+            log.info("AMap search converted {} shops, {}", shops.size(), requestSummary);
+            return result;
         } catch (Exception e) {
-            log.error("缓存店铺到Redis失败", e);
+            log.error("AMap search failed, reason=exception, {}", requestSummary, e);
+            return result;
+        }
+    }
+
+    private Shop convertPoiToShop(JSONObject poi, Integer typeId) {
+        try {
+            String poiId = poi.getStr("id");
+            if (StrUtil.isBlank(poiId)) {
+                return null;
+            }
+
+            Shop shop = new Shop();
+            shop.setAmapPoiId(poiId);
+            long hash = Math.abs((long) poiId.hashCode());
+            shop.setId(9_000_000_000L + hash % 1_000_000_000L);
+            shop.setName(poi.getStr("name"));
+            shop.setTypeId(typeId != null ? Long.valueOf(typeId) : 1L);
+            shop.setAddress(poi.getStr("address"));
+            shop.setArea(poi.getStr("adname"));
+            shop.setProvince(poi.getStr("pname"));
+            shop.setCity(StrUtil.blankToDefault(poi.getStr("cityname"), poi.getStr("pname")));
+            shop.setDistrict(poi.getStr("adname"));
+            shop.setAdcode(poi.getStr("adcode"));
+            shop.setCityCode(poi.getStr("adcode"));
+
+            String location = poi.getStr("location");
+            if (StrUtil.isNotBlank(location) && location.contains(",")) {
+                String[] coords = location.split(",");
+                if (coords.length >= 2) {
+                    shop.setX(Double.valueOf(coords[0]));
+                    shop.setY(Double.valueOf(coords[1]));
+                }
+            }
+
+            JSONArray photos = poi.getJSONArray("photos");
+            if (photos != null && !photos.isEmpty()) {
+                StringBuilder images = new StringBuilder();
+                for (int i = 0; i < Math.min(photos.size(), 3); i++) {
+                    JSONObject photo = photos.getJSONObject(i);
+                    if (photo == null) {
+                        continue;
+                    }
+                    String photoUrl = photo.getStr("url");
+                    if (StrUtil.isBlank(photoUrl)) {
+                        continue;
+                    }
+                    if (images.length() > 0) {
+                        images.append(",");
+                    }
+                    images.append(photoUrl);
+                }
+                shop.setImages(images.length() > 0 ? images.toString() : "/imgs/shop/default.png");
+            } else {
+                shop.setImages("/imgs/shop/default.png");
+            }
+
+            JSONObject bizExt = poi.getJSONObject("biz_ext");
+            if (bizExt == null && StrUtil.isNotBlank(poi.getStr("biz_ext"))) {
+                bizExt = JSONUtil.parseObj(poi.getStr("biz_ext"));
+            }
+            if (bizExt != null && StrUtil.isNotBlank(bizExt.getStr("rating"))) {
+                try {
+                    shop.setScore((int) (Double.parseDouble(bizExt.getStr("rating")) * 10));
+                } catch (NumberFormatException e) {
+                    shop.setScore(40);
+                }
+            } else {
+                shop.setScore(40);
+            }
+
+            String tel = poi.getStr("tel");
+            shop.setPhone(StrUtil.isBlank(tel) ? "" : tel.split(";")[0]);
+
+            String businessTime = poi.getStr("business_time");
+            shop.setOpenHours(StrUtil.isBlank(businessTime) ? "09:00-22:00" : businessTime);
+
+            String cost = poi.getStr("cost");
+            if (StrUtil.isNotBlank(cost)) {
+                try {
+                    shop.setAvgPrice(Long.valueOf(cost));
+                } catch (NumberFormatException e) {
+                    shop.setAvgPrice(null);
+                }
+            }
+
+            shop.setSold(0);
+
+            String commentNum = poi.getStr("comment_num");
+            if (StrUtil.isNotBlank(commentNum)) {
+                try {
+                    shop.setComments(Integer.parseInt(commentNum));
+                } catch (NumberFormatException e) {
+                    shop.setComments(10);
+                }
+            } else {
+                shop.setComments(10);
+            }
+            return shop;
+        } catch (Exception e) {
+            log.error("AMap POI convert failed: {}", poi, e);
+            return null;
         }
     }
 }

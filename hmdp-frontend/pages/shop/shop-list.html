@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -36,22 +36,32 @@
       background: var(--bg);
       color: var(--text-primary);
       line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    #app {
+      width: min(100%, 390px);
+      min-height: 100vh;
+      margin: 0 auto;
+      position: relative;
     }
 
     /* Header */
     .header {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(calc(100vw - 32px), 358px);
       height: 56px;
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
+      padding: 0 8px;
       z-index: 1000;
       box-shadow: var(--shadow);
+      border-radius: var(--radius-lg);
     }
 
     .header-back-btn {
@@ -99,29 +109,33 @@
     /* Sort Bar */
     .sort-bar {
       position: fixed;
-      top: 56px;
-      left: 0;
-      right: 0;
+      top: 86px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(calc(100vw - 32px), 358px);
       height: 52px;
       background: var(--surface);
       display: flex;
       align-items: center;
       justify-content: space-around;
-      padding: 0 8px;
+      padding: 6px;
       z-index: 999;
       box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
     }
 
     .sort-item {
       display: flex;
       align-items: center;
       gap: 4px;
-      padding: 8px 16px;
+      padding: 8px 14px;
       font-size: 14px;
       color: var(--text-secondary);
       cursor: pointer;
-      border-radius: 20px;
+      border-radius: 999px;
       transition: all 0.3s ease;
+      min-width: 0;
     }
 
     .sort-item:hover,
@@ -136,14 +150,34 @@
 
     /* Main Content */
     .main-content {
-      padding-top: 120px;
-      padding-bottom: 20px;
+      padding-top: 196px;
+      padding-bottom: 32px;
       min-height: 100vh;
+    }
+
+    .city-context-bar {
+      position: fixed;
+      top: 146px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(calc(100vw - 32px), 358px);
+      z-index: 998;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: var(--primary);
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(255,107,53,0.12);
+      box-shadow: var(--shadow-sm);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* Shop List */
     .shop-list {
-      padding: 0 12px;
+      padding: 0 16px;
     }
 
     .shop-card {
@@ -152,6 +186,7 @@
       margin-bottom: 12px;
       overflow: hidden;
       box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
       transition: all 0.3s ease;
       cursor: pointer;
     }
@@ -309,7 +344,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 80px 20px;
+      padding: 140px 20px 80px;
       text-align: center;
     }
 
@@ -340,6 +375,7 @@
       font-size: 14px;
       color: var(--text-secondary);
       margin-bottom: 20px;
+      max-width: 220px;
     }
 
     .empty-btn {
@@ -377,8 +413,8 @@
     /* Scroll to Top */
     .scroll-top {
       position: fixed;
-      bottom: 30px;
-      right: 20px;
+      bottom: 24px;
+      right: max(20px, calc((100vw - 390px) / 2 + 20px));
       width: 48px;
       height: 48px;
       background: var(--surface);
@@ -425,7 +461,12 @@
       }
       
       .sort-bar {
-        padding: 0 4px;
+        width: calc(100vw - 24px);
+        padding: 6px 4px;
+      }
+
+      .header {
+        width: calc(100vw - 24px);
       }
       
       .sort-item {
@@ -475,7 +516,7 @@
     @media (max-width: 320px) {
       .sort-item {
         font-size: 12px;
-        padding: 4px 8px;
+        padding: 4px 6px;
       }
       
       .shop-image {
@@ -497,7 +538,7 @@
       <i class="el-icon-arrow-left"></i>
     </div>
     <div class="header-title">
-      {{typeName || '店铺列表'}}
+      {{headerTitle}}
       <i v-if="isLocating" class="el-icon-loading" style="font-size: 14px; margin-left: 8px;"></i>
     </div>
     <div class="header-search" @click="goToSearch">
@@ -535,6 +576,10 @@
     </div>
   </div>
 
+  <div class="city-context-bar" v-if="cityEditionEnabled">
+    {{cityProfile.cityTagline}}
+  </div>
+
   <!-- Main Content -->
   <div class="main-content">
     <!-- Loading State -->
@@ -558,7 +603,7 @@
       <div class="shop-card" v-for="s in shops" :key="s.id" @click="toDetail(s.id)">
         <div class="shop-card-inner">
           <div class="shop-image">
-            <img :src="s.images" alt="店铺图片">
+            <img :src="s.images" alt="店铺图片" @error="handleImageError">
           </div>
           <div class="shop-info">
             <div class="shop-header">
@@ -575,6 +620,7 @@
             <div class="shop-tags">
               <span class="shop-tag">{{s.area}}</span>
               <span class="shop-tag" v-if="s.typeName">{{s.typeName}}</span>
+              <span class="shop-tag" v-if="s.decisionReason">{{s.decisionReason}}</span>
             </div>
 
             <div class="shop-footer">
@@ -613,247 +659,6 @@
   <script src="/js/axios.min.js"></script>
   <script src="/js/element.js"></script>
   <script src="/js/common.js"></script>
-<script>
-  const app = new Vue({
-    el: "#app",
-    data: {
-      util,
-      loading: true,
-      isLoadingMore: false,
-      hasMore: true,
-      showScrollTop: false,
-      types: [],
-      shops: [],
-      typeName: "",
-      params: {
-        typeId: 0,
-        current: 1,
-        sortBy: "",
-        x: 112.938814,
-        y: 28.228209
-      },
-      isLocating: false
-    },
-    created() {
-      this.params.typeId = util.getUrlParam("type");
-      this.typeName = util.getUrlParam("name");
-      const urlX = util.getUrlParam("x");
-      const urlY = util.getUrlParam("y");
-      if (urlX && urlY) {
-        this.params.x = parseFloat(urlX);
-        this.params.y = parseFloat(urlY);
-        localStorage.setItem('userLocation', JSON.stringify({
-          x: this.params.x,
-          y: this.params.y
-        }));
-      }
-      this.queryTypes();
-      this.getCurrentLocation();
-
-      // Listen to scroll
-      window.addEventListener('scroll', this.handleScroll);
-    },
-    destroyed() {
-      window.removeEventListener('scroll', this.handleScroll);
-    },
-    methods: {
-      normalizeShops(data) {
-        const shopList = Array.isArray(data) ? data : [];
-        return shopList.map(shop => {
-          if (shop.images) {
-            shop.images = shop.images.split(',')[0];
-          }
-          return shop;
-        });
-      },
-      applySort() {
-        const sortBy = this.params.sortBy;
-        const toNumber = (val, fallback) => {
-          const num = Number(val);
-          return Number.isFinite(num) ? num : fallback;
-        };
-        if (!sortBy) {
-          this.shops.sort((a, b) => toNumber(a.distance, Infinity) - toNumber(b.distance, Infinity));
-          return;
-        }
-        if (sortBy === 'comments') {
-          this.shops.sort((a, b) => toNumber(b.comments, 0) - toNumber(a.comments, 0));
-          return;
-        }
-        if (sortBy === 'score') {
-          this.shops.sort((a, b) => toNumber(b.score, 0) - toNumber(a.score, 0));
-        }
-      },
-      isNearPageBottom() {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-        const clientHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 0;
-        const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
-        return scrollTop + clientHeight + 120 >= scrollHeight;
-      },
-      ensureViewportFilled() {
-        if (this.loading || this.isLoadingMore || !this.hasMore) {
-          return;
-        }
-        this.$nextTick(() => {
-          if (this.isNearPageBottom()) {
-            this.loadMoreShops();
-          }
-        });
-      },
-      getCurrentLocation() {
-        this.isLocating = true;
-        
-        // Try to get location from local storage first
-        const savedLocation = localStorage.getItem('userLocation');
-        if (savedLocation) {
-          try {
-            const location = JSON.parse(savedLocation);
-            this.params.x = location.x;
-            this.params.y = location.y;
-            this.queryShops();
-            this.isLocating = false;
-            return;
-          } catch (e) {
-            console.log('Failed to parse saved location');
-          }
-        }
-
-        // Use browser geolocation
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              this.params.x = position.coords.longitude;
-              this.params.y = position.coords.latitude;
-              
-              // Save location to local storage
-              localStorage.setItem('userLocation', JSON.stringify({
-                x: this.params.x,
-                y: this.params.y
-              }));
-              
-              this.queryShops();
-              this.isLocating = false;
-            },
-            (error) => {
-              console.error('Geolocation error:', error);
-              // Use default location
-              this.queryShops();
-              this.isLocating = false;
-            },
-            {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 600000
-            }
-          );
-        } else {
-          // Browser doesn't support geolocation
-          this.queryShops();
-          this.isLocating = false;
-        }
-      },
-      
-      queryTypes() {
-        axios.get("/shop-type/list")
-          .then(({data}) => {
-            this.types = Array.isArray(data) ? data : (data || []);
-          })
-          .catch(err => {
-            console.log(err);
-          })
-      },
-      queryShops() {
-        this.loading = true;
-        this.hasMore = true;
-        axios.get("/shop/of/type", {
-            params: this.params
-          })
-          .then((response) => {
-            this.loading = false;
-            console.log('响应数据:', response);
-            const data = this.normalizeShops(response.data);
-            if (!data || data.length === 0) {
-              this.shops = [];
-              this.hasMore = false;
-              return;
-            }
-            this.shops = data;
-            this.applySort();
-            this.ensureViewportFilled();
-          })
-          .catch(err => {
-            this.loading = false;
-            console.log(err);
-            this.$message.error("加载失败，请重试");
-          })
-      },
-      loadMoreShops() {
-        if (this.loading || this.isLoadingMore || !this.hasMore) {
-          return;
-        }
-        this.isLoadingMore = true;
-        const nextCurrent = this.params.current + 1;
-        axios.get("/shop/of/type", {
-            params: Object.assign({}, this.params, { current: nextCurrent })
-          })
-          .then((response) => {
-            const data = this.normalizeShops(response.data);
-            if (!data || data.length === 0) {
-              this.hasMore = false;
-              return;
-            }
-            this.params.current = nextCurrent;
-            this.shops = this.shops.concat(data);
-            this.applySort();
-            this.ensureViewportFilled();
-          })
-          .catch(err => {
-            console.log(err);
-            this.$message.error("加载更多失败，请稍后重试");
-          })
-          .finally(() => {
-            this.isLoadingMore = false;
-          });
-      },
-      handleCommand(t) {
-        const params = [
-          "type=" + t.id,
-          "name=" + encodeURIComponent(t.name || ""),
-          "x=" + this.params.x,
-          "y=" + this.params.y
-        ];
-        location.href = "./shop-list.html?" + params.join("&");
-      },
-      sortAndQuery(sortBy) {
-        this.params.sortBy = sortBy;
-        this.params.current = 1;
-        this.shops = [];
-        this.hasMore = true;
-        this.queryShops();
-      },
-      goBack() {
-        history.back();
-      },
-      goToSearch() {
-        location.href = "../misc/search.html";
-      },
-      toDetail(id) {
-        location.href = "./shop-detail.html?id="+id
-      },
-      handleScroll() {
-        this.showScrollTop = window.pageYOffset > 300;
-        if (this.isNearPageBottom()) {
-          this.loadMoreShops();
-        }
-      },
-      scrollToTop() {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      }
-    }
-  })
-</script>
+<script src="/js/shop-list-page.js"></script>
 </body>
 </html>

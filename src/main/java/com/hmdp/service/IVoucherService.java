@@ -1,6 +1,7 @@
 package com.hmdp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.hmdp.dto.MerchantVoucherSaveDTO;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.Voucher;
 
@@ -41,4 +42,14 @@ public interface IVoucherService extends IService<Voucher> {
      * @return {@link Result}
      */
     Result queryVoucherById(Long id);
+
+    Result queryMerchantVouchers(Long shopId, Integer status);
+
+    Result saveMerchantVoucher(MerchantVoucherSaveDTO dto);
+
+    Result updateMerchantVoucher(Long id, MerchantVoucherSaveDTO dto);
+
+    Result publishVoucher(Long id);
+
+    Result unpublishVoucher(Long id);
 }

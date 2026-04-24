@@ -1,351 +1,180 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>附近店铺地图 - 周边优速通</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>地图找店 - 周边优速通</title>
   <link rel="stylesheet" href="/css/element.css">
   <link href="/css/main.css" rel="stylesheet">
-  <!-- 引入高德地图 - 使用JSAPI Loader方式加载 -->
   <script src="https://webapi.amap.com/loader.js"></script>
   <style>
-    .map-container { height: 100vh; display: flex; flex-direction: column; }
-    .map-header { background: #fff; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; }
-    .map-search { display: flex; gap: 10px; margin-bottom: 10px; position: relative; }
-    .map-filters { display: flex; gap: 10px; flex-wrap: wrap; }
-    #map { flex: 1; }
-    .shop-popup { padding: 12px; max-width: 280px; }
-    .popup-img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
-    .popup-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
-    .popup-address { color: #666; font-size: 12px; margin-bottom: 8px; }
-    .popup-meta { display: flex; justify-content: space-between; align-items: center; }
-    .popup-score { color: #ff6633; font-weight: 600; }
-    .popup-distance { color: #999; font-size: 12px; }
-    .shop-list { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 16px 16px 0 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); max-height: 40vh; overflow-y: auto; z-index: 100; transition: transform 0.3s; }
-    .shop-list.collapsed { transform: translateY(calc(100% - 50px)); }
-    .list-toggle { text-align: center; padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; }
-    .list-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
-    .list-item:hover { background: #f9f9f9; }
-    .list-thumb { width: 70px; height: 70px; object-fit: cover; border-radius: 4px; }
-    .list-info { flex: 1; }
-    .list-title { font-weight: 600; margin-bottom: 4px; }
-    .list-address { color: #666; font-size: 12px; margin-bottom: 4px; }
-    .list-meta { display: flex; gap: 12px; font-size: 12px; color: #999; }
-    .location-btn { position: fixed; right: 16px; bottom: calc(40vh + 16px); width: 48px; height: 48px; background: #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; }
-    .location-btn i { font-size: 24px; color: #ff6633; }
-    /* 底部导航栏样式 */
-    .foot { width: 100%; height: 60px; display: flex; justify-content: center; align-items: center; box-shadow: 0 -1px 2px 1px rgba(0, 0, 0, 0.1); position: fixed; bottom: 0; background: #fff; z-index: 1000; }
-    .foot .add-btn { width: 38px; height: 38px; box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.1); border-radius: 18px; }
-    .foot-box { width: 20%; color: #82848a; text-align: center; cursor: pointer; }
-    .foot-view { font-size: 26px; }
-    .foot-text { font-size: 10px; margin-top: -4px; }
-    .foot-text, .foot-view { text-align: center; }
-    .active { color: #ff6633; }
-    /* 调整店铺列表位置，避免被底部导航栏遮挡 */
-    .shop-list { bottom: 60px; max-height: calc(40vh - 60px); }
-    .location-btn { bottom: calc(40vh + 76px); }
-    #map { margin-bottom: 60px; }
-    /* 搜索建议下拉列表 */
-    .search-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.15); max-height: 300px; overflow-y: auto; z-index: 1000; margin-top: 4px; }
-    .suggestion-item { padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
-    .suggestion-item:hover { background: #f5f5f5; }
-    .suggestion-name { font-size: 14px; color: #333; margin-bottom: 2px; }
-    .suggestion-address { font-size: 12px; color: #999; }
-    .suggestion-type { float: right; font-size: 12px; color: #ff6633; background: #fff5f0; padding: 2px 6px; border-radius: 3px; }
-    .search-input-wrapper { flex: 1; position: relative; }
-    /* 路径规划面板 - 内联在搜索栏下方，可折叠 */
-    .route-panel-inline { 
-      background: #fff; 
-      border-radius: 8px; 
-      margin-top: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      overflow: hidden;
-      transition: all 0.3s;
-    }
-    .route-panel-inline.collapsed {
-      max-height: 44px;
-    }
-    .route-panel-inline:not(.collapsed) {
-      max-height: 60vh;
-    }
-    .route-panel-toggle { 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 16px;
-      background: #f9f9f9;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-      color: #333;
-      position: relative;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.3s;
-    }
-    .route-panel-inline:not(.collapsed) .route-panel-toggle {
-      border-bottom-color: #eee;
-    }
-    .route-panel-toggle i:first-child {
-      margin-right: 8px;
-      transition: transform 0.3s;
-    }
-    .route-panel-inline.collapsed .route-panel-toggle i:first-child {
-      transform: rotate(-180deg);
-    }
-    .route-close-inline { 
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer; 
-      color: #999; 
-      font-size: 16px;
-      padding: 4px;
-    }
-    .route-panel-content {
-       padding: 12px;
-       overflow-y: auto;
-       max-height: calc(60vh - 44px);
-     }
-     /* 路线信息展示 */
-     .route-info-display {
-       margin-bottom: 12px;
-       padding: 10px;
-       background: #f5f5f5;
-       border-radius: 4px;
-     }
-     .route-info-row {
-       display: flex;
-       align-items: center;
-       margin-bottom: 8px;
-     }
-     .route-info-row:last-child {
-       margin-bottom: 0;
-     }
-     .route-info-row .route-label {
-       width: 30px;
-       color: #666;
-       font-size: 14px;
-     }
-     .route-info-row .route-value {
-       flex: 1;
-       color: #333;
-       font-size: 14px;
-       font-weight: 500;
-     }
-    .route-inputs { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
-    .route-input-row { display: flex; align-items: center; gap: 8px; }
-    .route-label { width: 50px; font-size: 14px; color: #666; }
-    .route-input { flex: 1; }
-    .route-actions { display: flex; gap: 10px; margin-bottom: 12px; }
-    .route-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
-    .route-type-btn { padding: 6px 4px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; text-align: center; font-size: 12px; white-space: nowrap; }
-    .route-type-btn i { display: block; font-size: 16px; margin-bottom: 2px; }
-    .route-type-btn.active { background: #ff6633; color: #fff; border-color: #ff6633; }
-    .route-results { border-top: 1px solid #eee; padding-top: 12px; }
-    .route-result-item { padding: 10px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: all 0.3s; }
-    .route-result-item:hover { background: #f9f9f9; }
-    .route-result-item.active { background: #fff5f0; border-left: 3px solid #ff6633; }
-    .route-info { display: flex; justify-content: space-between; align-items: center; }
-    .route-time { font-weight: 600; color: #333; }
-    .route-distance { color: #666; font-size: 12px; }
-    .route-detail { font-size: 12px; color: #999; margin-top: 4px; }
-    /* 导航按钮 */
-    .nav-btn { position: fixed; right: 16px; bottom: calc(40vh + 76px); width: 48px; height: 48px; background: #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; margin-bottom: 60px; }
-    .nav-btn i { font-size: 24px; color: #ff6633; }
-    /* 工具栏 */
-    .toolbar { position: fixed; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 100; }
-    .toolbar-btn { width: 40px; height: 40px; background: #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    .toolbar-btn i { font-size: 20px; color: #666; }
-    .toolbar-btn:hover i { color: #ff6633; }
-    /* 天气信息 */
-    .weather-info { position: fixed; top: 80px; right: 16px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 8px 12px; z-index: 100; font-size: 12px; }
-    .weather-temp { font-weight: 600; color: #333; }
-    .weather-desc { color: #666; }
-    /* 交通状况按钮 */
-    .traffic-btn { position: fixed; right: 16px; bottom: calc(40vh + 140px); width: 48px; height: 48px; background: #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; }
-    .traffic-btn i { font-size: 24px; color: #ff6633; }
-    .traffic-btn.active { background: #ff6633; }
-    .traffic-btn.active i { color: #fff; }
-    /* 当前位置标记样式 */
-    .current-location-marker {
-      position: relative;
-      width: 30px;
-      height: 30px;
-    }
-    .location-dot {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 16px;
-      height: 16px;
-      background: #ff6633;
-      border: 3px solid #fff;
-      border-radius: 50%;
-      box-shadow: 0 0 10px rgba(255, 102, 51, 0.5);
-      z-index: 2;
-    }
-    .location-pulse {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 30px;
-      height: 30px;
-      background: rgba(255, 102, 51, 0.3);
-      border-radius: 50%;
-      animation: pulse 2s ease-out infinite;
-      z-index: 1;
-    }
-    @keyframes pulse {
-      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-      100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    :root{--primary:#ff6b35;--primary-soft:#fff2eb;--surface:rgba(255,255,255,.94);--bg:linear-gradient(180deg,#fff8f4 0%,#f7f8fb 24%,#f2f5f9 100%);--text:#1e293b;--sub:#64748b;--light:#94a3b8;--shadow:0 16px 44px rgba(15,23,42,.12);--shadow-sm:0 10px 30px rgba(15,23,42,.06)}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}body{display:flex;justify-content:center}.map-page{width:min(100%,430px);min-height:100vh;position:relative;overflow-x:hidden}.page-shell{min-height:100vh;padding:14px 14px 96px}.top-card{position:sticky;top:12px;z-index:120;padding:14px;border-radius:24px;background:var(--surface);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.6);margin-bottom:14px}.search-row{display:flex;align-items:center;gap:10px}.back-btn,.mini-action,.floating-btn,.result-action,.ghost-btn,.nav-chip{min-width:44px;min-height:44px}.back-btn{width:44px;height:44px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;color:var(--primary);background:var(--primary-soft);font-size:18px;cursor:pointer;flex:0 0 44px}.search-box{flex:1;position:relative}.search-input .el-input__inner{height:46px;line-height:46px;border-radius:16px;border:1px solid rgba(255,107,53,.14);background:rgba(255,255,255,.92);padding-left:14px;padding-right:42px;font-size:14px}.search-input .el-input__inner:focus{border-color:rgba(255,107,53,.48);box-shadow:0 0 0 4px rgba(255,107,53,.08)}.search-input .el-input__prefix{left:12px}.search-input .el-input__prefix i{color:var(--light)}.search-btn{height:46px;padding:0 18px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--primary) 0%,#ff8452 100%);color:#fff;font-weight:600;cursor:pointer;box-shadow:0 12px 22px rgba(255,107,53,.24)}.map-filters{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.filter-select{flex:1 1 120px;min-width:0}.filter-select .el-input__inner{height:40px;line-height:40px;border-radius:14px;background:rgba(255,255,255,.9);border-color:rgba(148,163,184,.18);padding-left:12px;font-size:13px}.mini-action{border:1px solid rgba(255,107,53,.18);background:rgba(255,255,255,.92);color:var(--text);border-radius:14px;padding:0 12px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}.search-suggestions{position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:140;background:#fff;border-radius:18px;box-shadow:0 18px 40px rgba(15,23,42,.14);overflow:hidden;border:1px solid rgba(255,255,255,.7)}.suggestion-item{padding:12px 14px;border-bottom:1px solid rgba(226,232,240,.9);cursor:pointer}.suggestion-item:last-child{border-bottom:none}.suggestion-name{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;justify-content:space-between}.suggestion-address{margin-top:4px;font-size:12px;color:var(--sub);line-height:1.5}.suggestion-type{font-size:11px;color:var(--primary);padding:2px 8px;border-radius:999px;background:var(--primary-soft);white-space:nowrap}.results-panel,.navigation-view{display:flex;flex-direction:column;gap:14px}.navigation-view{padding-top:4px}.result-toolbar,.section-card{padding:16px;border-radius:22px;background:rgba(255,255,255,.9);box-shadow:var(--shadow-sm)}.result-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px}.toolbar-label{font-size:12px;color:var(--light);margin-bottom:4px}.toolbar-title{font-size:17px;font-weight:700}.toolbar-title small{font-size:12px;color:var(--sub);font-weight:500;margin-left:6px}.ghost-btn{border:none;border-radius:16px;background:var(--primary-soft);color:var(--primary);padding:0 14px;font-weight:600;cursor:pointer;white-space:nowrap}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.section-title{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}.section-title::before{content:"";width:4px;height:18px;border-radius:999px;background:linear-gradient(180deg,#ff8c61 0%,var(--primary) 100%)}.section-meta{font-size:12px;color:var(--sub)}.shop-results{display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 356px);overflow-y:auto;padding-right:2px}.shop-results::-webkit-scrollbar,.route-results::-webkit-scrollbar{width:4px}.shop-results::-webkit-scrollbar-thumb,.route-results::-webkit-scrollbar-thumb{background:rgba(148,163,184,.4);border-radius:999px}.result-card{display:grid;grid-template-columns:88px 1fr;gap:12px;padding:12px;border-radius:18px;background:#fff;border:1px solid rgba(226,232,240,.72);box-shadow:0 10px 26px rgba(15,23,42,.06)}.result-card.active{border-color:rgba(255,107,53,.28);box-shadow:0 16px 30px rgba(255,107,53,.12)}.result-cover{width:88px;height:88px;border-radius:16px;object-fit:cover;background:#f5f5f5}.result-body{min-width:0;display:flex;flex-direction:column;gap:8px}.result-name{font-size:15px;font-weight:700;line-height:1.4;margin:0}.result-address{font-size:12px;line-height:1.6;color:var(--sub);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.result-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--sub)}.meta-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:#f8fafc;border:1px solid rgba(226,232,240,.9)}.meta-chip.score{color:var(--primary);background:var(--primary-soft);border-color:rgba(255,107,53,.14);font-weight:600}.result-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto}.result-secondary{border:none;background:transparent;color:var(--sub);font-size:13px;padding:0;cursor:pointer;display:inline-flex;align-items:center;gap:4px}.result-action{border:none;border-radius:14px;padding:0 16px;background:linear-gradient(135deg,var(--primary) 0%,#ff8753 100%);color:#fff;font-weight:600;cursor:pointer;box-shadow:0 10px 22px rgba(255,107,53,.22)}.empty-state,.loading-state{padding:32px 18px;border-radius:18px;text-align:center;background:#fff;border:1px dashed rgba(255,107,53,.22);color:var(--sub)}.empty-state i,.loading-state i{font-size:34px;color:rgba(255,107,53,.72);margin-bottom:12px;display:block}
+  </style>
+  <style>
+    .nav-top-header{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative;z-index:1}
+    .city-map-strip{margin-top:12px;padding:12px;border-radius:8px;background:rgba(255,255,255,.72);border:1px solid rgba(255,107,53,.12)}
+    .city-map-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px}
+    .city-map-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+    .city-map-chips::-webkit-scrollbar{display:none}
+    .city-map-chip{border:1px solid rgba(255,107,53,.18);border-radius:8px;background:#fff;color:var(--primary);padding:8px 10px;white-space:nowrap;font-size:12px;font-weight:700;cursor:pointer}
+    .nav-back-btn{min-height:40px;border:none;border-radius:14px;padding:0 14px;background:rgba(255,255,255,.14);color:#fff;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+    .map-stage{position:relative;min-height:calc(100vh - 124px);border-radius:28px;overflow:hidden;background:rgba(255,255,255,.78);box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.65)}
+    .map-canvas{width:100%;height:calc(100vh - 124px);min-height:620px}
+    .weather-chip{position:absolute;top:16px;left:16px;z-index:30;padding:10px 14px;border-radius:16px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(15,23,42,.14);font-size:12px;line-height:1.6;color:var(--text)}
+    .map-top-overlay{position:absolute;top:16px;left:16px;right:16px;z-index:32;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;pointer-events:none}
+    .map-overlay-info,.map-return-btn{pointer-events:auto}
+    .map-overlay-info{display:flex;flex-direction:column;gap:8px;max-width:72%}
+    .map-overlay-badge{border:none;min-height:42px;display:inline-flex;align-items:center;gap:6px;align-self:flex-start;padding:0 15px;border-radius:8px;background:rgba(18,38,66,.88);color:#fff;font-size:13px;font-weight:700;backdrop-filter:blur(10px);box-shadow:0 12px 28px rgba(15,23,42,.18);cursor:pointer}
+    .map-overlay-badge.active{background:linear-gradient(135deg,var(--primary) 0%,#ff8753 100%);box-shadow:0 12px 28px rgba(255,107,53,.24)}
+    .map-return-btn{min-height:42px;border:none;border-radius:14px;padding:0 14px;background:rgba(255,255,255,.92);color:var(--text);font-weight:600;display:inline-flex;align-items:center;gap:6px;box-shadow:0 14px 28px rgba(15,23,42,.12);cursor:pointer;white-space:nowrap}
+    .floating-actions{position:absolute;right:16px;top:122px;z-index:30;display:flex;flex-direction:column;gap:10px}
+    .floating-btn{width:46px;height:46px;border:none;border-radius:16px;background:rgba(255,255,255,.94);box-shadow:0 12px 26px rgba(15,23,42,.16);display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer}
+    .floating-btn.active{background:var(--primary);color:#fff}
+    .route-sheet{position:absolute;left:0;right:0;bottom:0;z-index:40;padding:16px}
+    .route-card{background:rgba(255,255,255,.97);backdrop-filter:blur(18px);border-radius:8px;box-shadow:0 20px 40px rgba(15,23,42,.18);overflow:hidden}
+    .route-card.collapsed .route-body{display:none}
+    .route-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(226,232,240,.85);cursor:pointer}
+    .route-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .route-header .el-icon-close{font-size:16px;color:var(--sub);cursor:pointer}
+    .route-body{padding:12px 16px 16px}
+    .route-input-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}
+    .route-input-item{padding:10px 12px;border-radius:8px;background:#f8fafc;border:1px solid rgba(226,232,240,.9)}
+    .route-input-label{display:block;font-size:11px;color:var(--light);margin-bottom:6px}
+    .route-input .el-input__inner{height:38px;line-height:38px;border:none;background:#fff;border-radius:8px;color:var(--text);font-weight:600}
+    .route-types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+    .nav-chip{border:none;border-radius:14px;background:#f5f7fb;color:var(--sub);font-size:12px;font-weight:600;padding:10px 8px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+    .nav-chip.active{background:var(--primary-soft);color:var(--primary);box-shadow:inset 0 0 0 1px rgba(255,107,53,.14)}
+    .route-actions{display:flex;gap:10px;margin-bottom:12px}
+    .route-actions .el-button{flex:1;border-radius:8px;height:42px}
+    .route-preview-action{margin-bottom:12px}
+    .route-preview-action .el-button{width:100%;height:42px;border-radius:14px;font-weight:700}
+    .route-results{display:flex;flex-direction:column;gap:10px;max-height:220px;overflow-y:auto}
+    .route-result-item{padding:12px 14px;border-radius:16px;border:1px solid rgba(226,232,240,.9);background:#fff;cursor:pointer}
+    .route-result-item.active{border-color:rgba(255,107,53,.28);background:var(--primary-soft);box-shadow:0 10px 24px rgba(255,107,53,.1)}
+    .route-result-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+    .route-time{font-size:14px;font-weight:700;color:var(--text)}
+    .route-distance{font-size:12px;color:var(--primary);font-weight:600}
+    .route-detail{font-size:12px;line-height:1.6;color:var(--sub)}
+    @media (max-width:380px){.page-shell{padding:12px 12px 94px}.top-card{padding:12px;border-radius:22px}.search-row{gap:8px}.search-btn{padding:0 14px}.result-card{grid-template-columns:76px 1fr}.result-cover{width:76px;height:76px}.route-types{grid-template-columns:repeat(2,minmax(0,1fr))}.map-stage,.map-canvas{min-height:560px;height:calc(100vh - 116px)}.map-top-overlay{right:12px;left:12px}.map-overlay-info{max-width:68%}.floating-actions{top:114px}}
+  </style>
+  <style>
+    .results-shell{padding:14px 14px 10px}
+    .compact-toolbar{padding:0 0 12px;margin-bottom:8px;background:transparent;box-shadow:none;border:none}
+    .section-head-tight{margin-bottom:12px;padding-top:4px;border-top:1px solid rgba(226,232,240,.7)}
+    .result-toolbar .ghost-btn{min-height:40px;border-radius:14px;padding:0 14px}
+    .shop-results{max-height:calc(100vh - 330px)}
+    .map-overlay-info{max-width:62%}
+    .map-return-btn{min-height:40px;padding:0 12px}
+    .floating-actions{gap:8px}
+    .route-sheet{padding:12px}
+    .route-card{border-radius:8px}
+    @media (max-width:380px){
+      .results-shell{padding:12px 12px 8px}
+      .toolbar-title{font-size:16px}
+      .map-overlay-info{max-width:66%}
+      .route-sheet{padding:10px}
     }
   </style>
 </head>
 <body>
-<div id="app" class="map-container">
-  <!-- 顶部搜索栏 -->
-  <div class="map-header">
-    <div class="map-search">
-      <div class="header-back-btn" onclick="history.back()" style="display:flex; align-items:center;">
-        <i class="el-icon-arrow-left"></i>
-      </div>
-      <div class="search-input-wrapper">
-        <el-input 
-          v-model="keyword" 
-          placeholder="搜索地点、商户" 
-          prefix-icon="el-icon-search" 
-          @keyup.enter.native="searchShops"
-          @input="onKeywordInput"
-          @focus="showSuggestions = true"
-          clearable>
-        </el-input>
-        <!-- 搜索建议下拉列表 -->
-        <div v-if="showSuggestions && suggestions.length > 0" class="search-suggestions">
-          <div 
-            v-for="(item, index) in suggestions" 
-            :key="index" 
-            class="suggestion-item"
-            @click="selectSuggestion(item)">
-            <div class="suggestion-name">
-              <i class="el-icon-location-outline" style="color:#ff6633; margin-right:4px;"></i>
-              {{ item.name }}
-              <span class="suggestion-type">{{ item.type }}</span>
+<div id="app" class="map-page">
+  <div class="page-shell">
+    <div v-show="viewMode === 'results'" class="top-card">
+      <div class="search-row">
+        <div class="back-btn" @click="goBack"><i class="el-icon-arrow-left"></i></div>
+        <div class="search-box">
+          <el-input class="search-input" v-model="keyword" placeholder="搜索地点、商户" prefix-icon="el-icon-search" @keyup.enter.native="searchShops" @input="onKeywordInput" @focus="showSuggestions = true" clearable></el-input>
+          <div v-if="showSuggestions && suggestions.length" class="search-suggestions">
+            <div v-for="(item, index) in suggestions" :key="index" class="suggestion-item" @click="selectSuggestion(item)">
+              <div class="suggestion-name"><span><i class="el-icon-location-outline" style="color:#ff6b35;"></i> {{ item.name }}</span><span class="suggestion-type">{{ item.type }}</span></div>
+              <div class="suggestion-address">{{ item.address }}</div>
             </div>
-            <div class="suggestion-address">{{ item.address }}</div>
           </div>
         </div>
+        <button class="search-btn" @click="searchShops">搜索</button>
       </div>
-      <el-button type="primary" @click="searchShops">搜索</el-button>
-    </div>
-    <div class="map-filters">
-      <el-select v-model="radius" placeholder="距离" size="small" style="width:100px;" @change="onRadiusChange">
-        <el-option label="1公里" :value="1000"></el-option>
-        <el-option label="3公里" :value="3000"></el-option>
-        <el-option label="5公里" :value="5000"></el-option>
-        <el-option label="10公里" :value="10000"></el-option>
-      </el-select>
-      <el-select v-model="typeId" placeholder="类型" size="small" style="width:100px;" @change="onTypeChange">
-        <el-option label="全部" :value="null"></el-option>
-        <el-option v-for="t in types" :key="t.id" :label="t.name" :value="t.id"></el-option>
-      </el-select>
-      <el-button size="small" @click="showRoutePanel = true" icon="el-icon-guide">路线</el-button>
-      <el-button size="small" @click="getWeather" icon="el-icon-sunny">天气</el-button>
+      <div class="map-filters">
+        <el-select v-model="radius" class="filter-select" placeholder="距离" size="small" @change="onRadiusChange"><el-option label="1公里" :value="1000"></el-option><el-option label="3公里" :value="3000"></el-option><el-option label="5公里" :value="5000"></el-option><el-option label="10公里" :value="10000"></el-option></el-select>
+        <el-select v-model="typeId" class="filter-select" placeholder="类型" size="small" @change="onTypeChange"><el-option label="全部" :value="null"></el-option><el-option v-for="t in types" :key="t.id" :label="t.name" :value="t.id"></el-option></el-select>
+        <button class="mini-action" @click="openMapOverview()"><i class="el-icon-map-location"></i>地图模式</button>
+        <button class="mini-action" @click="getWeather"><i class="el-icon-sunny"></i>天气</button>
+      </div>
+      <div class="city-map-strip" v-if="cityEditionEnabled">
+        <div class="city-map-title">{{ cityMapTitle }}</div>
+        <div class="city-map-chips">
+          <button class="city-map-chip" v-for="scene in cityScenes.slice(0, 4)" :key="scene.id || scene.sceneId || scene.sceneName || scene.name" @click="openCityScene(scene)">{{ scene.title || scene.sceneTitle || scene.sceneName || scene.name }}</button>
+          <button class="city-map-chip" v-for="district in cityProfile.featuredDistricts.slice(0, 4)" :key="district" @click="openDistrict(district)">{{ district }}</button>
+        </div>
+      </div>
     </div>
 
-    <!-- 路径规划面板 - 放在搜索栏下方，可折叠 -->
-    <div v-if="showRoutePanel" :class="['route-panel-inline', { 'collapsed': routePanelCollapsed }]">
-      <div class="route-panel-toggle" @click="routePanelCollapsed = !routePanelCollapsed">
-        <i :class="routePanelCollapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'"></i>
-        路线规划
-        <i class="el-icon-close route-close-inline" @click.stop="showRoutePanel = false"></i>
-      </div>
-      <div class="route-panel-content">
-        <!-- 起点终点信息（只读） -->
-        <div class="route-info-display">
-          <div class="route-info-row">
-            <span class="route-label">从</span>
-            <span class="route-value">{{ routeStart }}</span>
+    <div v-show="viewMode === 'results'" ref="resultsView" class="results-panel">
+      <div class="section-card results-shell">
+        <div class="result-toolbar compact-toolbar">
+          <div>
+            <div class="toolbar-label">{{ currentCity }} · {{ radiusLabel }}范围</div>
+            <div class="toolbar-title">{{ currentListTitle }} <small v-if="shops.length">{{ shops.length }} 家</small></div>
           </div>
-          <div class="route-info-row">
-            <span class="route-label">到</span>
-            <span class="route-value">{{ routeEnd }}</span>
-          </div>
+          <button class="ghost-btn" @click="refreshResults"><i class="el-icon-refresh-right"></i> 刷新</button>
         </div>
-        <!-- 路线类型选择（点击后自动规划路线） -->
-        <div class="route-types">
-          <div :class="['route-type-btn', { active: routeType === 'driving' }]" @click="selectRouteType('driving')">
-            <i class="el-icon-truck"></i>驾车
-          </div>
-          <div :class="['route-type-btn', { active: routeType === 'walking' }]" @click="selectRouteType('walking')">
-            <i class="el-icon-user"></i>步行
-          </div>
-          <div :class="['route-type-btn', { active: routeType === 'riding' }]" @click="selectRouteType('riding')">
-            <i class="el-icon-bicycle"></i>骑行
-          </div>
-          <div :class="['route-type-btn', { active: routeType === 'transit' }]" @click="selectRouteType('transit')">
-            <i class="el-icon-bus"></i>公交
-          </div>
-        </div>
-        <!-- 清除按钮 -->
-        <div class="route-actions">
-          <el-button @click="clearRoute" style="flex:1;">清除路线</el-button>
-        </div>
-        <!-- 路线结果 -->
-        <div v-if="routeResults.length > 0" class="route-results">
-          <div v-for="(route, index) in routeResults" :key="index" 
-               :class="['route-result-item', { active: currentRouteIndex === index }]" 
-               @click="selectRoute(route, index)">
-            <div class="route-info">
-              <span class="route-time">{{ route.time }}</span>
-              <span class="route-distance">{{ route.distance }}</span>
+        <div class="section-head section-head-tight"><div class="section-title">附近店铺</div><div class="section-meta" v-if="currentLocation">已定位 · {{ formatDistance(radius) }}内</div></div>
+        <div v-if="isLoading" class="loading-state"><i class="el-icon-loading"></i>正在帮你搜索周边店铺，请稍候…</div>
+        <div v-else-if="!shops.length" class="empty-state"><i class="el-icon-location-information"></i><div style="font-weight:700; margin-bottom:6px;">暂时没有找到相关店铺</div><div style="font-size:13px; line-height:1.7;">你可以换个关键词、放大搜索范围，或者切到地图模式看看更远的结果。</div></div>
+        <div v-else ref="resultsScroller" class="shop-results">
+          <article v-for="shop in shops" :key="shop.id" :class="['result-card', { active: selectedShop && selectedShop.id === shop.id }]" @click="selectShop(shop)">
+            <img class="result-cover" :src="shop.images || '/imgs/icons/default-icon.png'" :alt="shop.name">
+            <div class="result-body">
+              <h3 class="result-name">{{ shop.name }}</h3>
+              <p class="result-address">{{ shop.address || '暂无地址' }}</p>
+              <div class="result-meta"><span class="meta-chip score"><i class="el-icon-star-on"></i> {{ shop.score || '暂无' }}</span><span class="meta-chip" v-if="shop.avgPrice">人均 ¥{{ shop.avgPrice }}</span><span class="meta-chip" v-if="shop.distance">{{ formatDistance(shop.distance) }}</span></div>
+              <div class="result-actions"><button class="result-secondary" @click.stop="openMapOverview(shop)"><i class="el-icon-location-outline"></i>地图预览</button><button class="result-action" @click.stop="navigateToShop(shop)">导航去</button></div>
             </div>
-            <div class="route-detail">{{ route.detail }}</div>
+          </article>
+        </div>
+      </div>
+    </div>
+    <div v-show="viewMode === 'navigation'" class="navigation-view">
+      <div class="map-stage">
+        <div class="map-top-overlay">
+          <div v-if="selectedShop" class="map-overlay-info">
+            <button :class="['map-overlay-badge', { active: showRoutePanel }]" @click="toggleRoutePanel">
+              <i class="el-icon-guide"></i>导航路线
+            </button>
+          </div>
+          <button class="map-return-btn" @click="returnToResults"><i class="el-icon-arrow-left"></i>返回列表</button>
+        </div>
+        <div v-if="weatherData" class="weather-chip"><div style="font-weight:700;">{{ weatherData.temperature }}°C · {{ weatherData.weather }}</div><div>{{ weatherData.windDirection }}风 {{ weatherData.windPower }}级</div></div>
+        <div class="floating-actions"><button class="floating-btn" @click="getCurrentLocation()"><i class="el-icon-aim"></i></button><button :class="['floating-btn', { active: trafficEnabled }]" @click="toggleTraffic"><i class="el-icon-odometer"></i></button></div>
+        <div ref="mapCanvas" id="map" class="map-canvas"></div>
+        <div class="route-sheet" v-if="showRoutePanel">
+          <div :class="['route-card', { collapsed: routePanelCollapsed }]">
+            <div class="route-header" @click="routePanelCollapsed = !routePanelCollapsed"><div class="route-title"><i :class="routePanelCollapsed ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>路线详情</div><i class="el-icon-close" @click.stop="closeRoutePanel"></i></div>
+            <div class="route-body">
+              <div class="route-input-grid">
+                <label class="route-input-item">
+                  <span class="route-input-label">从</span>
+                  <el-input class="route-input" v-model="routeStart" placeholder="我的位置或输入起点" clearable @input="onRouteStartInput"></el-input>
+                </label>
+                <label class="route-input-item">
+                  <span class="route-input-label">到</span>
+                  <el-input class="route-input" v-model="routeEnd" placeholder="输入终点" clearable @input="onRouteEndInput"></el-input>
+                </label>
+              </div>
+              <div class="route-types">
+                <button :class="['nav-chip', { active: routeType === 'driving' }]" @click="selectRouteType('driving')"><i class="el-icon-truck"></i>驾车</button>
+                <button :class="['nav-chip', { active: routeType === 'walking' }]" @click="selectRouteType('walking')"><i class="el-icon-user"></i>步行</button>
+                <button :class="['nav-chip', { active: routeType === 'riding' }]" @click="selectRouteType('riding')"><i class="el-icon-bicycle"></i>骑行</button>
+                <button :class="['nav-chip', { active: routeType === 'transit' }]" @click="selectRouteType('transit')"><i class="el-icon-bus"></i>公交</button>
+              </div>
+              <div class="route-preview-action"><el-button type="primary" @click="openAmapNavigationForRoute">打开高德导航</el-button></div>
+              <div class="route-actions"><el-button @click="searchRoute">{{ routeResults.length ? '重新规划' : '预览路线' }}</el-button><el-button @click="clearRoute">清除路线</el-button></div>
+              <div v-if="routeResults.length" class="route-results"><div v-for="(route, index) in routeResults" :key="index" :class="['route-result-item', { active: currentRouteIndex === index }]" @click="selectRoute(route, index)"><div class="route-result-row"><span class="route-time">{{ route.time }}</span><span class="route-distance">{{ route.distance }}</span></div><div class="route-detail">{{ route.detail }}</div></div></div>
+              <div v-else class="empty-state" style="padding:18px 14px;"><i class="el-icon-guide"></i><div style="font-weight:700; margin-bottom:6px;">还没有路线结果</div><div style="font-size:13px;">点击“预览路线”，生成当前路线；也可以直接打开高德导航。</div></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- 地图容器 -->
-  <div id="map"></div>
-
-  <!-- 天气信息 -->
-  <div v-if="weatherData" class="weather-info">
-    <div class="weather-temp">{{ weatherData.temperature }}°C {{ weatherData.weather }}</div>
-    <div class="weather-desc">{{ weatherData.windDirection }}风 {{ weatherData.windPower }}级</div>
-  </div>
-
-  <!-- 交通状况按钮 -->
-  <div :class="['traffic-btn', { active: trafficEnabled }]" @click="toggleTraffic">
-    <i class="el-icon-odometer"></i>
-  </div>
-
-  <!-- 定位按钮 -->
-  <div class="location-btn" @click="getCurrentLocation">
-    <i class="el-icon-aim"></i>
-  </div>
-
-  <!-- 店铺列表 -->
-  <div :class="['shop-list', { 'collapsed': listCollapsed }]">
-    <div class="list-toggle" @click="listCollapsed = !listCollapsed">
-      <i :class="listCollapsed ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>
-      附近店铺 ({{ shops.length }})
-    </div>
-    <div v-for="shop in shops" :key="shop.id" class="list-item" @click="focusShop(shop)">
-      <img class="list-thumb" :src="shop.images || '/imgs/icons/default-icon.png'" alt="">
-      <div class="list-info">
-        <div class="list-title">{{ shop.name }}</div>
-        <div class="list-address">{{ shop.address }}</div>
-        <div class="list-meta">
-          <span style="color:#ff6633;">评分 {{ shop.score }}</span>
-          <span v-if="shop.avgPrice">人均 ¥{{ shop.avgPrice }}</span>
-          <span>{{ formatDistance(shop.distance) }}</span>
-        </div>
-      </div>
-      <el-button size="mini" type="primary" @click.stop="navigateToShop(shop)">去这里</el-button>
     </div>
   </div>
   <foot-bar :active-btn="2"></foot-bar>
@@ -356,1324 +185,6 @@
 <script src="/js/element.js"></script>
 <script src="/js/common.js"></script>
 <script src="/js/footer.js"></script>
-<script>
-  // 高德地图 Key 和安全密钥
-  const AMAP_KEY = 'ee216a99d8b649b4ee30239b1d6b7b44';
-  const AMAP_SECURITY_KEY = 'f6568b403165a5b880f461f1d2f4346e';
-  
-  // 配置安全密钥
-  window._AMapSecurityConfig = {
-    securityJsCode: AMAP_SECURITY_KEY
-  };
-  
-  // 使用高德 JSAPI Loader 加载地图
-  AMapLoader.load({
-    key: AMAP_KEY,
-    version: '2.0',
-    plugins: ['AMap.PlaceSearch', 'AMap.AutoComplete', 'AMap.Geolocation', 'AMap.Driving', 'AMap.Walking', 'AMap.Riding', 'AMap.Transfer', 'AMap.Weather', 'AMap.ToolBar', 'AMap.Scale', 'AMap.MapType', 'AMap.Traffic', 'AMap.CircleMarker', 'AMap.Geocoder']
-  }).then((AMap) => {
-    console.log('高德地图加载成功');
-    initApp(AMap);
-  }).catch((error) => {
-    console.error('高德地图加载失败:', error);
-    alert('地图加载失败，请检查网络连接');
-  });
-  
-  function initApp(AMap) {
-    new Vue({
-      el: '#app',
-      data: {
-        map: null,
-        keyword: '',
-        radius: 5000,
-        typeId: null,
-        types: [
-          { id: 1, name: '美食' },
-          { id: 2, name: 'KTV' },
-          { id: 3, name: '丽人' },
-          { id: 4, name: '美甲' },
-          { id: 5, name: '按摩' },
-          { id: 6, name: 'SPA' },
-          { id: 7, name: '亲子' },
-          { id: 8, name: '酒吧' },
-          { id: 9, name: '轰趴' },
-          { id: 10, name: '运动' }
-        ],
-        shops: [],
-        markers: [],
-        currentLocation: null,
-        currentLocationMarker: null,
-        currentLocationCircle: null,
-        listCollapsed: false,
-        // 高德地图搜索相关
-        placeSearch: null,
-        autoComplete: null,
-        suggestions: [],
-        showSuggestions: false,
-        searchTimer: null,
-        // 当前搜索的城市
-        currentCity: '长沙',
-        // 路径规划
-        showRoutePanel: false,
-        routePanelCollapsed: false,
-        routeStart: '',
-        routeEnd: '',
-        routeType: 'driving',
-        routeResults: [],
-        autoPlanned: false, // 是否自动规划（点击去这里后为true）
-        driving: null,
-        walking: null,
-        riding: null,
-        transfer: null,
-        currentRoute: null,
-        currentRouteIndex: -1, // 当前选中的路线索引
-        // 天气
-        weatherData: null,
-        weather: null,
-        // 交通状况
-        trafficEnabled: false,
-        trafficLayer: null,
-        // 地理编码
-        geocoder: null,
-        // 加载状态
-        loadingMessage: null
-      },
-      mounted() {
-        this.initMap();
-        // 点击外部关闭搜索建议
-        document.addEventListener('click', this.handleClickOutside);
-      },
-      beforeDestroy() {
-        document.removeEventListener('click', this.handleClickOutside);
-      },
-      methods: {
-        initMap() {
-          try {
-            // 默认位置（长沙）
-            const defaultLng = 112.9388;
-            const defaultLat = 28.2282;
-            
-            this.map = new AMap.Map('map', {
-              zoom: 14,
-              center: [defaultLng, defaultLat],
-              viewMode: '2D'
-            });
-
-            // 添加地图控件
-            this.map.addControl(new AMap.ToolBar({
-              position: 'LB'
-            }));
-            this.map.addControl(new AMap.Scale());
-            this.map.addControl(new AMap.MapType({
-              defaultType: 0
-            }));
-
-            // 初始化高德地图搜索插件
-            this.initAMapPlugins();
-
-            // 尝试获取当前位置
-            this.getCurrentLocation();
-          } catch (error) {
-            console.error('地图初始化失败:', error);
-            this.$message.error('地图初始化失败');
-          }
-        },
-        // 初始化高德地图插件
-        initAMapPlugins() {
-          // 地点搜索
-          this.placeSearch = new AMap.PlaceSearch({
-            pageSize: 20,
-            pageIndex: 1,
-            extensions: 'all',
-            city: this.currentCity
-          });
-
-          // 输入提示
-          this.autoComplete = new AMap.AutoComplete({
-            city: this.currentCity
-          });
-
-          // 路径规划 - 设置不同颜色
-          this.driving = new AMap.Driving({
-            map: this.map,
-            panel: false,
-            policy: AMap.DrivingPolicy.LEAST_TIME,
-            outlineColor: '#FF6B6B',  // 驾车路线轮廓色 - 红色系
-            strokeColor: '#FF6B6B',   // 驾车路线填充色 - 红色系
-            strokeWeight: 8,
-            showTraffic: true,         // 显示实时路况
-            hideMarkers: false
-          });
-
-          this.walking = new AMap.Walking({
-            map: this.map,
-            panel: false,
-            outlineColor: '#4ECDC4',  // 步行路线轮廓色 - 青色系
-            strokeColor: '#4ECDC4',   // 步行路线填充色 - 青色系
-            strokeWeight: 8
-          });
-
-          // 骑行规划 - 使用 AMap.Ride (高德2.0版本)
-          this.riding = new AMap.Riding({
-            map: this.map,
-            panel: false,
-            policy: 1,  // 骑行路线策略：1-推荐路线，0-最快路线
-            outlineColor: '#45B7D1',  // 骑行路线轮廓色 - 蓝色系
-            strokeColor: '#45B7D1',   // 骑行路线填充色 - 蓝色系
-            strokeWeight: 8,
-            hideMarkers: false,  // 显示起点终点标记
-            autoFitView: true    // 自动调整视野
-          });
-
-          this.transfer = new AMap.Transfer({
-            map: this.map,
-            panel: false,
-            city: this.currentCity,
-            outlineColor: '#96CEB4',  // 公交路线轮廓色 - 绿色系
-            strokeColor: '#96CEB4',   // 公交路线填充色 - 绿色系
-            strokeWeight: 8,
-            hideMarkers: false,  // 显示起点终点标记
-            autoFitView: true    // 自动调整视野
-          });
-
-          // 天气
-          this.weather = new AMap.Weather();
-
-          // 交通图层
-          this.trafficLayer = new AMap.TileLayer.Traffic({
-            zIndex: 10
-          });
-
-          // 地理编码插件
-          this.geocoder = new AMap.Geocoder({
-            city: this.currentCity,
-            radius: 1000
-          });
-          
-          console.log('高德地图插件初始化完成');
-        },
-        // 获取天气信息
-        getWeather() {
-          if (!this.weather) {
-            this.$message.warning('天气服务未初始化');
-            return;
-          }
-          
-          this.weather.getLive(this.currentCity, (err, data) => {
-            if (!err) {
-              this.weatherData = data;
-              this.$message.success(`${this.currentCity}当前天气：${data.weather} ${data.temperature}°C`);
-            } else {
-              this.$message.error('获取天气失败');
-            }
-          });
-        },
-        // 切换交通状况
-        toggleTraffic() {
-          this.trafficEnabled = !this.trafficEnabled;
-          if (this.trafficEnabled) {
-            this.trafficLayer.setMap(this.map);
-            this.$message.success('已开启实时路况');
-          } else {
-            this.trafficLayer.setMap(null);
-            this.$message.success('已关闭实时路况');
-          }
-        },
-        // 设置起点为当前位置
-        setStartToCurrent() {
-          if (this.currentLocation) {
-            this.routeStart = '我的位置';
-          } else {
-            this.$message.warning('请先获取当前位置');
-          }
-        },
-
-        // 选择路线类型并自动规划
-        selectRouteType(type) {
-          this.routeType = type;
-          // 如果有起点和终点，自动规划路线
-          if (this.routeStart && this.routeEnd) {
-            this.$nextTick(() => {
-              this.searchRoute();
-            });
-          }
-        },
-        // 导航到店铺
-        navigateToShop(shop) {
-          console.log('========== 导航到店铺 ==========');
-          console.log('店铺信息:', shop);
-          console.log('当前位置:', this.currentLocation);
-
-          if (!shop) {
-            this.$message.error('店铺信息无效');
-            return;
-          }
-
-          // 设置终点为店铺地址
-          this.routeEnd = shop.address || shop.name;
-
-          // 如果当前位置已获取，设置为起点
-          if (this.currentLocation && this.currentLocation.lng && this.currentLocation.lat) {
-            this.routeStart = '我的位置';
-            console.log('起点设置为我的位置:', this.currentLocation);
-            
-            // 检查定位精度
-            if (this.currentLocation.accuracy && this.currentLocation.accuracy > 500) {
-              this.$message.warning('当前定位精度较低，导航可能不够准确');
-            }
-          } else {
-            // 如果当前位置未获取，尝试重新获取
-            console.log('当前位置未获取，尝试重新定位');
-            this.$message.warning('正在获取当前位置，请稍后再试');
-            this.getCurrentLocation();
-            return;
-          }
-
-          // 展开路线规划面板
-          this.showRoutePanel = true;
-          this.routePanelCollapsed = false;
-
-          // 标记为自动规划模式（隐藏路线类型选择和规划按钮）
-          this.autoPlanned = true;
-
-          // 自动开始规划路线
-          this.$nextTick(() => {
-            this.searchRoute();
-          });
-        },
-        // 搜索路径
-        searchRoute() {
-          if (!this.routeStart || !this.routeEnd) {
-            this.$message.warning('请输入起点和终点');
-            return;
-          }
-
-          // 显示加载状态并保存引用
-          this.loadingMessage = this.$message({
-            message: '正在规划路线，请稍候...',
-            duration: 0,
-            showClose: true,
-            type: 'info'
-          });
-
-          this.clearRoute();
-
-          console.log('========== 路线规划调试 ==========');
-          console.log('routeStart:', this.routeStart);
-          console.log('routeEnd:', this.routeEnd);
-          console.log('currentLocation:', this.currentLocation);
-
-          let startPoint = null;
-          
-          if (this.routeStart === '我的位置') {
-            if (this.currentLocation) {
-              startPoint = [this.currentLocation.lng, this.currentLocation.lat];
-              console.log('起点设置为我的位置:', startPoint);
-            } else {
-              console.log('错误：选择了我的位置但currentLocation为空');
-              // 关闭加载状态
-              if (this.loadingMessage) {
-                this.loadingMessage.close();
-                this.loadingMessage = null;
-              }
-              this.$message.error('无法获取当前位置，请先定位');
-              return;
-            }
-          }
-          
-          if (!startPoint) {
-            // 使用地理编码获取起点坐标
-            console.log('起点不是"我的位置"，进行地理编码:', this.routeStart);
-            this.geocodeAddress(this.routeStart, (lnglat) => {
-              // 关闭加载状态
-              if (this.loadingMessage) {
-                this.loadingMessage.close();
-                this.loadingMessage = null;
-              }
-              
-              if (lnglat) {
-                console.log('起点地理编码结果:', lnglat);
-                this.doSearchRoute(lnglat, this.routeEnd);
-              } else {
-                this.$message.error('无法识别起点位置，请检查地址是否正确');
-              }
-            });
-            return;
-          }
-
-          console.log('使用起点坐标:', startPoint);
-          this.doSearchRoute(startPoint, this.routeEnd);
-        },
-        // 地理编码地址 - 使用Geocoder进行精确地理编码
-        geocodeAddress(address, callback) {
-          console.log('地理编码地址:', address);
-          
-          if (!address || address.trim() === '') {
-            console.warn('地址为空，无法进行地理编码');
-            callback(null);
-            return;
-          }
-          
-          // 使用高德地理编码服务，增加城市参数提高精度
-          this.geocoder.getLocation(address, (status, result) => {
-            console.log('地理编码结果:', status, result);
-            if (status === 'complete' && result.info === 'OK' && result.geocodes && result.geocodes.length > 0) {
-              const location = result.geocodes[0].location;
-              const formattedAddress = result.geocodes[0].formattedAddress;
-              const confidence = result.geocodes[0].confidence || 0;
-              
-              console.log('地理编码成功:', [location.lng, location.lat]);
-              console.log('格式化地址:', formattedAddress);
-              console.log('匹配精度:', confidence);
-              
-              // 检查匹配精度
-              if (confidence < 70) {
-                console.warn('地址匹配精度较低:', confidence);
-                // 尝试使用更详细的地址进行二次编码
-                this.tryEnhancedGeocoding(address, callback);
-              } else {
-                callback([location.lng, location.lat]);
-              }
-            } else {
-              console.log('地理编码失败，尝试POI搜索');
-              // 如果地理编码失败，回退到POI搜索
-              this.placeSearch.search(address, (status, result) => {
-                if (status === 'complete' && result.info === 'OK' && result.poiList.pois.length > 0) {
-                  const poi = result.poiList.pois[0];
-                  console.log('POI搜索成功:', [poi.location.lng, poi.location.lat]);
-                  console.log('POI名称:', poi.name);
-                  console.log('POI地址:', poi.address);
-                  callback([poi.location.lng, poi.location.lat]);
-                } else {
-                  console.log('POI搜索也失败');
-                  callback(null);
-                }
-              });
-            }
-          });
-        },
-        
-        // 尝试增强地理编码 - 使用城市+地址的组合
-        tryEnhancedGeocoding(address, callback) {
-          const enhancedAddress = this.currentCity + address;
-          console.log('尝试增强地理编码:', enhancedAddress);
-          
-          this.geocoder.getLocation(enhancedAddress, (status, result) => {
-            if (status === 'complete' && result.info === 'OK' && result.geocodes && result.geocodes.length > 0) {
-              const location = result.geocodes[0].location;
-              console.log('增强地理编码成功:', [location.lng, location.lat]);
-              callback([location.lng, location.lat]);
-            } else {
-              console.log('增强地理编码也失败');
-              // 回退到普通POI搜索
-              this.placeSearch.search(address, (status, result) => {
-                if (status === 'complete' && result.info === 'OK' && result.poiList.pois.length > 0) {
-                  const poi = result.poiList.pois[0];
-                  console.log('POI搜索成功:', [poi.location.lng, poi.location.lat]);
-                  callback([poi.location.lng, poi.location.lat]);
-                } else {
-                  callback(null);
-                }
-              });
-            }
-          });
-        },
-        // 执行路径搜索
-        doSearchRoute(startPoint, endAddress) {
-          console.log('========== doSearchRoute ==========');
-          console.log('startPoint参数:', startPoint);
-          console.log('endAddress参数:', endAddress);
-          console.log('startPoint类型:', typeof startPoint, Array.isArray(startPoint));
-          
-          // 如果startPoint已经是坐标数组，直接使用；否则需要地理编码
-          const doSearch = (sPoint, ePoint) => {
-            console.log('实际搜索 - 起点:', sPoint, '终点:', ePoint);
-            const callback = (status, result) => {
-              console.log('路径规划结果:', status, result);
-              
-              // 关闭加载状态
-              if (this.loadingMessage) {
-                this.loadingMessage.close();
-                this.loadingMessage = null;
-              }
-              
-              if (status === 'complete') {
-                this.parseRouteResult(result);
-              } else {
-                this.$message.error('路径规划失败，请检查起点和终点是否正确');
-              }
-            };
-
-            // 高德地图路线规划插件在初始化时已绑定map
-            // search方法参数：Driving/Walking/Riding/Transfer.search(origin, destination, callback)
-            switch (this.routeType) {
-              case 'driving':
-                this.driving.search(sPoint, ePoint, callback);
-                break;
-              case 'walking':
-                this.walking.search(sPoint, ePoint, callback);
-                break;
-              case 'riding':
-                this.riding.search(sPoint, ePoint, callback);
-                break;
-              case 'transit':
-                this.transfer.search(sPoint, ePoint, callback);
-                break;
-            }
-          };
-
-          // 解析终点地址
-          this.geocodeAddress(endAddress, (endPoint) => {
-            console.log('终点解析结果:', endPoint);
-            if (!endPoint) {
-              // 关闭加载状态
-              if (this.loadingMessage) {
-                this.loadingMessage.close();
-                this.loadingMessage = null;
-              }
-              this.$message.error('无法识别终点位置，请检查地址是否正确');
-              return;
-            }
-
-            // 如果起点已经是坐标数组（如"我的位置"），直接使用
-            if (Array.isArray(startPoint) && startPoint.length === 2) {
-              console.log('起点是坐标数组，直接使用');
-              doSearch(startPoint, endPoint);
-            } else {
-              // 否则需要解析起点地址
-              console.log('起点需要地理编码:', this.routeStart);
-              this.geocodeAddress(this.routeStart, (startLngLat) => {
-                // 关闭加载状态
-                if (this.loadingMessage) {
-                  this.loadingMessage.close();
-                  this.loadingMessage = null;
-                }
-                
-                if (startLngLat) {
-                  doSearch(startLngLat, endPoint);
-                } else {
-                  this.$message.error('无法识别起点位置，请检查地址是否正确');
-                }
-              });
-            }
-          });
-        },
-        // 解析路径结果
-        parseRouteResult(result) {
-          this.routeResults = [];
-          console.log('解析路径结果:', this.routeType, result);
-          
-          let routes = [];
-          
-          // 公交规划返回的数据结构不同，使用plans而不是routes
-          if (this.routeType === 'transit') {
-            routes = result.plans || [];
-          } else {
-            routes = result.routes || [];
-            // 如果返回的是单条路线（某些插件如Riding可能只返回一条）
-            if (!routes.length && result.route) {
-              routes = [result.route];
-            }
-          }
-          
-          console.log('解析到的路线数量:', routes.length);
-          
-          if (routes.length > 0) {
-            routes.forEach((route, index) => {
-              let time, distance, detail;
-              
-              // 处理不同路线类型的数据
-              if (this.routeType === 'transit') {
-                // 公交路线数据处理
-                time = this.formatTime(route.time);
-                distance = this.formatDistance(route.distance);
-                // 公交路线详情
-                if (route.segments && route.segments.length > 0) {
-                  const segmentInfos = route.segments.map(s => {
-                    if (s.transit_mode === 'BUS' || s.transit_mode === 'SUBWAY') {
-                      return s.transit.lines && s.transit.lines[0] ? s.transit.lines[0].name : '公交';
-                    } else if (s.transit_mode === 'WALK') {
-                      return '步行';
-                    }
-                    return '';
-                  }).filter(s => s).join(' → ');
-                  detail = segmentInfos || '公交路线';
-                } else {
-                  detail = '公交路线';
-                }
-              } else if (this.routeType === 'riding') {
-                // 骑行路线数据处理
-                time = this.formatTime(route.time || 0);
-                distance = this.formatDistance(route.distance || 0);
-                detail = route.steps ? `骑行途经 ${route.steps.length} 个路段` : '骑行路线';
-              } else {
-                time = this.formatTime(route.time);
-                distance = this.formatDistance(route.distance);
-                detail = route.steps ? `途经 ${route.steps.length} 个路段` : '路线规划';
-              }
-              
-              this.routeResults.push({
-                index: index,
-                time: time,
-                distance: distance,
-                detail: detail,
-                route: route
-              });
-            });
-            
-            // 默认选中第一条路线（仅标记选中状态，不重新绘制，因为search方法已自动绘制）
-            this.currentRouteIndex = 0;
-            this.currentRoute = routes[0];
-            
-            this.$message.success(`找到 ${routes.length} 条路线`);
-          } else {
-            console.log('未找到路线，result内容:', result);
-            this.$message.warning('未找到可用路线');
-          }
-        },
-        // 选择路线
-        selectRoute(routeInfo, index) {
-          this.currentRoute = routeInfo.route;
-          this.currentRouteIndex = index;
-          this.$message.success(`已选择路线，预计${routeInfo.time}到达`);
-
-          // 清除之前的路线并重新绘制选中的路线
-          if (this.routeStart && this.routeEnd) {
-            this.clearRouteOnMap();
-            // 根据路线类型调用对应的绘制方法
-            switch (this.routeType) {
-              case 'transit':
-                this.drawTransitRoute(index);
-                break;
-              case 'driving':
-                this.drawDrivingRoute(index);
-                break;
-              case 'walking':
-                this.drawWalkingRoute();
-                break;
-              case 'riding':
-                this.drawRidingRoute();
-                break;
-            }
-          }
-        },
-
-        // 清除地图上的路线（不清除数据和选中状态）
-        clearRouteOnMap() {
-          this.driving.clear();
-          this.walking.clear();
-          this.riding.clear();
-          this.transfer.clear();
-        },
-
-        // 绘制公交路线 - 使用planIndex参数选择特定路线方案
-        drawTransitRoute(planIndex) {
-          // 获取起点和终点坐标
-          let startPoint = null;
-          if (this.routeStart === '我的位置' && this.currentLocation) {
-            startPoint = [this.currentLocation.lng, this.currentLocation.lat];
-          }
-
-          // 解析终点地址
-          this.geocodeAddress(this.routeEnd, (endPoint) => {
-            if (!endPoint) {
-              this.$message.error('无法识别终点位置');
-              return;
-            }
-
-            // 如果起点已经是坐标数组，直接使用
-            const doDraw = (sPoint) => {
-              if (!sPoint) {
-                this.$message.error('无法识别起点位置');
-                return;
-              }
-
-              console.log('绘制公交路线:', '起点:', sPoint, '终点:', endPoint, '方案索引:', planIndex);
-
-              // 公交路线规划 - 使用planIndex参数指定要显示的方案
-              // 高德地图Transfer插件支持planIndex参数选择特定方案
-              const options = {
-                city: this.currentCity,
-                cityd: this.currentCity,
-                policy: planIndex // 使用policy参数传递方案索引
-              };
-
-              this.transfer.search(sPoint, endPoint, options, (status, result) => {
-                console.log('公交路线绘制结果:', status, result);
-                if (status === 'complete') {
-                  console.log('公交路线绘制成功，方案索引:', planIndex);
-                } else {
-                  console.error('公交路线绘制失败:', status, result);
-                  this.$message.error('公交路线绘制失败');
-                }
-              });
-            };
-
-            if (Array.isArray(startPoint) && startPoint.length === 2) {
-              doDraw(startPoint);
-            } else {
-              // 解析起点地址
-              this.geocodeAddress(this.routeStart, (startLngLat) => {
-                doDraw(startLngLat);
-              });
-            }
-          });
-        },
-
-        // 绘制驾车路线 - 使用policy参数选择路线策略
-        drawDrivingRoute(policyIndex) {
-          this.getRoutePoints((sPoint, endPoint) => {
-            if (!sPoint || !endPoint) return;
-
-            console.log('绘制驾车路线:', '起点:', sPoint, '终点:', endPoint, '策略:', policyIndex);
-
-            // 驾车路线策略：0-最快，1-最经济，2-最短，3-躲避拥堵，4-高速优先，5-不走高速
-            const policies = [
-              AMap.DrivingPolicy.LEAST_TIME,     // 最快
-              AMap.DrivingPolicy.LEAST_FEE,      // 最经济
-              AMap.DrivingPolicy.LEAST_DISTANCE, // 最短
-              AMap.DrivingPolicy.REAL_TRAFFIC,   // 躲避拥堵
-              AMap.DrivingPolicy.HIGHWAY,        // 高速优先
-              AMap.DrivingPolicy.NOHIGHWAY       // 不走高速
-            ];
-            const policy = policies[policyIndex] || AMap.DrivingPolicy.LEAST_TIME;
-
-            // 增加实时路况参数
-            const options = {
-              policy: policy,
-              showTraffic: true
-            };
-
-            this.driving.search(sPoint, endPoint, options, (status, result) => {
-              if (status === 'complete') {
-                console.log('驾车路线绘制成功，策略:', policyIndex);
-                console.log('找到路线数量:', result.routes ? result.routes.length : 0);
-              } else {
-                console.error('驾车路线绘制失败:', status, result);
-              }
-            });
-          });
-        },
-
-        // 绘制步行路线
-        drawWalkingRoute() {
-          this.getRoutePoints((sPoint, endPoint) => {
-            if (!sPoint || !endPoint) return;
-
-            console.log('绘制步行路线:', '起点:', sPoint, '终点:', endPoint);
-
-            this.walking.search(sPoint, endPoint, (status, result) => {
-              if (status === 'complete') {
-                console.log('步行路线绘制成功');
-              } else {
-                console.error('步行路线绘制失败:', status, result);
-              }
-            });
-          });
-        },
-
-        // 绘制骑行路线
-        drawRidingRoute() {
-          this.getRoutePoints((sPoint, endPoint) => {
-            if (!sPoint || !endPoint) return;
-
-            console.log('绘制骑行路线:', '起点:', sPoint, '终点:', endPoint);
-
-            this.riding.search(sPoint, endPoint, (status, result) => {
-              if (status === 'complete') {
-                console.log('骑行路线绘制成功');
-              } else {
-                console.error('骑行路线绘制失败:', status, result);
-              }
-            });
-          });
-        },
-
-        // 获取路线起点和终点坐标的通用方法
-        getRoutePoints(callback) {
-          // 获取起点坐标
-          let startPoint = null;
-          if (this.routeStart === '我的位置' && this.currentLocation) {
-            startPoint = [this.currentLocation.lng, this.currentLocation.lat];
-          }
-
-          // 解析终点地址
-          this.geocodeAddress(this.routeEnd, (endPoint) => {
-            if (!endPoint) {
-              this.$message.error('无法识别终点位置');
-              callback(null, null);
-              return;
-            }
-
-            // 如果起点已经是坐标数组，直接使用
-            if (Array.isArray(startPoint) && startPoint.length === 2) {
-              callback(startPoint, endPoint);
-            } else {
-              // 否则解析起点地址
-              this.geocodeAddress(this.routeStart, (startLngLat) => {
-                if (!startLngLat) {
-                  this.$message.error('无法识别起点位置');
-                  callback(null, null);
-                  return;
-                }
-                callback(startLngLat, endPoint);
-              });
-            }
-          });
-        },
-
-        // 在地图上绘制指定索引的路线（兼容旧方法）
-        drawRouteOnMap(routeIndex) {
-          // 根据路线类型调用对应的绘制方法
-          switch (this.routeType) {
-            case 'transit':
-              this.drawTransitRoute(routeIndex);
-              break;
-            case 'driving':
-              this.drawDrivingRoute(routeIndex);
-              break;
-            case 'walking':
-              this.drawWalkingRoute();
-              break;
-            case 'riding':
-              this.drawRidingRoute();
-              break;
-          }
-        },
-
-        // 清除路线
-        clearRoute() {
-          this.driving.clear();
-          this.walking.clear();
-          this.riding.clear();
-          this.transfer.clear();
-          this.routeResults = [];
-          this.currentRoute = null;
-          this.currentRouteIndex = -1; // 重置选中索引
-          this.autoPlanned = false; // 重置自动规划标记
-        },
-        // 格式化时间
-        formatTime(seconds) {
-          if (seconds < 60) {
-            return seconds + '秒';
-          } else if (seconds < 3600) {
-            return Math.floor(seconds / 60) + '分钟';
-          } else {
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            return hours + '小时' + minutes + '分钟';
-          }
-        },
-        // 关键词输入处理
-        onKeywordInput() {
-          if (this.searchTimer) {
-            clearTimeout(this.searchTimer);
-          }
-          
-          if (!this.keyword || this.keyword.length < 1) {
-            this.suggestions = [];
-            this.showSuggestions = false;
-            return;
-          }
-
-          // 延迟搜索，避免频繁请求
-          this.searchTimer = setTimeout(() => {
-            this.searchAMapSuggestions();
-          }, 300);
-        },
-        // 高德地图搜索建议
-        searchAMapSuggestions() {
-          if (!this.autoComplete) {
-            console.log('AutoComplete 未初始化');
-            return;
-          }
-
-          this.autoComplete.search(this.keyword, (status, result) => {
-            console.log('搜索建议状态:', status, '结果:', result);
-            if (status === 'complete' && result.info === 'OK') {
-              this.suggestions = result.tips.map(tip => ({
-                name: tip.name,
-                address: tip.address || tip.district || '',
-                type: tip.type || '地点',
-                location: tip.location,
-                adcode: tip.adcode
-              })).filter(item => item.name && item.name.length > 0);
-              this.showSuggestions = this.suggestions.length > 0;
-            } else {
-              this.suggestions = [];
-              this.showSuggestions = false;
-            }
-          });
-        },
-        // 选择搜索建议
-        selectSuggestion(item) {
-          this.keyword = item.name;
-          this.showSuggestions = false;
-          
-          if (item.location && item.location.lng && item.location.lat) {
-            // 如果有点位置信息，直接定位到该位置
-            this.map.setCenter([item.location.lng, item.location.lat]);
-            this.map.setZoom(16);
-            
-            // 添加搜索标记
-            new AMap.Marker({
-              position: [item.location.lng, item.location.lat],
-              map: this.map,
-              title: item.name
-            });
-            
-            // 重要：不要更新currentLocation！currentLocation应该始终保持用户的真实位置
-            // 只使用关键词搜索
-            this.searchWithAMap(); // 使用关键词搜索，而不是附近搜索
-          } else {
-            // 否则执行关键词搜索
-            this.searchShops();
-          }
-        },
-        // 点击外部关闭搜索建议
-        handleClickOutside(e) {
-          const searchWrapper = document.querySelector('.search-input-wrapper');
-          if (searchWrapper && !searchWrapper.contains(e.target)) {
-            this.showSuggestions = false;
-          }
-        },
-        // 获取当前位置 - 使用高德地图定位插件
-        getCurrentLocation() {
-          // 先使用默认位置
-          this.currentLocation = { lng: 112.9388, lat: 28.2282 };
-          
-          // 使用高德地图定位插件
-          const geolocation = new AMap.Geolocation({
-            enableHighAccuracy: true, // 是否使用高精度定位，默认:true
-            timeout: 15000,           // 增加超时时间到15秒
-            buttonPosition: 'RB',     // 定位按钮的停靠位置
-            buttonOffset: new AMap.Pixel(10, 20), // 定位按钮与设置的停靠位置的偏移量，默认：Pixel(10, 20)
-            zoomToAccuracy: true,     // 定位成功后是否自动调整地图视野到定位点
-            showMarker: false,        // 不显示默认标记，使用自定义标记
-            showCircle: false,        // 不显示默认定位圆圈
-            extensions: 'all'         // 获取详细的定位信息
-          });
-          
-          this.map.addControl(geolocation);
-          
-          geolocation.getCurrentPosition((status, result) => {
-            if (status === 'complete') {
-              // 定位成功
-              const lng = result.position.lng;
-              const lat = result.position.lat;
-              const accuracy = result.accuracy || 100; // 获取定位精度
-              
-              // 检查定位精度
-              if (accuracy > 500) {
-                console.warn('定位精度较低:', accuracy, '米');
-                this.$message.warning('定位精度较低，可能影响导航准确性');
-              } else {
-                console.log('高德定位成功，精度:', accuracy, '米');
-                this.$message.success('定位成功');
-              }
-              
-              this.currentLocation = { lng, lat, accuracy };
-              
-              console.log('高德定位成功:', result);
-              
-              // 添加自定义当前位置标记
-              this.addCurrentLocationMarker(lng, lat, accuracy);
-              
-              // 使用高德地图搜索附近
-              this.searchNearbyWithAMap();
-            } else {
-              // 定位失败，回退到浏览器定位
-              console.error('高德定位失败:', result);
-              this.fallbackBrowserGeolocation();
-            }
-          });
-        },
-        
-        // 坐标转换：WGS84转GCJ-02（高德地图使用的坐标系）
-        wgs84ToGcj02(lng, lat) {
-          const pi = 3.1415926535897932384626;
-          const a = 6378245.0;
-          const ee = 0.00669342162296594323;
-          
-          if (this.outOfChina(lng, lat)) {
-            return [lng, lat];
-          }
-          
-          let dLat = this.transformLat(lng - 105.0, lat - 35.0);
-          let dLng = this.transformLng(lng - 105.0, lat - 35.0);
-          const radLat = lat / 180.0 * pi;
-          let magic = Math.sin(radLat);
-          magic = 1 - ee * magic * magic;
-          const sqrtMagic = Math.sqrt(magic);
-          dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * pi);
-          dLng = (dLng * 180.0) / (a / sqrtMagic * Math.cos(radLat) * pi);
-          
-          return [lng + dLng, lat + dLat];
-        },
-        
-        // 检查坐标是否在中国境外
-        outOfChina(lng, lat) {
-          return !(lng > 73.66 && lng < 135.05 && lat > 3.86 && lat < 53.55);
-        },
-        
-        // 纬度转换
-        transformLat(x, y) {
-          const pi = 3.1415926535897932384626;
-          let ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));
-          ret += (20.0 * Math.sin(6.0 * x * pi) + 20.0 * Math.sin(2.0 * x * pi)) * 2.0 / 3.0;
-          ret += (20.0 * Math.sin(y * pi) + 40.0 * Math.sin(y / 3.0 * pi)) * 2.0 / 3.0;
-          ret += (160.0 * Math.sin(y / 12.0 * pi) + 320 * Math.sin(y * pi / 30.0)) * 2.0 / 3.0;
-          return ret;
-        },
-        
-        // 经度转换
-        transformLng(x, y) {
-          const pi = 3.1415926535897932384626;
-          let ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));
-          ret += (20.0 * Math.sin(6.0 * x * pi) + 20.0 * Math.sin(2.0 * x * pi)) * 2.0 / 3.0;
-          ret += (20.0 * Math.sin(x * pi) + 40.0 * Math.sin(x / 3.0 * pi)) * 2.0 / 3.0;
-          ret += (150.0 * Math.sin(x / 12.0 * pi) + 300.0 * Math.sin(x * pi / 30.0)) * 2.0 / 3.0;
-          return ret;
-        },
-        
-        // 浏览器定位回退
-        fallbackBrowserGeolocation() {
-          this.$message.warning('高德定位失败，尝试浏览器定位...');
-          
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                let lng = position.coords.longitude;
-                let lat = position.coords.latitude;
-                const accuracy = position.coords.accuracy || 100;
-                
-                // 浏览器定位返回WGS84坐标，需要转换为GCJ-02（高德地图使用的坐标系）
-                const gcjCoords = this.wgs84ToGcj02(lng, lat);
-                lng = gcjCoords[0];
-                lat = gcjCoords[1];
-                
-                // 检查定位精度
-                if (accuracy > 500) {
-                  console.warn('浏览器定位精度较低:', accuracy, '米');
-                  this.$message.warning('定位精度较低，可能影响导航准确性');
-                } else {
-                  console.log('浏览器定位成功，精度:', accuracy, '米');
-                  console.log('WGS84坐标:', [position.coords.longitude, position.coords.latitude]);
-                  console.log('转换为GCJ-02坐标:', [lng, lat]);
-                  this.$message.success('浏览器定位成功');
-                }
-                
-                this.currentLocation = { lng, lat, accuracy };
-                this.map.setCenter([lng, lat]);
-                
-                // 添加自定义当前位置标记
-                this.addCurrentLocationMarker(lng, lat, accuracy);
-                
-                this.searchNearbyWithAMap();
-              },
-              (error) => {
-                console.error('浏览器定位失败:', error);
-                this.$message.warning('定位失败，使用默认位置（长沙）');
-                this.currentLocation = { lng: 112.9388, lat: 28.2282, accuracy: 1000 };
-                this.addCurrentLocationMarker(112.9388, 28.2282, 1000);
-                this.searchNearbyWithAMap();
-              },
-              {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 0
-              }
-            );
-          } else {
-            this.$message.warning('浏览器不支持定位，使用默认位置（长沙）');
-            this.currentLocation = { lng: 112.9388, lat: 28.2282, accuracy: 1000 };
-            this.addCurrentLocationMarker(112.9388, 28.2282, 1000);
-            this.searchNearbyWithAMap();
-          }
-        },
-        
-        // 添加自定义当前位置标记
-        addCurrentLocationMarker(lng, lat, accuracy = 100) {
-          // 清除之前的当前位置标记
-          if (this.currentLocationMarker) {
-            this.map.remove(this.currentLocationMarker);
-          }
-          if (this.currentLocationCircle) {
-            this.map.remove(this.currentLocationCircle);
-          }
-          
-          // 创建脉冲效果的标记
-          const markerContent = `
-            <div class="current-location-marker">
-              <div class="location-dot"></div>
-              <div class="location-pulse"></div>
-            </div>
-          `;
-          
-          this.currentLocationMarker = new AMap.Marker({
-            position: [lng, lat],
-            map: this.map,
-            title: '我的位置',
-            content: markerContent,
-            offset: new AMap.Pixel(-15, -15),
-            zIndex: 200
-          });
-          
-          // 添加精度圆圈 - 使用实际的定位精度
-          this.currentLocationCircle = new AMap.Circle({
-            center: [lng, lat],
-            radius: Math.max(accuracy, 50), // 精度范围，单位：米，最小50米
-            fillColor: '#ff6633',
-            fillOpacity: 0.1,
-            strokeColor: '#ff6633',
-            strokeWeight: 1,
-            strokeOpacity: 0.3,
-            map: this.map,
-            zIndex: 100
-          });
-        },
-        // 距离变化
-        onRadiusChange() {
-          if (this.currentLocation) {
-            this.searchNearbyWithAMap();
-          }
-        },
-        // 类型变化
-        onTypeChange() {
-          if (this.keyword) {
-            this.searchShops();
-          } else if (this.currentLocation) {
-            this.searchNearbyWithAMap();
-          }
-        },
-        // 使用高德地图搜索附近
-        searchNearbyWithAMap() {
-          if (!this.placeSearch || !this.currentLocation) {
-            console.log('PlaceSearch 未初始化或位置未知');
-            return;
-          }
-
-          console.log('开始搜索附近，位置:', this.currentLocation, '半径:', this.radius);
-
-          // 构建类型筛选
-          let searchType = '';
-          if (this.typeId) {
-            const typeMap = {
-              1: '餐饮服务',
-              2: 'KTV',
-              3: '丽人',
-              4: '美甲',
-              5: '按摩',
-              6: 'SPA',
-              7: '亲子',
-              8: '酒吧',
-              9: '轰趴',
-              10: '运动'
-            };
-            searchType = typeMap[this.typeId] || '';
-          }
-
-          // 搜索附近
-          const keyword = searchType || '美食|酒店|购物|生活服务';
-          
-          this.placeSearch.searchNearBy(
-            keyword,
-            [this.currentLocation.lng, this.currentLocation.lat],
-            this.radius,
-            (status, result) => {
-              console.log('搜索附近结果 - 状态:', status, '结果:', result);
-              this.handleAMapSearchResult(status, result);
-            }
-          );
-        },
-        // 搜索按钮点击
-        searchShops() {
-          if (!this.keyword) {
-            this.searchNearbyWithAMap();
-            return;
-          }
-
-          this.showSuggestions = false;
-
-          // 使用高德地图搜索
-          if (this.placeSearch && this.currentLocation) {
-            this.searchWithAMap();
-          } else {
-            this.$message.warning('地图服务初始化中，请稍后再试');
-          }
-        },
-        // 使用高德地图关键词搜索
-        searchWithAMap() {
-          const center = this.map.getCenter();
-          
-          console.log('关键词搜索:', this.keyword, '中心点:', center);
-
-          // 构建类型筛选
-          let searchKeyword = this.keyword;
-          if (this.typeId) {
-            const typeMap = {
-              1: '美食',
-              2: 'KTV',
-              3: '丽人',
-              4: '美甲',
-              5: '按摩',
-              6: 'SPA',
-              7: '亲子',
-              8: '酒吧',
-              9: '轰趴',
-              10: '运动'
-            };
-            const typeName = typeMap[this.typeId];
-            if (typeName && !this.keyword.includes(typeName)) {
-              searchKeyword = typeName + ' ' + this.keyword;
-            }
-          }
-
-          // 使用searchNearBy但不限制距离，使用大半径搜索（100公里）
-          this.placeSearch.searchNearBy(
-            searchKeyword,
-            [center.lng, center.lat],
-            100000, // 100公里，相当于不限制距离
-            (status, result) => {
-              console.log('关键词搜索结果 - 状态:', status, '结果:', result);
-              this.handleAMapSearchResult(status, result);
-            }
-          );
-        },
-        // 处理高德地图搜索结果
-        handleAMapSearchResult(status, result) {
-          console.log('处理搜索结果:', status, result);
-          
-          if (status === 'complete' && result.info === 'OK' && result.poiList && result.poiList.pois) {
-            const pois = result.poiList.pois;
-            console.log('找到 POI 数量:', pois.length);
-            
-            if (pois.length === 0) {
-              this.shops = [];
-              this.$message.info('附近没有找到相关店铺');
-              this.renderMarkers();
-              return;
-            }
-            
-            // 将高德地图结果转换为店铺格式
-            this.shops = pois.map(poi => ({
-              id: poi.id,
-              name: poi.name,
-              address: poi.address || '暂无地址',
-              longitude: poi.location ? poi.location.lng : 0,
-              latitude: poi.location ? poi.location.lat : 0,
-              score: (poi.biz_ext && poi.biz_ext.rating) ? parseFloat(poi.biz_ext.rating) : (Math.random() * 2 + 3.5).toFixed(1),
-              avgPrice: (poi.biz_ext && poi.biz_ext.cost) ? parseInt(poi.biz_ext.cost) : Math.floor(Math.random() * 100 + 30),
-              distance: poi.distance || 0,
-              images: (poi.photos && poi.photos.length > 0) ? poi.photos[0].url : '/imgs/icons/default-icon.png',
-              typeId: this.getTypeFromPoi(poi.type)
-            }));
-            
-            this.renderMarkers();
-            
-            // 调整地图视野
-            if (pois.length > 0) {
-              this.map.setFitView();
-            }
-          } else {
-            console.log('搜索失败或无结果:', status, result);
-            this.shops = [];
-            this.$message.info('附近没有找到相关店铺');
-            this.renderMarkers();
-          }
-        },
-        // 根据POI类型获取类型ID
-        getTypeFromPoi(poiType) {
-          if (!poiType) return null;
-          
-          const typeMap = {
-            '美食': 1,
-            '餐饮': 1,
-            'KTV': 2,
-            '丽人': 3,
-            '美容': 3,
-            '美发': 3,
-            '美甲': 4,
-            '按摩': 5,
-            '足疗': 5,
-            'SPA': 6,
-            '亲子': 7,
-            '儿童': 7,
-            '酒吧': 8,
-            '轰趴': 9,
-            '运动': 10,
-            '健身': 10,
-            '体育': 10
-          };
-          
-          for (let key in typeMap) {
-            if (poiType.includes(key)) {
-              return typeMap[key];
-            }
-          }
-          return null;
-        },
-        // 渲染标记
-        renderMarkers() {
-          // 清除旧标记（保留当前位置标记）
-          const markers = this.map.getAllOverlays('marker');
-          markers.forEach(marker => {
-            if (marker !== this.currentLocationMarker) {
-              this.map.remove(marker);
-            }
-          });
-
-          // 添加店铺标记
-          this.shops.forEach(shop => {
-            if (!shop.longitude || !shop.latitude) return;
-            
-            const marker = new AMap.Marker({
-              position: [shop.longitude, shop.latitude],
-              map: this.map,
-              title: shop.name
-            });
-
-            // 信息窗体
-            const content = `
-              <div class="shop-popup">
-                <img class="popup-img" src="${shop.images}" alt="" onerror="this.src='/imgs/icons/default-icon.png'">
-                <div class="popup-title">${shop.name}</div>
-                <div class="popup-address">${shop.address}</div>
-                <div class="popup-meta">
-                  <span class="popup-score">评分 ${shop.score}</span>
-                  <span class="popup-distance">${this.formatDistance(shop.distance)}</span>
-                </div>
-              </div>
-            `;
-
-            const infoWindow = new AMap.InfoWindow({
-              content: content,
-              offset: new AMap.Pixel(0, -30)
-            });
-
-            marker.on('click', () => {
-              infoWindow.open(this.map, marker.getPosition());
-            });
-          });
-        },
-        // 聚焦到店铺
-        focusShop(shop) {
-          if (shop.longitude && shop.latitude) {
-            this.map.setCenter([shop.longitude, shop.latitude]);
-            this.map.setZoom(18);
-          }
-        },
-        // 格式化距离
-        formatDistance(distance) {
-          if (!distance) return '';
-          if (distance < 1000) {
-            return Math.round(distance) + 'm';
-          }
-          return (distance / 1000).toFixed(1) + 'km';
-        }
-      }
-    });
-  }
-</script>
+<script src="/js/map-page.js"></script>
 </body>
 </html>

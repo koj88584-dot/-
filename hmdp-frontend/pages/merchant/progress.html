@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>商家申请进度</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <style>
+    :root {
+      --p-primary: #FF7A45;
+      --p-bg: #FDFBF9;
+      --p-text: #3A3432;
+      --p-sub: #8A817C;
+      --p-muted: #B5AFA6;
+      --p-border: #F0ECE8;
+      --p-shadow: 0 8px 24px rgba(255,122,69,0.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--p-bg);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      color: var(--p-text); -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { display: none; }
+    .page { max-width: 390px; margin: 0 auto; min-height: 100vh; padding-bottom: 40px; }
+
+    /* Header */
+    .header {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: rgba(253,251,249,0.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+    .back {
+      width: 36px; height: 36px; border: none; border-radius: 50%;
+      background: rgba(255,122,69,0.10); color: var(--p-primary); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .title { flex: 1; font-size: 17px; font-weight: 700; }
+
+    /* Status Hero Card — Merchant (orange) */
+    .status-hero {
+      margin: 12px 12px 0; padding: 20px;
+      background: linear-gradient(135deg, var(--p-primary) 0%, #FF9C6E 100%);
+      border-radius: 20px; color: #fff;
+      box-shadow: 0 12px 32px rgba(255,122,69,0.20);
+    }
+    /* Status Hero Card — Admin (purple) */
+    .status-hero.admin-hero {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      box-shadow: 0 12px 32px rgba(99,102,241,0.25);
+    }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 20px;
+      background: rgba(255,255,255,0.25); font-size: 12px; font-weight: 700;
+    }
+    .status-badge i { font-size: 14px; }
+    .status-stats {
+      display: flex; gap: 24px; margin-top: 14px;
+    }
+    .status-stat-label { font-size: 12px; opacity: 0.8; }
+    .status-stat-value { font-size: 20px; font-weight: 800; margin-top: 2px; }
+    .status-actions {
+      display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap;
+    }
+    .status-btn {
+      border: none; border-radius: 12px; padding: 10px 18px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .status-btn:active { transform: scale(0.96); }
+    .status-btn.primary {
+      background: #fff; color: var(--p-primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .status-hero.admin-hero .status-btn.primary {
+      color: #6366f1;
+    }
+    .status-btn.secondary {
+      background: rgba(255,255,255,0.2); color: #fff;
+    }
+
+    /* — Admin Quick-Action Cards — */
+    .admin-actions-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin: 12px 12px 0;
+    }
+    .admin-action-card {
+      padding: 16px; border-radius: 20px;
+      background: #fff; border: none; cursor: pointer;
+      box-shadow: var(--p-shadow); text-align: left;
+      transition: transform 0.2s ease;
+    }
+    .admin-action-card:active { transform: scale(0.97); }
+    .admin-action-icon {
+      width: 36px; height: 36px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; margin-bottom: 10px;
+    }
+    .admin-action-icon.purple { background: rgba(99,102,241,0.10); color: #6366f1; }
+    .admin-action-icon.orange { background: rgba(255,122,69,0.10); color: var(--p-primary); }
+    .admin-action-icon.green { background: rgba(5,150,105,0.10); color: #059669; }
+    .admin-action-icon.blue { background: rgba(37,99,235,0.10); color: #2563eb; }
+    .admin-action-title { font-size: 14px; font-weight: 700; color: var(--p-text); }
+    .admin-action-desc { font-size: 11px; color: var(--p-muted); margin-top: 3px; line-height: 1.4; }
+
+    /* Admin info hint */
+    .admin-info-card {
+      margin: 12px 12px 0; padding: 14px 16px;
+      background: #fff; border-radius: 20px;
+      box-shadow: var(--p-shadow);
+    }
+    .admin-info-title {
+      font-size: 14px; font-weight: 700; color: var(--p-text); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .admin-info-title i {
+      width: 24px; height: 24px; border-radius: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 12px; background: rgba(99,102,241,0.10); color: #6366f1;
+    }
+    .admin-info-list { list-style: none; margin: 0; padding: 0; }
+    .admin-info-list li {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0; font-size: 13px; color: var(--p-sub);
+      border-bottom: 1px solid var(--p-border);
+    }
+    .admin-info-list li:last-child { border-bottom: none; }
+    .admin-info-list li i { color: #6366f1; font-size: 14px; width: 18px; text-align: center; }
+
+    /* Application Cards */
+    .app-card {
+      margin: 12px 12px 0; padding: 0;
+      background: #fff; border-radius: 20px;
+      box-shadow: var(--p-shadow); overflow: hidden;
+    }
+    .app-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--p-border);
+    }
+    .app-card-title {
+      font-size: 15px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .app-card-title i {
+      width: 28px; height: 28px; border-radius: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .app-card-title i.merchant { background: rgba(255,122,69,0.10); color: var(--p-primary); }
+    .app-card-title i.claim { background: rgba(37,99,235,0.10); color: #2563eb; }
+    .app-card-title i.create { background: rgba(5,150,105,0.10); color: #059669; }
+
+    .app-status-pill {
+      padding: 3px 10px; border-radius: 8px;
+      font-size: 11px; font-weight: 700;
+    }
+    .app-status-pill.passed { background: rgba(5,150,105,0.10); color: #059669; }
+    .app-status-pill.pending { background: rgba(217,119,6,0.10); color: #d97706; }
+    .app-status-pill.rejected { background: rgba(239,68,68,0.10); color: #ef4444; }
+
+    .app-card-body { padding: 14px 16px; }
+    .info-grid {
+      display: grid; grid-template-columns: auto 1fr; gap: 4px 12px;
+      font-size: 13px;
+    }
+    .info-label { color: var(--p-muted); font-weight: 500; white-space: nowrap; }
+    .info-value { color: var(--p-text); font-weight: 500; word-break: break-all; }
+
+    .image-section { margin-top: 12px; }
+    .image-label { font-size: 12px; color: var(--p-muted); font-weight: 600; margin-bottom: 6px; }
+    .image-row {
+      display: flex; gap: 8px; overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .image-row::-webkit-scrollbar { display: none; }
+    .img-thumb {
+      width: 64px; height: 64px; flex-shrink: 0;
+      border: 0; padding: 0; border-radius: 12px;
+      overflow: hidden; background: #F9F6F0; cursor: pointer;
+    }
+    .img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .image-preview { width: 100%; max-height: 72vh; object-fit: contain; border-radius: 16px; background: #0f172a; }
+  </style>
+</head>
+<body>
+<div id="app" class="page">
+  <div class="header">
+    <button class="back" @click="goBack"><i class="el-icon-arrow-left"></i></button>
+    <div class="title">{{ isAdmin ? '管理员概览' : '申请进度' }}</div>
+  </div>
+
+  <!-- ========== ADMIN VIEW ========== -->
+  <template v-if="isAdmin && profile">
+    <!-- Admin Hero -->
+    <div class="status-hero admin-hero">
+      <div class="status-badge">
+        <i class="el-icon-s-check"></i> 平台管理员
+      </div>
+      <div class="status-stats">
+        <div>
+          <div class="status-stat-label">身份</div>
+          <div class="status-stat-value">管理员</div>
+        </div>
+        <div>
+          <div class="status-stat-label">管理店铺</div>
+          <div class="status-stat-value">{{ profile.managedShopCount || 0 }}</div>
+        </div>
+      </div>
+      <div class="status-actions">
+        <button class="status-btn primary" @click="goMerchantCenter">进入管理员中心</button>
+        <button class="status-btn secondary" @click="goAdminReview">审核后台</button>
+      </div>
+    </div>
+
+    <!-- Admin Quick Actions -->
+    <div class="admin-actions-grid">
+      <button class="admin-action-card" @click="goAdminReview">
+        <div class="admin-action-icon purple"><i class="el-icon-s-operation"></i></div>
+        <div class="admin-action-title">审核后台</div>
+        <div class="admin-action-desc">审核商家申请、店铺认领和新建店铺</div>
+      </button>
+      <button class="admin-action-card" @click="goMerchantCenter">
+        <div class="admin-action-icon orange"><i class="el-icon-s-shop"></i></div>
+        <div class="admin-action-title">优惠券管理</div>
+        <div class="admin-action-desc">管理所有店铺的优惠券和订单核销</div>
+      </button>
+      <button class="admin-action-card" @click="goClaimShop">
+        <div class="admin-action-icon blue"><i class="el-icon-link"></i></div>
+        <div class="admin-action-title">认领店铺</div>
+        <div class="admin-action-desc">将已有店铺分配给商家管理</div>
+      </button>
+      <button class="admin-action-card" @click="goCreateShop">
+        <div class="admin-action-icon green"><i class="el-icon-circle-plus-outline"></i></div>
+        <div class="admin-action-title">新建店铺</div>
+        <div class="admin-action-desc">在平台上创建新的店铺</div>
+      </button>
+    </div>
+
+    <!-- Admin permissions info -->
+    <div class="admin-info-card">
+      <div class="admin-info-title"><i class="el-icon-info"></i> 管理员权限</div>
+      <ul class="admin-info-list">
+        <li><i class="el-icon-check"></i> 可查看和管理平台全部店铺</li>
+        <li><i class="el-icon-check"></i> 可审核商家资格、店铺认领和新建店铺申请</li>
+        <li><i class="el-icon-check"></i> 可为任意店铺创建、编辑和管理优惠券</li>
+        <li><i class="el-icon-check"></i> 可核销任意店铺的优惠券订单</li>
+      </ul>
+    </div>
+  </template>
+
+  <!-- ========== MERCHANT / USER VIEW ========== -->
+  <template v-else-if="profile">
+    <!-- Merchant Status Hero -->
+    <div class="status-hero">
+      <div class="status-badge">
+        <i class="el-icon-check" v-if="profile.merchantEnabled"></i>
+        <i class="el-icon-time" v-else></i>
+        {{ profile.merchantEnabled ? '已开通商家资格' : profile.merchantApplicationStatusText }}
+      </div>
+      <div class="status-stats">
+        <div>
+          <div class="status-stat-label">身份</div>
+          <div class="status-stat-value">{{ profile.primaryRole === 'MERCHANT' ? '商家' : '用户' }}</div>
+        </div>
+        <div>
+          <div class="status-stat-label">管理店铺</div>
+          <div class="status-stat-value">{{ profile.managedShopCount || 0 }}</div>
+        </div>
+      </div>
+      <div class="status-actions">
+        <button v-if="!profile.merchantEnabled && profile.merchantApplicationStatus !== 'PENDING'" class="status-btn primary" @click="goApply">重新提交申请</button>
+        <button v-if="profile.merchantEnabled" class="status-btn primary" @click="goMerchantCenter">进入商家中心</button>
+        <button v-if="profile.merchantEnabled" class="status-btn secondary" @click="goClaimShop">认领店铺</button>
+        <button v-if="profile.merchantEnabled" class="status-btn secondary" @click="goCreateShop">新建店铺</button>
+      </div>
+    </div>
+
+  <!-- Merchant Application -->
+  <div class="app-card" v-if="profile && profile.latestMerchantApplication">
+    <div class="app-card-header">
+      <div class="app-card-title"><i class="el-icon-s-custom merchant"></i> 商家资格</div>
+      <span class="app-status-pill" :class="{passed: profile.latestMerchantApplication.statusText === '已通过', pending: profile.latestMerchantApplication.statusText === '审核中', rejected: profile.latestMerchantApplication.statusText === '已拒绝'}">
+        {{ profile.latestMerchantApplication.statusText }}
+      </span>
+    </div>
+    <div class="app-card-body">
+      <div class="info-grid">
+        <span class="info-label">联系人</span>
+        <span class="info-value">{{ profile.latestMerchantApplication.contactName }} · {{ profile.latestMerchantApplication.contactPhone }}</span>
+        <template v-if="profile.latestMerchantApplication.companyName">
+          <span class="info-label">公司</span>
+          <span class="info-value">{{ profile.latestMerchantApplication.companyName }}</span>
+        </template>
+        <span class="info-label">提交时间</span>
+        <span class="info-value">{{ profile.latestMerchantApplication.createTime }}</span>
+        <template v-if="profile.latestMerchantApplication.reviewRemark">
+          <span class="info-label">审核备注</span>
+          <span class="info-value">{{ profile.latestMerchantApplication.reviewRemark }}</span>
+        </template>
+      </div>
+      <div class="image-section" v-if="splitImages(profile.latestMerchantApplication.proofImages).length">
+        <div class="image-label">证明图片</div>
+        <div class="image-row">
+          <button class="img-thumb" v-for="(item, index) in splitImages(profile.latestMerchantApplication.proofImages)" :key="item + index" @click="previewImage(item)">
+            <img :src="resolveImage(item)" alt="">
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shop Claim Application -->
+  <div class="app-card" v-if="profile && profile.latestShopClaimApplication">
+    <div class="app-card-header">
+      <div class="app-card-title"><i class="el-icon-link claim"></i> 店铺认领</div>
+      <span class="app-status-pill" :class="{passed: profile.latestShopClaimApplication.statusText === '已通过', pending: profile.latestShopClaimApplication.statusText === '审核中', rejected: profile.latestShopClaimApplication.statusText === '已拒绝'}">
+        {{ profile.latestShopClaimApplication.statusText }}
+      </span>
+    </div>
+    <div class="app-card-body">
+      <div class="info-grid">
+        <span class="info-label">店铺</span>
+        <span class="info-value">{{ profile.latestShopClaimApplication.shopName || ('#' + profile.latestShopClaimApplication.shopId) }}</span>
+        <span class="info-label">提交时间</span>
+        <span class="info-value">{{ profile.latestShopClaimApplication.createTime }}</span>
+        <template v-if="profile.latestShopClaimApplication.message">
+          <span class="info-label">说明</span>
+          <span class="info-value">{{ profile.latestShopClaimApplication.message }}</span>
+        </template>
+        <template v-if="profile.latestShopClaimApplication.reviewRemark">
+          <span class="info-label">审核备注</span>
+          <span class="info-value">{{ profile.latestShopClaimApplication.reviewRemark }}</span>
+        </template>
+      </div>
+      <div class="image-section" v-if="splitImages(profile.latestShopClaimApplication.proofImages).length">
+        <div class="image-label">证明图片</div>
+        <div class="image-row">
+          <button class="img-thumb" v-for="(item, index) in splitImages(profile.latestShopClaimApplication.proofImages)" :key="item + index" @click="previewImage(item)">
+            <img :src="resolveImage(item)" alt="">
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shop Create Application -->
+  <div class="app-card" v-if="profile && profile.latestShopCreateApplication">
+    <div class="app-card-header">
+      <div class="app-card-title"><i class="el-icon-office-building create"></i> 新建店铺</div>
+      <span class="app-status-pill" :class="{passed: profile.latestShopCreateApplication.statusText === '已通过', pending: profile.latestShopCreateApplication.statusText === '审核中', rejected: profile.latestShopCreateApplication.statusText === '已拒绝'}">
+        {{ profile.latestShopCreateApplication.statusText }}
+      </span>
+    </div>
+    <div class="app-card-body">
+      <div class="info-grid">
+        <span class="info-label">店铺</span>
+        <span class="info-value">{{ profile.latestShopCreateApplication.shopName }}</span>
+        <span class="info-label">类型</span>
+        <span class="info-value">{{ profile.latestShopCreateApplication.typeName || profile.latestShopCreateApplication.typeId }}</span>
+        <span class="info-label">地址</span>
+        <span class="info-value">{{ profile.latestShopCreateApplication.address }}</span>
+        <span class="info-label">提交时间</span>
+        <span class="info-value">{{ profile.latestShopCreateApplication.createTime }}</span>
+        <template v-if="profile.latestShopCreateApplication.reviewRemark">
+          <span class="info-label">审核备注</span>
+          <span class="info-value">{{ profile.latestShopCreateApplication.reviewRemark }}</span>
+        </template>
+      </div>
+      <div class="image-section" v-if="splitImages(profile.latestShopCreateApplication.images).length">
+        <div class="image-label">门店图片</div>
+        <div class="image-row">
+          <button class="img-thumb" v-for="(item, index) in splitImages(profile.latestShopCreateApplication.images)" :key="item + index" @click="previewImage(item)">
+            <img :src="resolveImage(item)" alt="">
+          </button>
+        </div>
+      </div>
+      <div class="image-section" v-if="splitImages(profile.latestShopCreateApplication.proofImages).length">
+        <div class="image-label">证明图片</div>
+        <div class="image-row">
+          <button class="img-thumb" v-for="(item, index) in splitImages(profile.latestShopCreateApplication.proofImages)" :key="item + index" @click="previewImage(item)">
+            <img :src="resolveImage(item)" alt="">
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </template>
+
+  <el-dialog :visible.sync="imagePreviewVisible" width="92%" append-to-body>
+    <img class="image-preview" :src="imagePreviewUrl" alt="图片预览">
+  </el-dialog>
+</div>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/merchant-progress-page.js"></script>
+</body>
+</html>

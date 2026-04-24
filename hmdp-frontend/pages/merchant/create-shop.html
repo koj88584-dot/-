@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>新建店铺申请</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link href="/css/main.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0; background: #FDFBF9;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      color: #3A3432; -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { display: none; }
+    .page { max-width: 390px; margin: 0 auto; padding: 0 0 40px; }
+    .header {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: rgba(253,251,249,0.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+    .header, .panel, .card {
+      border-radius: 0;
+    }
+    .panel, .card {
+      background: #fff; border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(255,122,69,0.06);
+      margin: 12px 12px 0; padding: 18px;
+    }
+    .back {
+      width: 36px; height: 36px; border: none; border-radius: 50%;
+      background: rgba(255,122,69,0.10); color: #FF7A45; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .title { flex: 1; font-size: 17px; font-weight: 700; }
+    .meta { color: #8A817C; line-height: 1.8; font-size: 13px; }
+    .tips { color: #8A817C; line-height: 1.8; margin-bottom: 16px; font-size: 13px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .shop-card {
+      padding: 14px; border: 1px solid #F0ECE8; border-radius: 14px;
+      margin-top: 10px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .shop-card:active { transform: scale(0.98); }
+    .shop-card.active {
+      border-color: #FF7A45;
+      background: linear-gradient(180deg, #FFF8F4 0%, #FFF 100%);
+      box-shadow: 0 6px 16px rgba(255,122,69,0.10);
+    }
+    .image-section { margin-top: 10px; }
+    .image-title { color: #3A3432; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .image-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; margin-top: 8px; }
+    .image-thumb {
+      width: 100%; aspect-ratio: 1/1; border: 0; padding: 0;
+      border-radius: 12px; overflow: hidden; background: #F9F6F0; cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+    }
+    .image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .image-preview { width: 100%; max-height: 72vh; object-fit: contain; border-radius: 16px; background: #0f172a; }
+    .upload-card {
+      border: 1px dashed #E8E2D9; border-radius: 16px; padding: 14px;
+      background: linear-gradient(180deg, #FDFBF9 0%, #FFF 100%);
+    }
+    .upload-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .upload-hint { color: #B5AFA6; font-size: 12px; }
+    .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
+    .image-item { position: relative; border-radius: 12px; overflow: hidden; background: #F9F6F0; aspect-ratio: 1/1; }
+    .image-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .image-remove {
+      position: absolute; right: 5px; top: 5px; width: 22px; height: 22px;
+      border: none; border-radius: 50%;
+      background: rgba(58,52,50,0.6); color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 10px;
+    }
+    .coord-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .coord-help { margin-top: 6px; color: #B5AFA6; font-size: 11px; line-height: 1.6; }
+    .coord-input .el-input__inner { padding-left: 12px; padding-right: 12px; }
+    .el-form-item__label { font-size: 13px; font-weight: 600; color: #3A3432; }
+    .el-input__inner, .el-textarea__inner { border-radius: 12px; }
+    @media (max-width: 520px) {
+      .coord-row { grid-template-columns: 1fr; gap: 8px; }
+      .upload-actions { align-items: flex-start; }
+      .upload-actions .el-button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div id="app" class="page">
+  <div class="header">
+    <button class="back" @click="goBack"><i class="el-icon-arrow-left"></i></button>
+    <div class="title">新建店铺申请</div>
+  </div>
+  <div class="panel">
+    <div class="tips">填写基础店铺资料和证明图片。管理员审核通过后，系统会自动创建门店并把管理权限绑定到你的账号。</div>
+    <el-form :model="form" label-width="92px">
+      <el-form-item label="店铺名称">
+        <el-input v-model.trim="form.shopName"></el-input>
+      </el-form-item>
+      <el-form-item label="店铺类型">
+        <el-select v-model="form.typeId" placeholder="请选择店铺类型" style="width:100%;">
+          <el-option v-for="type in types" :key="type.id" :label="type.name" :value="type.id"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="店铺地址">
+        <el-input v-model.trim="form.address"></el-input>
+      </el-form-item>
+      <el-form-item label="经纬度">
+        <div class="coord-row">
+          <el-input class="coord-input" v-model.trim="form.x" inputmode="decimal" placeholder="经度，例如 112.938814"></el-input>
+          <el-input class="coord-input" v-model.trim="form.y" inputmode="decimal" placeholder="纬度，例如 28.228209"></el-input>
+        </div>
+        <div class="coord-help">可以填写地图里复制的坐标，小数点会被保留，例如：经度 112.938814，纬度 28.228209。</div>
+      </el-form-item>
+      <el-form-item label="联系电话">
+        <el-input v-model.trim="form.contactPhone"></el-input>
+      </el-form-item>
+      <el-form-item label="门店图片">
+        <div class="upload-card">
+          <input ref="shopImagesInput" type="file" accept="image/*" multiple style="display:none" @change="handleShopImagesChange">
+          <div class="upload-actions">
+            <el-button type="primary" plain icon="el-icon-picture-outline" @click="triggerShopImagesPicker">从手机相册选择</el-button>
+            <div class="upload-hint">门头、环境图都可以上传，最多 6 张，单张不超过 5MB</div>
+          </div>
+          <div v-if="shopImageList.length" class="image-grid">
+            <div v-for="(item, index) in shopImageList" :key="item + index" class="image-item">
+              <img :src="resolveImage(item)" alt="门店图片">
+              <button class="image-remove" type="button" @click="removeShopImage(index)">
+                <i class="el-icon-close"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </el-form-item>
+      <el-form-item label="证明图片">
+        <div class="upload-card">
+          <input ref="proofInput" type="file" accept="image/*" multiple style="display:none" @change="handleProofChange">
+          <div class="upload-actions">
+            <el-button type="primary" plain icon="el-icon-picture-outline" @click="triggerProofPicker">从手机相册选择</el-button>
+            <div class="upload-hint">营业执照、门头照等证明图，最多 3 张，单张不超过 5MB</div>
+          </div>
+          <div v-if="proofImageList.length" class="image-grid">
+            <div v-for="(item, index) in proofImageList" :key="item + index" class="image-item">
+              <img :src="resolveImage(item)" alt="证明图片">
+              <button class="image-remove" type="button" @click="removeProofImage(index)">
+                <i class="el-icon-close"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" :loading="loading" @click="submit">提交申请</el-button>
+        <el-button @click="goProgress">查看进度</el-button>
+      </el-form-item>
+    </el-form>
+  </div>
+</div>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/merchant-create-shop-page.js"></script>
+</body>
+</html>

@@ -1,5 +1,46 @@
 (function (window) {
-  const BACKEND_BASE_URL = "http://localhost:8081";
+  function isLocalDevHost(hostname) {
+    if (!hostname) {
+      return false;
+    }
+    return hostname === "localhost"
+      || hostname === "127.0.0.1"
+      || hostname === "0.0.0.0"
+      || /^10\./.test(hostname)
+      || /^192\.168\./.test(hostname)
+      || /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+  }
+
+  function shouldUseLocalBackend(locationInfo) {
+    if (!locationInfo) {
+      return false;
+    }
+    const hostname = locationInfo.hostname || "";
+    const port = locationInfo.port || "";
+    if (!isLocalDevHost(hostname)) {
+      return false;
+    }
+    return ["3000", "3001", "5173", "5500", "5501", "8080"].indexOf(port) > -1;
+  }
+
+  function resolveBackendBaseUrl() {
+    if (window.util && typeof window.util.commonURL === "string" && window.util.commonURL) {
+      return window.util.commonURL.replace(/\/+$/, "");
+    }
+    const explicitBase = window.__HMDP_API_BASE__;
+    if (typeof explicitBase === "string" && explicitBase.trim()) {
+      return explicitBase.trim().replace(/\/+$/, "");
+    }
+    if (window.location && window.location.origin && window.location.origin !== "null") {
+      if (shouldUseLocalBackend(window.location)) {
+        return (window.location.protocol || "http:") + "//" + window.location.hostname + ":8081";
+      }
+      return window.location.origin.replace(/\/+$/, "");
+    }
+    return "http://localhost:8081";
+  }
+
+  const BACKEND_BASE_URL = resolveBackendBaseUrl();
   const DEFAULT_HOME = "/pages/index-new.html";
 
   function getToken() {

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -265,6 +265,71 @@
       color: var(--assistant-muted);
       font-size: 11px;
     }
+    .auto-hint {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: rgba(255, 122, 69, 0.1);
+      color: #b54708;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .opening-toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(108px, calc(env(safe-area-inset-bottom, 0px) + 88px));
+      transform: translateX(-50%);
+      width: min(420px, calc(100% - 28px));
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: rgba(20, 33, 61, 0.92);
+      color: #fff;
+      box-shadow: 0 22px 38px rgba(20, 33, 61, 0.2);
+      backdrop-filter: blur(16px);
+      z-index: 40;
+    }
+    .opening-toast-title {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.68);
+    }
+    .opening-toast-label {
+      margin-top: 6px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .opening-toast-desc {
+      margin-top: 4px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.76);
+      line-height: 1.5;
+    }
+    .opening-toast-progress {
+      position: relative;
+      height: 4px;
+      margin-top: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .opening-toast-progress::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform-origin: left center;
+      background: linear-gradient(90deg, #ff9b5f 0%, #ffd48f 100%);
+      animation: openingProgress 1s linear forwards;
+    }
+    .opening-toast-enter-active,
+    .opening-toast-leave-active {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .opening-toast-enter,
+    .opening-toast-leave-to {
+      opacity: 0;
+      transform: translateX(-50%) translateY(8px);
+    }
     .typing-dots {
       display: inline-flex;
       gap: 6px;
@@ -282,6 +347,10 @@
     @keyframes typing {
       0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
       40% { transform: translateY(-4px); opacity: 1; }
+    }
+    @keyframes openingProgress {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
     }
     .composer {
       position: fixed;
@@ -362,16 +431,12 @@
         border-radius: 22px;
       }
       .message-bubble { max-width: 100%; }
-      .composer {
-        width: calc(100% - 16px);
-      }
+      .composer { width: calc(100% - 16px); }
       .composer-inner {
         padding: 10px;
         gap: 10px;
       }
-      .composer textarea {
-        min-height: 76px;
-      }
+      .composer textarea { min-height: 76px; }
       .send-btn { min-width: 88px; }
     }
     @media (max-width: 560px) {
@@ -385,9 +450,7 @@
         margin-bottom: 360px;
         padding-bottom: 240px;
       }
-      .composer {
-        bottom: max(20px, env(safe-area-inset-bottom, 0px));
-      }
+      .composer { bottom: max(20px, env(safe-area-inset-bottom, 0px)); }
       .composer-inner {
         flex-direction: column;
         align-items: stretch;
@@ -405,7 +468,7 @@
       </button>
       <div class="header-copy">
         <div class="header-title">智能助手</div>
-        <div class="header-subtitle">{{ sceneLabel }} · 直接告诉我你想完成什么操作。</div>
+        <div class="header-subtitle">{{ sceneLabel }} · 直接告诉我你接下来想做什么</div>
       </div>
       <div class="header-tools">
         <span class="status-pill" :class="statusClass">{{ statusText }}</span>
@@ -419,8 +482,8 @@
         DeepSeek 智能助手
       </div>
       <div class="hero-desc">
-        你可以问我店铺、优惠券、订单、收藏、笔记和消息相关的问题。如果后端已经配置 DeepSeek Key，我会直接调用模型回答；
-        如果还没配置，我也会先用本地兜底能力帮你完成页面跳转和功能指引。
+        你可以直接告诉我想找什么店、想看哪个订单、想领优惠券，或者想发一篇什么样的探店笔记。
+        我会先给你一句简短回复，再自动把你带到对应页面并尽量帮你把动作先执行到位。
       </div>
       <div class="suggestion-list">
         <button class="suggestion-chip" v-for="prompt in quickPrompts" :key="prompt" @click="usePrompt(prompt)">
@@ -430,7 +493,7 @@
     </section>
 
     <section class="chat-shell">
-      <div class="message-row" :class="item.role" v-for="(item, index) in messages" :key="index + '-' + item.role">
+      <div class="message-row" :class="item.role" v-for="(item, index) in messages" :key="index + '-' + item.role + '-' + item.createdAt">
         <div class="message-avatar">
           <i :class="item.role === 'assistant' ? 'el-icon-magic-stick' : 'el-icon-user'"></i>
         </div>
@@ -441,11 +504,12 @@
           </div>
           <div class="message-bubble" v-html="formatMessage(item.content)"></div>
           <div class="message-actions" v-if="item.role === 'assistant' && item.actions && item.actions.length">
-            <button class="action-btn" v-for="action in item.actions" :key="action.path + action.label" @click="handleAction(action)">
+            <button class="action-btn" v-for="action in item.actions" :key="(action.path || '') + (action.label || '')" @click="handleAction(action)">
               <span>{{ action.label }}</span>
               <small>{{ action.description }}</small>
             </button>
           </div>
+          <div class="auto-hint" v-if="item.role === 'assistant' && item.executingHint">{{ item.executingHint }}</div>
         </div>
       </div>
 
@@ -470,6 +534,15 @@
     </section>
   </div>
 
+  <transition name="opening-toast">
+    <div class="opening-toast" v-if="openingState.visible">
+      <div class="opening-toast-title">正在为你打开...</div>
+      <div class="opening-toast-label">{{ openingState.label }}</div>
+      <div class="opening-toast-desc">{{ openingState.description }}</div>
+      <div class="opening-toast-progress"></div>
+    </div>
+  </transition>
+
   <div class="composer">
     <div class="composer-inner">
       <textarea
@@ -487,312 +560,7 @@
 <script src="/js/axios.min.js"></script>
 <script src="/js/element.js"></script>
 <script src="/js/common.js"></script>
-<script>
-  const STORAGE_KEY = 'hmdp_assistant_history';
-
-  new Vue({
-    el: '#app',
-    data: {
-      scene: util.getUrlParam('scene') || '智能助手',
-      draft: util.getUrlParam('prompt') || '',
-      loading: false,
-      assistantConfigured: null,
-      autoPromptSent: false,
-      quickPrompts: [
-        '帮我找附近评分高的火锅',
-        '优惠券怎么领更划算',
-        '我的订单在哪里查看',
-        '我想发布一篇探店笔记',
-        '消息中心都能做什么',
-        '推荐一家适合约会的餐厅'
-      ],
-      messages: []
-    },
-    computed: {
-      sceneLabel() {
-        return this.scene || '智能助手';
-      },
-      statusText() {
-        if (this.assistantConfigured === true) return 'DeepSeek 已连接';
-        if (this.assistantConfigured === false) return '本地兜底模式';
-        return '连接中';
-      },
-      statusClass() {
-        if (this.assistantConfigured === true) return 'connected';
-        if (this.assistantConfigured === false) return 'fallback';
-        return 'idle';
-      }
-    },
-    mounted() {
-      this.restoreConversation();
-      this.$nextTick(() => {
-        this.scrollToBottom();
-        if (this.draft.trim() && !this.autoPromptSent) {
-          this.autoPromptSent = true;
-          this.submitMessage();
-        }
-      });
-    },
-    methods: {
-      goBack() {
-        history.back();
-      },
-      buildWelcomeMessage() {
-        return {
-          role: 'assistant',
-          content: '你好，我可以帮你找店、领券、查看订单、发布笔记、进入消息中心，也可以告诉你下一步该怎么操作。',
-          actions: [
-            { label: '查看优惠券', description: '打开可领取优惠券和秒杀券页面', path: '/pages/misc/vouchers.html' },
-            { label: '查看订单', description: '继续支付、取消或核销订单', path: '/pages/order/orders.html' },
-            { label: '发布笔记', description: '进入发布探店笔记页面', path: '/pages/blog/blog-edit.html' }
-          ],
-          createdAt: Date.now()
-        };
-      },
-      restoreConversation() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-          this.messages = [this.buildWelcomeMessage()];
-          return;
-        }
-        try {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length) {
-            this.messages = parsed;
-            const latestAssistant = parsed.slice().reverse().find((item) => item.role === 'assistant');
-            if (latestAssistant && typeof latestAssistant.configured === 'boolean') {
-              this.assistantConfigured = latestAssistant.configured;
-            }
-            return;
-          }
-        } catch (e) {
-          console.warn('restore assistant history failed', e);
-        }
-        this.messages = [this.buildWelcomeMessage()];
-      },
-      persistConversation() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.messages.slice(-24)));
-      },
-      clearConversation() {
-        this.$confirm('确定清空当前对话吗？', '提示', {
-          confirmButtonText: '清空',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          this.assistantConfigured = null;
-          this.messages = [this.buildWelcomeMessage()];
-          this.persistConversation();
-          this.$nextTick(this.scrollToBottom);
-        }).catch(() => {});
-      },
-      usePrompt(prompt) {
-        this.draft = prompt;
-        this.$nextTick(() => this.submitMessage());
-      },
-      submitMessage() {
-        const content = this.draft.trim();
-        if (!content || this.loading) return;
-
-        const history = this.messages
-          .filter((item) => item.role === 'assistant' || item.role === 'user')
-          .map((item) => ({ role: item.role, content: item.content }))
-          .slice(-10);
-
-        this.messages.push({
-          role: 'user',
-          content: content,
-          actions: [],
-          createdAt: Date.now()
-        });
-        this.draft = '';
-        this.loading = true;
-        this.persistConversation();
-        this.$nextTick(this.scrollToBottom);
-
-        const assistantMessage = {
-          role: 'assistant',
-          content: '',
-          actions: [],
-          configured: this.assistantConfigured,
-          createdAt: Date.now()
-        };
-        this.messages.push(assistantMessage);
-        this.persistConversation();
-        this.streamAssistantReply(content, history, assistantMessage);
-        return;
-
-        axios.post('/assistant/chat', {
-          message: content,
-          scene: this.sceneLabel,
-          history: history
-        }).then((res) => {
-          const payload = res.data || {};
-          this.assistantConfigured = payload.configured;
-          this.messages.push({
-            role: 'assistant',
-            content: payload.reply || '这次没有拿到完整回答，你可以换个说法再试一次。',
-            actions: Array.isArray(payload.actions) ? payload.actions : [],
-            configured: payload.configured,
-            createdAt: Date.now()
-          });
-          this.persistConversation();
-        }).catch((err) => {
-          const fallbackMessage = typeof err === 'string'
-            ? err
-            : '智能助手暂时不可用，我先给你常用入口，你也可以稍后再试。';
-          this.assistantConfigured = false;
-          this.messages.push({
-            role: 'assistant',
-            content: fallbackMessage,
-            actions: [
-              { label: '去搜索页', description: '搜索店铺、地点和笔记', path: '/pages/misc/search.html' },
-              { label: '查看优惠券', description: '看看当前能领哪些券', path: '/pages/misc/vouchers.html' }
-            ],
-            configured: false,
-            createdAt: Date.now()
-          });
-          this.persistConversation();
-          this.$message.error('智能助手暂时不可用，请稍后重试');
-        }).finally(() => {
-          this.loading = false;
-          this.$nextTick(this.scrollToBottom);
-        });
-      },
-      async streamAssistantReply(content, history, assistantMessage) {
-        try {
-          const response = await fetch('/assistant/chat/stream', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              message: content,
-              scene: this.sceneLabel,
-              history: history
-            })
-          });
-
-          if (!response.ok || !response.body) {
-            throw new Error('Stream not available');
-          }
-
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder('utf-8');
-          let buffer = '';
-          let eventName = '';
-
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop();
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed) {
-                eventName = '';
-                continue;
-              }
-              if (trimmed.startsWith('event:')) {
-                eventName = trimmed.slice(6).trim();
-                continue;
-              }
-              if (trimmed.startsWith('data:')) {
-                const data = trimmed.slice(5).trim();
-                this.handleStreamEvent(eventName || 'delta', data, assistantMessage);
-              }
-            }
-          }
-          this.loading = false;
-          this.persistConversation();
-          this.$nextTick(this.scrollToBottom);
-        } catch (err) {
-          await this.requestAssistantReplyFallback(content, history, assistantMessage, err);
-        } finally {
-          this.loading = false;
-        }
-      },
-      handleStreamEvent(eventName, data, assistantMessage) {
-        if (!assistantMessage) return;
-        if (eventName === 'meta') {
-          try {
-            const meta = JSON.parse(data);
-            this.assistantConfigured = meta.configured;
-            assistantMessage.actions = Array.isArray(meta.actions) ? meta.actions : [];
-            assistantMessage.configured = meta.configured;
-          } catch (e) {
-            // ignore
-          }
-          return;
-        }
-        if (eventName === 'done') {
-          this.loading = false;
-          this.persistConversation();
-          return;
-        }
-        if (this.loading) {
-          this.loading = false;
-        }
-        assistantMessage.content += data || '';
-        this.$nextTick(this.scrollToBottom);
-      },
-      async requestAssistantReplyFallback(content, history, assistantMessage, err) {
-        try {
-          const res = await axios.post('/assistant/chat', {
-            message: content,
-            scene: this.sceneLabel,
-            history: history
-          });
-          const payload = res.data || {};
-          this.assistantConfigured = payload.configured;
-          assistantMessage.content = payload.reply || '这次没有拿到完整回复，请稍后再试。';
-          assistantMessage.actions = Array.isArray(payload.actions) ? payload.actions : [];
-          assistantMessage.configured = payload.configured;
-          this.persistConversation();
-        } catch (err2) {
-          const fallbackMessage = typeof err2 === 'string'
-            ? err2
-            : '智能助手暂时不可用，请稍后再试。';
-          this.assistantConfigured = false;
-          assistantMessage.content = fallbackMessage;
-          assistantMessage.actions = [
-            { label: '去搜索页', description: '搜索店铺、地点和笔记', path: '/pages/misc/search.html' },
-            { label: '查看优惠券', description: '看看当前能领哪些券', path: '/pages/misc/vouchers.html' }
-          ];
-          assistantMessage.configured = false;
-          this.persistConversation();
-          this.$message.error('智能助手暂时不可用，请稍后重试');
-        }
-      },
-      handleAction(action) {
-        if (!action || !action.path) return;
-        location.href = action.path;
-      },
-      formatMessage(content) {
-        const value = this.escapeHtml(content || '');
-        return value.replace(/\n/g, '<br>');
-      },
-      escapeHtml(content) {
-        return String(content)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-      },
-      formatTime(time) {
-        if (!time) return '';
-        const date = new Date(time);
-        const hour = String(date.getHours()).padStart(2, '0');
-        const minute = String(date.getMinutes()).padStart(2, '0');
-        return hour + ':' + minute;
-      },
-      scrollToBottom() {
-        window.scrollTo({
-          top: document.documentElement.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
-    }
-  });
-</script>
+<script src="/js/assistant-page.js"></script>
 </body>
 </html>
+
