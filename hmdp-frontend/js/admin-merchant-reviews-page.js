@@ -8,6 +8,7 @@ new Vue({
       merchantApplications: [],
       claimApplications: [],
       createApplications: [],
+      shopUpdateApplications: [],
       currentUser: null,
       imagePreviewVisible: false,
       imagePreviewUrl: ''
@@ -56,11 +57,13 @@ new Vue({
       Promise.all([
         axios.get('/admin/merchant-applications', { params }),
         axios.get('/admin/shop-claim-applications', { params }),
-        axios.get('/admin/shop-create-applications', { params })
-      ]).then(([merchantRes, claimRes, createRes]) => {
+        axios.get('/admin/shop-create-applications', { params }),
+        axios.get('/admin/shop-update-applications', { params })
+      ]).then(([merchantRes, claimRes, createRes, shopUpdateRes]) => {
         this.merchantApplications = Array.isArray(merchantRes.data) ? merchantRes.data : [];
         this.claimApplications = Array.isArray(claimRes.data) ? claimRes.data : [];
         this.createApplications = Array.isArray(createRes.data) ? createRes.data : [];
+        this.shopUpdateApplications = Array.isArray(shopUpdateRes.data) ? shopUpdateRes.data : [];
       }).catch((err) => {
         this.$message.error(util.getErrorMessage(err, '加载审核列表失败'));
       }).finally(() => {
@@ -80,9 +83,13 @@ new Vue({
         cancelButtonText: '取消',
         inputPlaceholder: '例如：资料齐全，允许通过'
       }).then(({ value }) => {
-        const base = kind === 'merchant'
-          ? '/admin/merchant-applications/'
-          : (kind === 'claim' ? '/admin/shop-claim-applications/' : '/admin/shop-create-applications/');
+        const baseMap = {
+          merchant: '/admin/merchant-applications/',
+          claim: '/admin/shop-claim-applications/',
+          create: '/admin/shop-create-applications/',
+          shopUpdate: '/admin/shop-update-applications/'
+        };
+        const base = baseMap[kind] || baseMap.merchant;
         axios.post(base + id + '/' + action, { reviewRemark: value || '' }).then(() => {
           this.$message.success(action === 'approve' ? '审核已通过' : '申请已驳回');
           this.reload();
@@ -90,6 +97,28 @@ new Vue({
           this.$message.error(util.getErrorMessage(err, '审核失败'));
         });
       }).catch(() => {});
+    },
+    formatChangePayload(payload) {
+      if (!payload) return [];
+      try {
+        const obj = typeof payload === 'string' ? JSON.parse(payload) : payload;
+        const labels = {
+          name: '店名',
+          typeId: '类型',
+          area: '商圈',
+          address: '地址',
+          x: '经度',
+          y: '纬度',
+          images: '门店图片'
+        };
+        return Object.keys(obj || {}).map(key => ({
+          key,
+          label: labels[key] || key,
+          value: obj[key]
+        }));
+      } catch (e) {
+        return [{ key: 'raw', label: '变更内容', value: payload }];
+      }
     }
   }
 });

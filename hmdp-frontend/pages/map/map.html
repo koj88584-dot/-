@@ -76,6 +76,57 @@
       .route-sheet{padding:10px}
     }
   </style>
+  <style>
+    .top-card{
+      top:10px;
+      padding:12px;
+      border-radius:26px;
+      box-shadow:0 14px 34px rgba(255,107,53,.10),0 4px 14px rgba(15,23,42,.06);
+    }
+    .search-row{gap:8px}
+    .back-btn{width:42px;height:42px;min-width:42px;min-height:42px;border-radius:15px}
+    .search-input .el-input__inner{height:44px;line-height:44px;border-radius:18px;background:#fff}
+    .search-btn{height:44px;border-radius:18px;padding:0 16px}
+    .map-filters{
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      padding-bottom:2px;
+      scrollbar-width:none;
+    }
+    .map-filters::-webkit-scrollbar{display:none}
+    .filter-select{flex:0 0 112px}
+    .mini-action{flex:0 0 auto;border-radius:16px;background:#fff}
+    .city-map-strip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:10px;
+      padding:10px;
+      border-radius:18px;
+      background:linear-gradient(135deg,#fff8f3 0%,#fff 100%);
+      border:1px solid rgba(255,107,53,.12);
+      overflow:hidden;
+    }
+    .city-map-title{
+      flex:0 0 auto;
+      margin:0;
+      max-width:122px;
+      font-size:12px;
+      line-height:1.35;
+    }
+    .city-map-chips{flex:1;min-width:0}
+    .city-map-chip{
+      border-radius:999px;
+      padding:8px 12px;
+      background:#fff1e8;
+      border:0;
+    }
+    .result-toolbar{padding:4px 0 12px}
+    .section-card{border-radius:26px}
+    .result-card{border-radius:22px;box-shadow:0 12px 28px rgba(15,23,42,.05)}
+    .map-stage{border-radius:26px}
+    .route-card{border-radius:24px}
+  </style>
 </head>
 <body>
 <div id="app" class="map-page">

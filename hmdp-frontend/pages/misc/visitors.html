@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>访客记录</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/visitors.css">
+</head>
+<body>
+<div id="app" class="visitor-page" v-cloak>
+  <header class="visitor-header">
+    <button @click="goBack"><i class="el-icon-arrow-left"></i></button>
+    <div>
+      <strong>谁看过我</strong>
+      <span>{{ unreadCount > 0 ? unreadCount + ' 位新访客' : '最近访问你主页的人' }}</span>
+    </div>
+    <button @click="loadVisitors(true)"><i class="el-icon-refresh"></i></button>
+  </header>
+
+  <section class="visitor-hero">
+    <p>访客雷达</p>
+    <h1>主页被谁轻轻敲过门？</h1>
+    <span>开启隐私设置里的“隐身访问”后，你访问别人主页不会出现在这里。</span>
+  </section>
+
+  <main class="visitor-list" v-loading="loading">
+    <section class="visitor-empty" v-if="!loading && visitors.length === 0">
+      <div><i class="el-icon-view"></i></div>
+      <h3>暂时没有访客</h3>
+      <p>等有人访问你的主页，这里会冒出第一颗小信号。</p>
+    </section>
+
+    <article class="visitor-card" v-for="item in visitors" :key="item.id" @click="openProfile(item.visitorId)">
+      <img :src="avatarUrl(item.visitorIcon)" alt="" @error="handleAvatarError">
+      <div class="visitor-main">
+        <div class="visitor-row">
+          <strong>{{ item.visitorName || '用户' }}</strong>
+          <em v-if="item.isRead === 0">新访客</em>
+        </div>
+        <p>{{ formatTime(item.visitTime) }} 看过你的主页</p>
+      </div>
+      <i class="el-icon-arrow-right"></i>
+    </article>
+
+    <div v-if="hasMore" class="visitor-more">
+      <el-button type="text" :loading="loadingMore" @click="loadMore">加载更多</el-button>
+    </div>
+  </main>
+</div>
+
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/visitors-page.js"></script>
+</body>
+</html>

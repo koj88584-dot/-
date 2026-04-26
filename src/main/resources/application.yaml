@@ -38,3 +38,23 @@ deepseek:
   api-key: ${DEEPSEEK_API_KEY:sk-92e4ae3b0d44a6dd57de0da311b42214dd42af96036c65a824d89cf07b67094d}
   base-url: ${DEEPSEEK_BASE_URL:https://fufu.iqach.top/v1}
   model: ${DEEPSEEK_MODEL:mimo-v2.5-pro}
+hot-news:
+  enabled: ${HOT_NEWS_ENABLED:true}
+  alapi:
+    enabled: ${HOT_NEWS_ALAPI_ENABLED:true}
+    token: ${HOT_NEWS_ALAPI_TOKEN:}
+    base-url: ${HOT_NEWS_ALAPI_BASE_URL:https://v3.alapi.cn}
+    weibo-path: ${HOT_NEWS_ALAPI_WEIBO_PATH:/api/new/wbtop}
+    toutiao-path: ${HOT_NEWS_ALAPI_TOUTIAO_PATH:/api/new/toutiao}
+    zaobao-path: ${HOT_NEWS_ALAPI_ZAOBAO_PATH:/api/zaobao}
+    tophub-path: ${HOT_NEWS_ALAPI_TOPHUB_PATH:/api/tophub}
+    tophub-site-path: ${HOT_NEWS_ALAPI_TOPHUB_SITE_PATH:/api/tophub/site}
+    site-cache-hours: ${HOT_NEWS_ALAPI_SITE_CACHE_HOURS:24}
+    default-site-ids: ${HOT_NEWS_ALAPI_DEFAULT_SITE_IDS:BaXJOg,vaDrOK,gMJkaY,GMbZMo,yanZaZ,BOoYax}
+  ttl-minutes: ${HOT_NEWS_TTL_MINUTES:30}
+  stale-hours: ${HOT_NEWS_STALE_HOURS:72}
+  asset-cache-hours: ${HOT_NEWS_ASSET_CACHE_HOURS:12}
+  max-items: ${HOT_NEWS_MAX_ITEMS:20}
+  google-news-rss-url: ${HOT_NEWS_GOOGLE_NEWS_RSS_URL:https://news.google.com/rss/search}
+  max-age-days: ${HOT_NEWS_MAX_AGE_DAYS:14}
+  allowed-hosts: ${HOT_NEWS_ALLOWED_HOSTS:news.google.com,bing.com,www.bing.com}

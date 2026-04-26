@@ -25,6 +25,7 @@ const NEARBY_CACHE_KEY = 'hmdp_nearby_shops_cache';
         cityOverviews: [],
         hotCityProfiles: [],
         cityScenes: [],
+        homeTab: 'city',
         cityBrandClaim: '懂这座城，才知道今天去哪',
         searchKeyword: '',
         isSearchFocused: false,
@@ -60,6 +61,13 @@ const NEARBY_CACHE_KEY = 'hmdp_nearby_shops_cache';
       computed: {
         cityEditionEnabled() {
           return util.isCityEditionEnabled(this.cityProfile, this.cityOverviews);
+        },
+        homeTabItems() {
+          return [
+            { key: 'follow', label: '关注' },
+            { key: 'city', label: this.currentCity && this.currentCity !== '定位中...' ? this.currentCity : '定位中' },
+            { key: 'hot', label: '热点' }
+          ];
         },
         currentCityCode() {
           return (this.currentLocation && this.currentLocation.cityCode)
@@ -150,6 +158,29 @@ const NEARBY_CACHE_KEY = 'hmdp_nearby_shops_cache';
           return this.cityEditionEnabled
             ? (this.cityPrimaryCategories.join(' · ') || '城市品类')
             : '按原分类查找附近好店';
+        },
+        displayNotes() {
+          return this.notes;
+        },
+        noteSectionTitle() {
+          return '推荐笔记';
+        },
+        cityHotEvents() {
+          const shops = (this.nearbyShops || []).slice(0, 3).map((shop, index) => ({
+            title: (shop.area || this.currentCity) + ' · ' + (shop.name || '热门店铺'),
+            subtitle: (shop.score ? (Number(shop.score) / 10).toFixed(1) + '星 · ' : '') + (shop.distanceText || '本城热度上升'),
+            image: shop.image,
+            keyword: shop.name || shop.area || this.currentCity,
+            rank: index + 1
+          }));
+          const searches = (this.cityHotSearches || []).map((keyword, index) => ({
+            title: keyword,
+            subtitle: this.currentCity + '正在被更多人搜索',
+            image: this.noteFallbackImage,
+            keyword,
+            rank: shops.length + index + 1
+          }));
+          return shops.concat(searches).slice(0, 6);
         }
       },
       mounted() {
@@ -167,6 +198,32 @@ const NEARBY_CACHE_KEY = 'hmdp_nearby_shops_cache';
       },
 
       methods: {
+        switchHomeTab(tab) {
+          if (tab === 'follow') {
+            window.location.href = util.buildUrl('misc/follow-feed.html', {
+              cityCode: this.currentCityCode,
+              city: this.currentCity
+            });
+            return;
+          }
+          if (tab === 'hot') {
+            window.location.href = util.buildUrl('misc/city-hot.html', {
+              cityCode: this.currentCityCode,
+              city: this.currentCity
+            });
+            return;
+          }
+          this.homeTab = 'city';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+        scanCode() {
+          const bridge = window.HmdpNative || window.HMDPNative || window.Android;
+          if (bridge && typeof bridge.scanQRCode === 'function') {
+            bridge.scanQRCode();
+            return;
+          }
+          this.$message.info('当前 Web 环境未接入扫码，App 原生层接入后会直接打开相机');
+        },
         async loadCityConfig() {
           const payload = await util.fetchCityList();
           this.cityOverviews = payload.cities || [];

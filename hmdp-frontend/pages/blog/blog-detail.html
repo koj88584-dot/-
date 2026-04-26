@@ -14,7 +14,28 @@
     <button class="blog-header__action" @click="goBack">
       <i class="el-icon-arrow-left"></i>
     </button>
-    <div class="blog-header__title">笔记详情</div>
+    <div class="blog-header__author" :class="{ 'is-placeholder': !blog.id }" @click="blog.id && openProfile()">
+      <img
+        v-if="blog.id"
+        class="blog-header__avatar"
+        :src="resolveImageUrl(blog.icon, 'avatar')"
+        alt=""
+        @error="handleImageError($event, 'avatar')"
+      >
+      <span v-else class="blog-header__avatar blog-header__avatar--empty"></span>
+      <div class="blog-header__copy">
+        <strong>{{ blog.name || '笔记详情' }}</strong>
+        <span>{{ storyAddress || formatDate(blog.createTime) }}</span>
+      </div>
+    </div>
+    <button
+      v-if="canFollowAuthor"
+      class="blog-header__follow"
+      :class="{ 'is-active': followed }"
+      @click.stop="toggleFollow"
+    >
+      {{ followed ? '已关注' : '关注' }}
+    </button>
     <button class="blog-header__action" @click="shareBlog">
       <i class="el-icon-share"></i>
     </button>
@@ -51,26 +72,16 @@
       <div v-else class="story-hero__empty">这篇笔记还没有图片</div>
 
       <div class="story-body">
-        <div class="story-author">
-          <div class="story-author__meta" @click="openProfile">
-            <img class="story-author__avatar" :src="resolveImageUrl(blog.icon, 'avatar')" alt="" @error="handleImageError($event, 'avatar')">
-            <div>
-              <div class="story-author__name">{{ blog.name || '匿名用户' }}</div>
-              <div class="story-author__time">{{ formatDate(blog.createTime) }}</div>
-            </div>
-          </div>
-          <button
-            v-if="canFollowAuthor"
-            class="story-author__follow"
-            :class="{ 'is-active': followed }"
-            @click="toggleFollow"
-          >
-            {{ followed ? '已关注' : '关注作者' }}
-          </button>
-        </div>
-
+        <button class="story-location-pill" v-if="storyAddress" @click="openShop">
+          <i class="el-icon-location"></i>
+          {{ storyAddress }}
+        </button>
         <h1 class="story-title">{{ blog.title || '未命名笔记' }}</h1>
         <div class="story-content" v-html="blog.content || '暂无内容'"></div>
+        <div class="story-meta-line">
+          <span><i class="el-icon-edit-outline"></i> 发布于 {{ formatDate(blog.createTime) }}</span>
+          <span v-if="storyAddress"><i class="el-icon-location-outline"></i> {{ storyAddress }}</span>
+        </div>
 
         <div class="story-stats">
           <div class="story-stat">
@@ -104,32 +115,6 @@
       <button class="story-shop__cta">查看店铺</button>
     </section>
 
-    <section class="story-likes">
-      <div class="section-head">
-        <div>
-          <div class="section-title">点赞的朋友</div>
-          <div class="section-subtitle">最近喜欢这篇笔记的用户</div>
-        </div>
-        <div class="section-subtitle">{{ formatCount(blog.liked) }} 人点赞</div>
-      </div>
-
-      <div class="likes-row" v-if="likes.length">
-        <div class="likes-avatars">
-          <img
-            v-for="user in likes.slice(0, 8)"
-            :key="user.id"
-            class="likes-avatar"
-            :src="resolveImageUrl(user.icon, 'avatar')"
-            :alt="user.nickName || user.name || '用户头像'"
-            @error="handleImageError($event, 'avatar')"
-          >
-        </div>
-        <div class="section-subtitle">{{ likesLabel }}</div>
-      </div>
-
-      <div class="likes-empty" v-else>还没有人抢先点赞，试试点个赞把这篇笔记顶起来。</div>
-    </section>
-
     <section class="story-comments">
       <div class="section-head">
         <div>
@@ -138,18 +123,43 @@
         </div>
         <div class="section-subtitle">{{ formatCount(commentTotal) }} 条评论</div>
       </div>
+      <div class="comment-inline-composer" @click="focusCommentInput">
+        <img class="comment-inline-composer__avatar" :src="currentUserAvatar" alt="" @error="handleImageError($event, 'avatar')">
+        <div class="comment-inline-composer__field">真实发声，言之有物</div>
+        <button @click.stop="mentionAuthor">@</button>
+        <button @click.stop="openCommentImageDialog"><i class="el-icon-picture-outline"></i></button>
+      </div>
 
       <div class="comment-list" v-if="comments.length">
         <article class="comment-card" v-for="comment in comments" :key="comment.id">
           <div class="comment-card__top">
-            <img class="comment-card__avatar" :src="resolveImageUrl(comment.userIcon, 'avatar')" alt="" @error="handleImageError($event, 'avatar')">
+            <img
+              class="comment-card__avatar"
+              :src="resolveImageUrl(comment.userIcon, 'avatar')"
+              alt=""
+              title="查看主页"
+              @click.stop="openUserProfile(comment.userId)"
+              @error="handleImageError($event, 'avatar')"
+            >
             <div class="comment-card__main">
               <div class="comment-card__user">
                 <span class="comment-card__name">{{ comment.userName || '匿名用户' }}</span>
                 <span class="comment-card__badge" v-if="comment.owner">我的评论</span>
               </div>
               <div class="comment-card__time">{{ formatRelativeTime(comment.createTime) }}</div>
-              <div class="comment-card__content">{{ comment.content }}</div>
+              <div class="comment-card__content">
+                <template v-for="(segment, idx) in comment.segments">
+                  <span v-if="segment.type === 'text'" :key="'text-' + idx">{{ segment.text }}</span>
+                  <img
+                    v-else
+                    :key="'image-' + idx"
+                    class="comment-card__image"
+                    :src="segment.src"
+                    alt="评论图片"
+                    @error="handleImageError($event, 'hero')"
+                  >
+                </template>
+              </div>
               <div class="comment-card__actions">
                 <button
                   class="comment-action"
@@ -186,23 +196,45 @@
           <div class="comment-replies" v-if="comment.showReplies">
             <div class="section-subtitle" v-if="comment.repliesLoading">正在加载回复...</div>
             <div class="comment-reply" v-for="reply in comment.replies" :key="reply.id">
-              <div class="comment-reply__user">
-                {{ reply.userName || '匿名用户' }}
-                <span v-if="reply.owner" class="comment-card__badge">我</span>
-              </div>
-              <div class="comment-reply__meta">{{ formatRelativeTime(reply.createTime) }}</div>
-              <div class="comment-reply__content">{{ reply.content }}</div>
-              <div class="comment-card__actions">
-                <button
-                  class="comment-action"
-                  :class="{ 'is-accent': reply.likedByCurrentUser }"
-                  @click="toggleReplyLike(comment, reply)"
-                >
-                  <i class="el-icon-star-on"></i>
-                  {{ reply.liked || 0 }}
-                </button>
-                <button class="comment-action" @click="replyTo(comment)">回复</button>
-                <button class="comment-action" v-if="reply.owner" @click="deleteReply(comment, reply)">删除</button>
+              <img
+                class="comment-reply__avatar"
+                :src="resolveImageUrl(reply.userIcon, 'avatar')"
+                alt=""
+                title="查看主页"
+                @click.stop="openUserProfile(reply.userId)"
+                @error="handleImageError($event, 'avatar')"
+              >
+              <div class="comment-reply__body">
+                <div class="comment-reply__user">
+                  {{ reply.userName || '匿名用户' }}
+                  <span v-if="reply.owner" class="comment-card__badge">我</span>
+                </div>
+                <div class="comment-reply__meta">{{ formatRelativeTime(reply.createTime) }}</div>
+                <div class="comment-reply__content">
+                  <template v-for="(segment, idx) in reply.segments">
+                    <span v-if="segment.type === 'text'" :key="'reply-text-' + idx">{{ segment.text }}</span>
+                    <img
+                      v-else
+                      :key="'reply-image-' + idx"
+                      class="comment-card__image"
+                      :src="segment.src"
+                      alt="回复图片"
+                      @error="handleImageError($event, 'hero')"
+                    >
+                  </template>
+                </div>
+                <div class="comment-card__actions">
+                  <button
+                    class="comment-action"
+                    :class="{ 'is-accent': reply.likedByCurrentUser }"
+                    @click="toggleReplyLike(comment, reply)"
+                  >
+                    <i class="el-icon-star-on"></i>
+                    {{ reply.liked || 0 }}
+                  </button>
+                  <button class="comment-action" @click="replyTo(comment)">回复</button>
+                  <button class="comment-action" v-if="reply.owner" @click="deleteReply(comment, reply)">删除</button>
+                </div>
               </div>
             </div>
             <div class="section-subtitle" v-if="comment.showReplies && !comment.repliesLoading && !comment.replies.length">
@@ -222,6 +254,66 @@
     </section>
   </main>
 
+  <div class="share-mask" v-show="shareSheetVisible" @click="closeShareSheet"></div>
+  <transition name="share-slide">
+    <section class="share-sheet" v-show="shareSheetVisible">
+      <div class="share-sheet__head">
+        <strong>分享至</strong>
+        <button @click="closeShareSheet"><i class="el-icon-close"></i></button>
+      </div>
+      <div class="share-grid">
+        <button class="share-option share-option--private" @click="openPrivateShare">
+          <span class="share-option__icon"><i class="el-icon-position"></i></span>
+          <em>私信好友</em>
+        </button>
+        <button class="share-option share-option--wechat" @click="shareExternal('wechat')">
+          <span class="share-option__icon"><i class="el-icon-chat-dot-round"></i></span>
+          <em>微信好友</em>
+        </button>
+        <button class="share-option share-option--moments" @click="shareExternal('moments')">
+          <span class="share-option__icon"><i class="el-icon-camera"></i></span>
+          <em>朋友圈</em>
+        </button>
+        <button class="share-option share-option--qq" @click="shareExternal('qq')">
+          <span class="share-option__icon">Q</span>
+          <em>QQ好友</em>
+        </button>
+        <button class="share-option share-option--qzone" @click="shareExternal('qzone')">
+          <span class="share-option__icon"><i class="el-icon-star-on"></i></span>
+          <em>QQ空间</em>
+        </button>
+        <button class="share-option share-option--image" @click="generateShareImage">
+          <span class="share-option__icon"><i :class="shareImageGenerating ? 'el-icon-loading' : 'el-icon-picture-outline'"></i></span>
+          <em>生成分享图</em>
+        </button>
+        <button class="share-option share-option--copy" @click="copyShareLink">
+          <span class="share-option__icon"><i class="el-icon-link"></i></span>
+          <em>复制链接</em>
+        </button>
+        <button class="share-option share-option--more" @click="shareExternal('more')">
+          <span class="share-option__icon"><i class="el-icon-more"></i></span>
+          <em>更多</em>
+        </button>
+      </div>
+      <div class="share-friends" v-if="shareFriendPanelVisible">
+        <div class="share-friends__title">选择站内好友</div>
+        <div class="share-friends__loading" v-if="shareFriendLoading">
+          <i class="el-icon-loading"></i> 正在加载好友...
+        </div>
+        <div class="share-friends__empty" v-else-if="!shareFriends.length">
+          暂时没有可私信的好友，可以先复制链接分享。
+        </div>
+        <div class="share-friend" v-else v-for="friend in shareFriends" :key="friend.id">
+          <img :src="resolveImageUrl(friend.icon, 'avatar')" alt="" @error="handleImageError($event, 'avatar')">
+          <span>{{ friend.nickName || '用户' + friend.id }}</span>
+          <button :disabled="shareSendingId === friend.id" @click="sendShareToFriend(friend)">
+            {{ shareSendingId === friend.id ? '发送中' : '发送' }}
+          </button>
+        </div>
+      </div>
+    </section>
+  </transition>
+
   <div class="composer">
     <div class="composer__wrap">
       <div class="composer__input-wrap">
@@ -229,43 +321,69 @@
           正在回复 {{ replyTargetName }}
           <button @click="clearReplyTarget">取消</button>
         </div>
-        <textarea
-          ref="commentInput"
-          class="composer__textarea"
-          v-model.trim="commentText"
-          :placeholder="replyTargetName ? '写下你的回复...' : '写下你的评论，和更多人交流吧...'"
-        ></textarea>
+        <div class="composer__field">
+          <textarea
+            ref="commentInput"
+            class="composer__textarea"
+            v-model.trim="commentText"
+            :placeholder="replyTargetName ? '写下你的回复...' : '说点什么吧~'"
+          ></textarea>
+          <div class="composer__tools">
+            <button type="button" @click="mentionAuthor" title="@作者">@</button>
+            <button type="button" @click="openCommentImageDialog" title="添加图片">
+              <i class="el-icon-picture-outline"></i>
+            </button>
+          </div>
+        </div>
+        <div class="composer__attachments" v-if="pendingCommentImages.length">
+          <img
+            v-for="image in pendingCommentImages"
+            :key="image"
+            :src="image"
+            alt="待发送图片"
+            @error="handleImageError($event, 'hero')"
+          >
+        </div>
       </div>
       <div class="composer__actions">
         <button
-          class="composer__btn"
+          class="composer__btn composer__btn--like"
           :class="{ 'is-like-active': blog.isLike }"
           @click="toggleBlogLike"
           title="点赞"
         >
           <i class="el-icon-star-on"></i>
+          <span>{{ formatCount(blog.liked) }}</span>
         </button>
         <button
-          class="composer__btn"
+          class="composer__btn composer__btn--fav"
           :class="{ 'is-fav-active': blog.isFavorited }"
           @click="toggleFavorite"
           title="收藏"
-          style=""
         >
           <i class="el-icon-star-off"></i>
+          <span>收藏</span>
         </button>
         <button
-          class="composer__btn"
-          @click="shareBlog"
-          title="分享"
+          class="composer__btn composer__btn--comment"
+          @click="focusCommentInput"
+          title="评论"
         >
-          <i class="el-icon-share"></i>
+          <i class="el-icon-chat-dot-round"></i>
+          <span>{{ formatCount(commentTotal) }}</span>
         </button>
         <button class="composer__submit" :disabled="commentSubmitting" @click="submitComment">
           {{ commentSubmitting ? '发送中' : '发送' }}
         </button>
       </div>
     </div>
+    <input
+      ref="commentImageInput"
+      class="comment-image-input"
+      type="file"
+      accept="image/*"
+      @change="commentImageSelected"
+    >
   </div>
 </div>
 

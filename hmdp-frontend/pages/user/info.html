@@ -330,6 +330,7 @@
     .icon-fav { background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%); color: #fff; }
     .icon-history { background: linear-gradient(135deg, #4ecdc4 0%, #7eddd6 100%); color: #fff; }
     .icon-msg { background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%); color: #fff; }
+    .icon-visitor { background: linear-gradient(135deg, #1d7b60 0%, #f0a35d 100%); color: #fff; }
     .icon-coupon { background: linear-gradient(135deg, #fa8c16 0%, #ffc53d 100%); color: #fff; }
     .icon-order { background: linear-gradient(135deg, #722ed1 0%, #b37feb 100%); color: #fff; }
     .icon-map { background: linear-gradient(135deg, #13c2c2 0%, #5cdbd3 100%); color: #fff; }
@@ -761,6 +762,13 @@
       </div>
       <div class="feature-label">消息</div>
     </div>
+    <div class="feature-item" @click="toVisitors">
+      <div class="feature-icon icon-visitor" style="position: relative;">
+        <i class="el-icon-view"></i>
+        <span class="feature-badge" v-if="visitorUnreadCount > 0">{{visitorUnreadCount > 99 ? '99+' : visitorUnreadCount}}</span>
+      </div>
+      <div class="feature-label">访客</div>
+    </div>
     <div class="feature-item" @click="toVouchers">
       <div class="feature-icon icon-coupon">
         <i class="el-icon-tickets"></i>
@@ -772,6 +780,13 @@
         <i class="el-icon-document"></i>
       </div>
       <div class="feature-label">我的订单</div>
+    </div>
+    <div class="feature-item" @click="toPendingReviews">
+      <div class="feature-icon icon-order" style="position: relative;">
+        <i class="el-icon-chat-dot-round"></i>
+        <span class="feature-badge" v-if="pendingReviewCount > 0">{{pendingReviewCount > 99 ? '99+' : pendingReviewCount}}</span>
+      </div>
+      <div class="feature-label">待评价</div>
     </div>
     <div class="feature-item" @click="toMap">
       <div class="feature-icon icon-map">

@@ -4,6 +4,7 @@ import com.hmdp.dto.AdminReviewActionDTO;
 import com.hmdp.dto.Result;
 import com.hmdp.service.impl.MerchantApplicationFlowService;
 import com.hmdp.service.impl.MerchantAuthService;
+import com.hmdp.service.impl.MerchantShopManagementService;
 import com.hmdp.utils.UserHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,8 @@ public class AdminMerchantReviewController {
     private MerchantApplicationFlowService merchantApplicationFlowService;
     @Resource
     private MerchantAuthService merchantAuthService;
+    @Resource
+    private MerchantShopManagementService merchantShopManagementService;
 
     @GetMapping("/merchant-applications")
     public Result listMerchantApplications(@RequestParam(value = "status", required = false) Integer status) {
@@ -105,7 +108,39 @@ public class AdminMerchantReviewController {
         return merchantApplicationFlowService.rejectShopCreateApplication(id, UserHolder.getUser().getId(), dto);
     }
 
+    @GetMapping("/shop-update-applications")
+    public Result listShopUpdateApplications(@RequestParam(value = "status", required = false) Integer status) {
+        Result access = assertAdmin();
+        if (access != null) {
+            return access;
+        }
+        return Result.ok(merchantShopManagementService.listUpdateApplications(status));
+    }
+
+    @PostMapping("/shop-update-applications/{id}/approve")
+    public Result approveShopUpdateApplication(@PathVariable("id") Long id, @RequestBody(required = false) AdminReviewActionDTO dto) {
+        Result access = assertAdmin();
+        if (access != null) {
+            return access;
+        }
+        String remark = dto == null ? null : dto.getReviewRemark();
+        return merchantShopManagementService.approveUpdateApplication(id, UserHolder.getUser().getId(), remark);
+    }
+
+    @PostMapping("/shop-update-applications/{id}/reject")
+    public Result rejectShopUpdateApplication(@PathVariable("id") Long id, @RequestBody(required = false) AdminReviewActionDTO dto) {
+        Result access = assertAdmin();
+        if (access != null) {
+            return access;
+        }
+        String remark = dto == null ? null : dto.getReviewRemark();
+        return merchantShopManagementService.rejectUpdateApplication(id, UserHolder.getUser().getId(), remark);
+    }
+
     private Result assertAdmin() {
+        if (UserHolder.getUser() == null) {
+            return Result.fail("请先登录");
+        }
         if (!merchantAuthService.isAdmin(UserHolder.getUser().getId())) {
             return Result.fail("当前账号暂无管理员权限");
         }

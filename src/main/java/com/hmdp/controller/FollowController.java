@@ -31,6 +31,11 @@ public class FollowController {
         return followService.isFollow(followUserId);
     }
 
+    @GetMapping("/is-mutual/{id}")
+    public Result isMutualFollow(@PathVariable("id") Long userId) {
+        return followService.isMutualFollow(userId);
+    }
+
     @GetMapping("/common/{id}")
     public Result followCommons(@PathVariable("id")Long id){
         return followService.followCommons(id);

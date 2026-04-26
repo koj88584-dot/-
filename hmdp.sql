@@ -436,9 +436,178 @@ CREATE TABLE `tb_privacy_setting`  (
   `allow_message` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否允许陌生人私信：0-不允许 1-允许',
   `allow_recommend` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否允许被推荐：0-不允许 1-允许',
   `show_online_status` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否显示在线状态：0-隐藏 1-显示',
+  `stealth_mode` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '隐身访问：0-关闭 1-开启',
+  `allow_visit_notify` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '允许访客通知：0-关闭 1-允许',
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`user_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户隐私设置表' ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Table structure for tb_chat_conversation
+-- ----------------------------
+DROP TABLE IF EXISTS `tb_chat_conversation`;
+CREATE TABLE `tb_chat_conversation` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id_a` bigint(20) UNSIGNED NOT NULL COMMENT '用户A（ID较小的一方）',
+  `user_id_b` bigint(20) UNSIGNED NOT NULL COMMENT '用户B（ID较大的一方）',
+  `last_message` varchar(500) DEFAULT NULL COMMENT '最新消息内容',
+  `last_sender_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '最新消息发送者',
+  `unread_count_a` int UNSIGNED DEFAULT 0 COMMENT 'A的未读数',
+  `unread_count_b` int UNSIGNED DEFAULT 0 COMMENT 'B的未读数',
+  `last_message_time` timestamp NULL DEFAULT NULL COMMENT '最新消息时间',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_users` (`user_id_a`, `user_id_b`),
+  KEY `idx_user_a` (`user_id_a`),
+  KEY `idx_user_b` (`user_id_b`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='聊天会话表';
+
+-- ----------------------------
+-- Table structure for tb_chat_message
+-- ----------------------------
+DROP TABLE IF EXISTS `tb_chat_message`;
+CREATE TABLE `tb_chat_message` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `conversation_id` bigint(20) UNSIGNED NOT NULL COMMENT '会话ID',
+  `sender_id` bigint(20) UNSIGNED NOT NULL COMMENT '发送者ID',
+  `receiver_id` bigint(20) UNSIGNED NOT NULL COMMENT '接收者ID',
+  `content` varchar(2000) NOT NULL COMMENT '消息内容',
+  `type` tinyint UNSIGNED DEFAULT 1 COMMENT '1-文本 2-图片',
+  `is_read` tinyint UNSIGNED DEFAULT 0 COMMENT '是否已读',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_conversation` (`conversation_id`),
+  KEY `idx_sender_receiver` (`sender_id`, `receiver_id`),
+  KEY `idx_receiver` (`receiver_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='聊天消息表';
+
+-- ----------------------------
+-- Table structure for tb_profile_visit
+-- ----------------------------
+DROP TABLE IF EXISTS `tb_profile_visit`;
+CREATE TABLE `tb_profile_visit` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `visitor_id` bigint(20) UNSIGNED NOT NULL COMMENT '访问者ID',
+  `visited_id` bigint(20) UNSIGNED NOT NULL COMMENT '被访问者ID',
+  `visit_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '访问时间',
+  `is_stealth` tinyint UNSIGNED DEFAULT 0 COMMENT '是否隐身访问',
+  `is_read` tinyint UNSIGNED DEFAULT 0 COMMENT '是否已读',
+  PRIMARY KEY (`id`),
+  KEY `idx_visited_time` (`visited_id`, `visit_time`),
+  KEY `idx_visitor` (`visitor_id`),
+  KEY `idx_unread` (`visited_id`, `is_read`, `is_stealth`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='主页访客记录表';
+
+ALTER TABLE `tb_shop`
+  ADD COLUMN `phone` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '店铺联系电话' AFTER `open_hours`;
+
+DROP TABLE IF EXISTS `tb_shop_update_application`;
+CREATE TABLE `tb_shop_update_application` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '提交商家用户id',
+  `shop_id` bigint(20) UNSIGNED NOT NULL COMMENT '店铺id',
+  `change_payload` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '待审核变更JSON',
+  `proof_images` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '证明图片',
+  `message` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '补充说明',
+  `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0待审核 1已通过 2已驳回',
+  `reviewer_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '审核人',
+  `review_remark` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '审核备注',
+  `review_time` timestamp NULL DEFAULT NULL COMMENT '审核时间',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_shop_status` (`shop_id`, `status`) USING BTREE,
+  KEY `idx_user_id` (`user_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='店铺资料变更申请表';
+
+DROP TABLE IF EXISTS `tb_shop_featured_dish`;
+CREATE TABLE `tb_shop_featured_dish` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `shop_id` bigint(20) UNSIGNED NOT NULL COMMENT '店铺id',
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '招牌菜名称',
+  `description` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '招牌菜描述',
+  `image` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '展示图片',
+  `price` bigint(10) UNSIGNED DEFAULT NULL COMMENT '参考价，单位分',
+  `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0草稿 1上架 2下架',
+  `sort` int(11) NOT NULL DEFAULT 0 COMMENT '排序值',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_shop_status_sort` (`shop_id`, `status`, `sort`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='店铺招牌菜表';
+
+DROP TABLE IF EXISTS `tb_group_deal`;
+CREATE TABLE `tb_group_deal` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `shop_id` bigint(20) UNSIGNED NOT NULL COMMENT '店铺id',
+  `title` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '团购标题',
+  `description` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '团购描述',
+  `images` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '团购图片',
+  `rules` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '使用规则',
+  `price` bigint(10) UNSIGNED NOT NULL COMMENT '团购价，单位分',
+  `original_price` bigint(10) UNSIGNED NOT NULL COMMENT '门市价，单位分',
+  `stock` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '库存',
+  `sold` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '已售',
+  `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0草稿 1上架 2下架 3已结束',
+  `begin_time` timestamp NULL DEFAULT NULL COMMENT '开始时间',
+  `end_time` timestamp NULL DEFAULT NULL COMMENT '结束时间',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_shop_status` (`shop_id`, `status`) USING BTREE,
+  KEY `idx_status_time` (`status`, `begin_time`, `end_time`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='店铺团购表';
+
+DROP TABLE IF EXISTS `tb_group_deal_order`;
+CREATE TABLE `tb_group_deal_order` (
+  `id` bigint(20) UNSIGNED NOT NULL COMMENT '主键',
+  `deal_id` bigint(20) UNSIGNED NOT NULL COMMENT '团购id',
+  `shop_id` bigint(20) UNSIGNED NOT NULL COMMENT '店铺id',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '购买用户id',
+  `pay_value` bigint(10) UNSIGNED NOT NULL COMMENT '实付金额，单位分',
+  `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '1未支付 2已支付待核销 3已核销 4已取消 5退款中 6已退款',
+  `verify_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '核销券码',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `pay_time` timestamp NULL DEFAULT NULL COMMENT '支付时间',
+  `use_time` timestamp NULL DEFAULT NULL COMMENT '核销时间',
+  `cancel_time` timestamp NULL DEFAULT NULL COMMENT '取消时间',
+  `refund_time` timestamp NULL DEFAULT NULL COMMENT '退款时间',
+  `effective_time` timestamp NULL DEFAULT NULL COMMENT '生效时间',
+  `expire_time` timestamp NULL DEFAULT NULL COMMENT '过期时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `commented` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0 not reviewed, 1 reviewed',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_verify_code` (`verify_code`) USING BTREE,
+  KEY `idx_shop_status` (`shop_id`, `status`) USING BTREE,
+  KEY `idx_user_status` (`user_id`, `status`) USING BTREE,
+  KEY `idx_deal_id` (`deal_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='团购订单表';
+
+DROP TABLE IF EXISTS `tb_shop_featured_dish_order`;
+CREATE TABLE `tb_shop_featured_dish_order` (
+  `id` bigint(20) UNSIGNED NOT NULL COMMENT 'primary key',
+  `dish_id` bigint(20) UNSIGNED NOT NULL COMMENT 'featured dish id',
+  `shop_id` bigint(20) UNSIGNED NOT NULL COMMENT 'shop id',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT 'buyer user id',
+  `pay_value` bigint(10) UNSIGNED NOT NULL COMMENT 'paid amount in cents',
+  `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 unpaid 2 paid pending verify 3 verified 4 cancelled 5 refunding 6 refunded',
+  `verify_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'verification code',
+  `commented` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0 not reviewed, 1 reviewed',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
+  `pay_time` timestamp NULL DEFAULT NULL COMMENT 'pay time',
+  `use_time` timestamp NULL DEFAULT NULL COMMENT 'verify time',
+  `cancel_time` timestamp NULL DEFAULT NULL COMMENT 'cancel time',
+  `refund_time` timestamp NULL DEFAULT NULL COMMENT 'refund time',
+  `effective_time` timestamp NULL DEFAULT NULL COMMENT 'effective time',
+  `expire_time` timestamp NULL DEFAULT NULL COMMENT 'expire time',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_verify_code` (`verify_code`) USING BTREE,
+  KEY `idx_shop_status` (`shop_id`, `status`) USING BTREE,
+  KEY `idx_user_status` (`user_id`, `status`) USING BTREE,
+  KEY `idx_dish_id` (`dish_id`) USING BTREE,
+  KEY `idx_user_comment` (`user_id`, `shop_id`, `status`, `commented`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='featured dish order table';
 
 SET FOREIGN_KEY_CHECKS = 1;

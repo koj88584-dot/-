@@ -139,7 +139,8 @@
       background: var(--mc-surface); border-radius: var(--mc-radius);
       box-shadow: var(--mc-shadow);
     }
-    .shop-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .shop-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; cursor: pointer; border-radius: 16px; padding: 2px; transition: background .2s ease, transform .2s ease; }
+    .shop-header:active { background: var(--mc-primary-soft); transform: scale(.99); }
     .shop-avatar {
       width: 48px; height: 48px; border-radius: 14px; object-fit: cover;
       background: linear-gradient(135deg, #FFF3ED 0%, #FFE8DC 100%);
@@ -207,6 +208,130 @@
     }
     .filter-pill.active {
       border-color: var(--mc-primary); background: var(--mc-primary-soft);
+      color: var(--mc-primary);
+    }
+
+    .create-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 0 0 14px;
+    }
+    .create-btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 10px 6px;
+      background: linear-gradient(180deg, #fff7f2 0%, #fff 100%);
+      color: var(--mc-primary);
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: inset 0 0 0 1px rgba(255,122,69,.12), 0 8px 18px rgba(255,122,69,.06);
+      cursor: pointer;
+    }
+    .create-btn i { display: block; font-size: 18px; margin-bottom: 4px; }
+    .sub-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin: 0 0 12px;
+      padding-bottom: 2px;
+    }
+    .sub-tabs::-webkit-scrollbar { display: none; }
+    .sub-tab {
+      flex: 0 0 auto;
+      border: 1px solid var(--mc-border);
+      border-radius: 999px;
+      padding: 8px 13px;
+      background: #fff;
+      color: var(--mc-sub);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .sub-tab.active {
+      border-color: rgba(255,122,69,.32);
+      background: var(--mc-primary-soft);
+      color: var(--mc-primary);
+    }
+    .product-card {
+      display: flex;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--mc-border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+    .product-cover, .order-cover {
+      width: 80px;
+      height: 80px;
+      border-radius: 14px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #FFF3ED, #FFE8DC);
+    }
+    .product-body, .order-body { flex: 1; min-width: 0; }
+    .product-title, .order-title {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--mc-text);
+      line-height: 1.35;
+    }
+    .product-sub, .order-meta {
+      margin-top: 4px;
+      color: var(--mc-sub);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .product-price {
+      margin-top: 8px;
+      color: var(--mc-primary);
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .product-price del {
+      margin-left: 6px;
+      color: var(--mc-muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .product-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--mc-border);
+    }
+    .product-stats {
+      display: flex;
+      gap: 8px;
+      color: var(--mc-sub);
+      font-size: 11px;
+      flex-wrap: wrap;
+    }
+    .product-actions, .order-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .verify-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: var(--mc-sub);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .verify-type-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--mc-primary-soft);
       color: var(--mc-primary);
     }
 
@@ -314,9 +439,6 @@
       <button class="topbar-action" v-if="isAdmin" @click="goToAdminReview" title="审核后台" style="background:rgba(99,102,241,0.12);color:#6366f1;">
         <i class="el-icon-s-operation"></i>
       </button>
-      <button class="topbar-action" @click="openCreateDialog" title="新建优惠券">
-        <i class="el-icon-plus"></i>
-      </button>
     </div>
   </div>
 
@@ -335,12 +457,13 @@
 
   <!-- Shop Selector with image -->
   <section class="shop-card">
-    <div class="shop-header" v-if="selectedShop">
+    <div class="shop-header" v-if="selectedShop" @click="openSelectedShopDetail" title="查看店铺详情">
       <img class="shop-avatar" :src="getShopImage()" alt="">
       <div class="shop-info">
         <div class="shop-name">{{ selectedShop.name }}</div>
         <div class="shop-id">ID: {{ selectedShop.id }}</div>
       </div>
+      <i class="el-icon-arrow-right" style="color:var(--mc-muted);"></i>
     </div>
     <el-input
       class="search-input"
@@ -399,76 +522,98 @@
   <!-- Main content -->
   <section v-else class="content-card">
     <div class="segmented-tabs">
-      <button class="segmented-tab" :class="{active: activeTab === 'vouchers'}" @click="switchTab('vouchers')">优惠券管理</button>
-      <button class="segmented-tab" :class="{active: activeTab === 'orders'}" @click="switchTab('orders')">订单核销</button>
+      <button class="segmented-tab" :class="{active: activeTab === 'manage'}" @click="switchTab('manage')">经营管理</button>
+      <button class="segmented-tab" :class="{active: activeTab === 'verify'}" @click="switchTab('verify')">到店核销</button>
+    </div>
+
+    <div class="create-strip">
+      <button class="create-btn" @click="openCreateDialog('voucher')"><i class="el-icon-ticket"></i>新建优惠券</button>
+      <button class="create-btn" @click="openCreateDialog('dish')"><i class="el-icon-dish"></i>新建菜品</button>
+      <button class="create-btn" @click="openCreateDialog('deal')"><i class="el-icon-shopping-bag-1"></i>新建团购</button>
     </div>
 
     <div v-if="loading" class="loading-state"><i class="el-icon-loading"></i></div>
 
-    <!-- Vouchers Tab -->
-    <template v-else-if="activeTab === 'vouchers'">
+    <template v-else-if="activeTab === 'manage'">
+      <div class="sub-tabs">
+        <button v-for="item in manageTypes" :key="item.key" class="sub-tab" :class="{active: manageType === item.key}" @click="switchManageType(item.key)">
+          <i :class="item.icon"></i> {{ item.label }}
+        </button>
+      </div>
       <div class="filter-row">
-        <button v-for="item in voucherStatusOptions" :key="item.key" class="filter-pill" :class="{active: voucherStatusFilter === item.value}" @click="setVoucherStatus(item.value)">
+        <button v-for="item in statusOptions" :key="item.key" class="filter-pill" :class="{active: (manageType === 'voucher' ? voucherStatusFilter : productStatusFilter) === item.value}" @click="setProductStatus(item.value)">
           {{ item.label }}
         </button>
       </div>
 
-      <div v-if="!merchantVouchers.length" class="empty-state">当前店铺还没有优惠券，点击右上角 + 新建一张吧。</div>
+      <div v-if="!currentManageList.length" class="empty-state">当前分类还没有内容，点击上方按钮新建一个吧。</div>
       <div v-else class="voucher-list">
-        <div v-for="voucher in merchantVouchers" :key="voucher.id" class="voucher-card">
-          <div class="voucher-top">
-            <img class="voucher-cover" :src="getShopImage()" alt="">
-            <div class="voucher-body">
-              <div class="voucher-title">{{ voucher.title }}</div>
-              <div class="voucher-sub">{{ voucher.subTitle || '到店消费可使用' }}</div>
-              <div class="voucher-price-row">
-                <span class="voucher-pay"><small>¥</small>{{ toYuan(voucher.payValue) }}</span>
-                <span class="voucher-actual">¥{{ toYuan(voucher.actualValue) }}</span>
-                <span class="voucher-status-tag" :class="{online: voucher.status===1, offline: voucher.status===2, draft: voucher.status===0, ended: voucher.status===3}">
-                  {{ voucher.statusText || getVoucherStatusText(voucher.status) }}
+        <div v-for="item in currentManageList" :key="manageType + '-' + item.id" class="product-card">
+          <img class="product-cover" :src="manageType === 'voucher' ? getShopImage() : getItemImage(item)" alt="" @error="handleImageError">
+          <div class="product-body">
+            <div class="product-title">{{ item.title || item.name }}</div>
+            <div class="product-sub">{{ item.subTitle || item.description || item.rules || '到店消费时向用户展示。' }}</div>
+            <div class="product-price" v-if="manageType === 'voucher'">
+              ¥{{ toYuan(item.payValue) }} <del>¥{{ toYuan(item.actualValue) }}</del>
+            </div>
+            <div class="product-price" v-else-if="manageType === 'dish'">
+              ¥{{ toYuan(item.price) }}
+            </div>
+            <div class="product-price" v-else>
+              ¥{{ toYuan(item.price) }} <del>¥{{ toYuan(item.originalPrice) }}</del>
+            </div>
+            <div class="product-bottom">
+              <div class="product-stats">
+                <span class="voucher-status-tag" :class="{online: item.status===1, offline: item.status===2, draft: item.status===0, ended: item.status===3}">
+                  {{ item.statusText || getStatusText(item.status) }}
                 </span>
+                <span v-if="manageType === 'voucher'">库存 {{ item.stock || 0 }}</span>
+                <span v-if="manageType === 'voucher'">支付 {{ item.paidCount || 0 }}</span>
+                <span v-if="manageType === 'deal'">已售 {{ item.sold || 0 }}</span>
+                <span v-if="manageType === 'deal'">剩余 {{ item.stock || 0 }}</span>
+                <span v-if="manageType === 'dish'">排序 {{ item.sort || 0 }}</span>
               </div>
-            </div>
-          </div>
-          <div class="voucher-bottom">
-            <div class="voucher-stats">
-              <span class="voucher-stat">库存 <b>{{ voucher.stock || 0 }}</b></span>
-              <span class="voucher-stat">领取 <b>{{ voucher.receivedCount || 0 }}</b></span>
-              <span class="voucher-stat">支付 <b>{{ voucher.paidCount || 0 }}</b></span>
-              <span class="voucher-stat">核销 <b>{{ voucher.verifiedCount || 0 }}</b></span>
-            </div>
-            <div class="voucher-actions">
-              <el-button size="mini" @click="editVoucher(voucher)">编辑</el-button>
-              <el-button v-if="voucher.status !== 1 && voucher.status !== 3" size="mini" type="primary" @click="publishVoucher(voucher)">上架</el-button>
-              <el-button v-if="voucher.status === 1" size="mini" type="warning" @click="unpublishVoucher(voucher)">下架</el-button>
+              <div class="product-actions">
+                <el-button size="mini" @click="editItem(item, manageType)">编辑</el-button>
+                <el-button v-if="item.status !== 1 && item.status !== 3" size="mini" type="primary" @click="publishItem(item, manageType)">上架</el-button>
+                <el-button v-if="item.status === 1" size="mini" type="warning" @click="unpublishItem(item, manageType)">下架</el-button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </template>
 
-    <!-- Orders Tab -->
     <template v-else>
       <div class="verify-box">
-        <el-input class="verify-input" v-model.trim="verifyCode" placeholder="输入用户出示的券码，例如 VC123ABC"></el-input>
-        <el-button type="primary" @click="verifyByCode">核销券码</el-button>
+        <el-input class="verify-input" v-model.trim="verifyCode" placeholder="输入用户出示的券码：VC/GD/FD 开头均可自动识别"></el-input>
+        <el-button type="primary" @click="verifyByCode">统一核销</el-button>
       </div>
-
+      <div class="sub-tabs">
+        <button v-for="item in verifyTypes" :key="item.key" class="sub-tab" :class="{active: verifyType === item.key}" @click="switchVerifyType(item.key)">
+          {{ item.label }}
+        </button>
+      </div>
       <div class="filter-row">
         <button v-for="item in orderStatusOptions" :key="item.key" class="filter-pill" :class="{active: orderStatusFilter === item.value}" @click="setOrderStatus(item.value)">
           {{ item.label }}
         </button>
       </div>
 
-      <div v-if="!merchantOrders.length" class="empty-state">当前没有可展示的优惠券订单。</div>
+      <div v-if="!unifiedOrders.length" class="empty-state">当前没有可展示的订单。</div>
       <div v-else class="voucher-list">
-        <div v-for="order in merchantOrders" :key="order.id" class="order-card">
-          <img class="order-cover" :src="getShopImage()" alt="">
+        <div v-for="order in unifiedOrders" :key="order.productType + '-' + order.id" class="order-card">
+          <img class="order-cover" :src="getItemImage(order)" alt="" @error="handleImageError">
           <div class="order-body">
-            <div class="order-title">{{ order.voucherTitle || '优惠券订单' }}</div>
+            <div class="verify-card-head">
+              <span class="verify-type-badge">{{ order.productLabel }}</span>
+              <span>{{ order.statusText || getOrderStatusText(order.status) }}</span>
+            </div>
+            <div class="order-title">{{ order.displayTitle }}</div>
             <div class="order-meta">
-              <div>{{ order.statusText || getOrderStatusText(order.status) }} · 券码：{{ order.verifyCode || '待生成' }}</div>
+              <div>券码：{{ order.verifyCode || '待生成' }} · 实付 ¥{{ toYuan(order.displayPrice || order.payValue) }}</div>
               <div>{{ formatDateTime(order.effectiveTime) || '支付后生效' }} - {{ formatDateTime(order.expireTime) || '长期有效' }}</div>
+              <div v-if="order.userNickName">用户：{{ order.userNickName }}</div>
             </div>
             <div class="order-actions">
               <el-button v-if="order.status === 2 && order.verifyCode" size="mini" type="success" @click="fillVerifyCode(order.verifyCode)">填入核销框</el-button>
@@ -481,47 +626,89 @@
 
   <!-- Quick-actions removed: role-specific actions are now inline above -->
 
-  <el-dialog :title="dialogMode === 'create' ? '新建优惠券' : '编辑优惠券'" :visible.sync="dialogVisible" width="92%">
+  <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="92%">
     <el-form class="dialog-form" :model="form" label-width="88px">
       <el-form-item label="所属店铺">
         <el-select v-model="form.shopId" placeholder="请选择店铺" style="width:100%;">
           <el-option v-for="shop in shops" :key="shop.id" :label="shop.name" :value="shop.id"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="优惠券标题">
-        <el-input v-model.trim="form.title" maxlength="24" show-word-limit></el-input>
-      </el-form-item>
-      <el-form-item label="副标题">
-        <el-input v-model.trim="form.subTitle" maxlength="40" show-word-limit></el-input>
-      </el-form-item>
-      <el-form-item label="使用规则">
-        <el-input v-model.trim="form.rules" type="textarea" :rows="3"></el-input>
-      </el-form-item>
-      <el-form-item label="券类型">
-        <el-radio-group v-model="form.type">
-          <el-radio :label="0">普通券</el-radio>
-          <el-radio :label="1">秒杀券</el-radio>
-        </el-radio-group>
-      </el-form-item>
-      <el-form-item label="支付金额">
-        <el-input v-model.trim="form.payValueYuan" placeholder="例如 45"></el-input>
-      </el-form-item>
-      <el-form-item label="抵扣金额">
-        <el-input v-model.trim="form.actualValueYuan" placeholder="例如 50"></el-input>
-      </el-form-item>
-      <el-form-item label="库存">
-        <el-input-number v-model="form.stock" :min="1" :max="99999"></el-input-number>
-      </el-form-item>
-      <el-form-item label="开始时间">
+      <template v-if="dialogType === 'voucher'">
+        <el-form-item label="优惠券标题">
+          <el-input v-model.trim="form.title" maxlength="24" show-word-limit></el-input>
+        </el-form-item>
+        <el-form-item label="副标题">
+          <el-input v-model.trim="form.subTitle" maxlength="40" show-word-limit></el-input>
+        </el-form-item>
+        <el-form-item label="使用规则">
+          <el-input v-model.trim="form.rules" type="textarea" :rows="3"></el-input>
+        </el-form-item>
+        <el-form-item label="券类型">
+          <el-radio-group v-model="form.type">
+            <el-radio :label="0">普通券</el-radio>
+            <el-radio :label="1">秒杀券</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="支付金额">
+          <el-input v-model.trim="form.payValueYuan" placeholder="例如 45"></el-input>
+        </el-form-item>
+        <el-form-item label="抵扣金额">
+          <el-input v-model.trim="form.actualValueYuan" placeholder="例如 50"></el-input>
+        </el-form-item>
+        <el-form-item label="库存">
+          <el-input-number v-model="form.stock" :min="1" :max="99999"></el-input-number>
+        </el-form-item>
+      </template>
+      <template v-else-if="dialogType === 'dish'">
+        <el-form-item label="菜品名称">
+          <el-input v-model.trim="form.name" maxlength="24" show-word-limit></el-input>
+        </el-form-item>
+        <el-form-item label="介绍">
+          <el-input v-model.trim="form.description" type="textarea" :rows="3" maxlength="120" show-word-limit></el-input>
+        </el-form-item>
+        <el-form-item label="图片地址">
+          <el-input v-model.trim="form.image" placeholder="/imgs/... 或上传后的路径"></el-input>
+        </el-form-item>
+        <el-form-item label="价格">
+          <el-input v-model.trim="form.priceYuan" placeholder="例如 28"></el-input>
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-input-number v-model="form.sort" :min="0" :max="999"></el-input-number>
+        </el-form-item>
+      </template>
+      <template v-else>
+        <el-form-item label="团购标题">
+          <el-input v-model.trim="form.title" maxlength="32" show-word-limit></el-input>
+        </el-form-item>
+        <el-form-item label="套餐说明">
+          <el-input v-model.trim="form.description" type="textarea" :rows="3" maxlength="160" show-word-limit></el-input>
+        </el-form-item>
+        <el-form-item label="图片">
+          <el-input v-model.trim="form.images" placeholder="多张图片用英文逗号分隔"></el-input>
+        </el-form-item>
+        <el-form-item label="使用规则">
+          <el-input v-model.trim="form.rules" type="textarea" :rows="3"></el-input>
+        </el-form-item>
+        <el-form-item label="团购价">
+          <el-input v-model.trim="form.priceYuan" placeholder="例如 80"></el-input>
+        </el-form-item>
+        <el-form-item label="门市价">
+          <el-input v-model.trim="form.originalPriceYuan" placeholder="例如 100"></el-input>
+        </el-form-item>
+        <el-form-item label="库存">
+          <el-input-number v-model="form.stock" :min="1" :max="99999"></el-input-number>
+        </el-form-item>
+      </template>
+      <el-form-item v-if="dialogType !== 'dish'" label="开始时间">
         <el-date-picker v-model="form.beginTime" type="datetime" placeholder="开始时间" style="width:100%;"></el-date-picker>
       </el-form-item>
-      <el-form-item label="结束时间">
+      <el-form-item v-if="dialogType !== 'dish'" label="结束时间">
         <el-date-picker v-model="form.endTime" type="datetime" placeholder="结束时间" style="width:100%;"></el-date-picker>
       </el-form-item>
     </el-form>
     <div slot="footer">
       <el-button @click="dialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="saveVoucher">保存</el-button>
+      <el-button type="primary" @click="saveCurrentForm">保存</el-button>
     </div>
   </el-dialog>
 </div>

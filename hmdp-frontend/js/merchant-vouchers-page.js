@@ -4,18 +4,27 @@ new Vue({
     return {
       loading: false,
       merchantProfile: null,
-      activeTab: 'vouchers',
+      activeTab: 'manage',
+      manageType: 'voucher',
+      verifyType: 'all',
       shops: [],
       shopKeyword: '',
       selectedShopId: util.readStorageJSON('merchant_selected_shop_id', null),
       merchantVouchers: [],
+      merchantDishes: [],
+      merchantGroupDeals: [],
       merchantOrders: [],
+      groupOrders: [],
+      dishOrders: [],
       voucherStatusFilter: null,
+      productStatusFilter: null,
       orderStatusFilter: 2,
       verifyCode: '',
       dialogVisible: false,
       dialogMode: 'create',
-      voucherStatusOptions: [
+      dialogType: 'voucher',
+      form: {},
+      statusOptions: [
         { key: 'all', label: '全部', value: null },
         { key: 'draft', label: '草稿', value: 0 },
         { key: 'online', label: '已上架', value: 1 },
@@ -28,7 +37,17 @@ new Vue({
         { key: 'verified', label: '已核销', value: 3 },
         { key: 'pending', label: '待支付', value: 1 }
       ],
-      form: this.createEmptyForm()
+      manageTypes: [
+        { key: 'voucher', label: '优惠券', icon: 'el-icon-ticket' },
+        { key: 'dish', label: '招牌菜', icon: 'el-icon-dish' },
+        { key: 'deal', label: '团购', icon: 'el-icon-shopping-bag-1' }
+      ],
+      verifyTypes: [
+        { key: 'all', label: '全部订单' },
+        { key: 'voucher', label: '优惠券' },
+        { key: 'deal', label: '团购' },
+        { key: 'dish', label: '招牌菜' }
+      ]
     };
   },
   computed: {
@@ -45,13 +64,76 @@ new Vue({
       if (this.isAdmin) return '管理员';
       if (this.isMerchant) return '商家';
       return '用户';
+    },
+    currentManageList() {
+      if (this.manageType === 'dish') return this.filteredByStatus(this.merchantDishes, this.productStatusFilter);
+      if (this.manageType === 'deal') return this.filteredByStatus(this.merchantGroupDeals, this.productStatusFilter);
+      return this.filteredByStatus(this.merchantVouchers, this.voucherStatusFilter);
+    },
+    unifiedOrders() {
+      const rows = [];
+      if (this.verifyType === 'all' || this.verifyType === 'voucher') {
+        rows.push.apply(rows, this.merchantOrders.map(order => this.normalizeOrder(order, 'voucher')));
+      }
+      if (this.verifyType === 'all' || this.verifyType === 'deal') {
+        rows.push.apply(rows, this.groupOrders.map(order => this.normalizeOrder(order, 'deal')));
+      }
+      if (this.verifyType === 'all' || this.verifyType === 'dish') {
+        rows.push.apply(rows, this.dishOrders.map(order => this.normalizeOrder(order, 'dish')));
+      }
+      return rows.sort((a, b) => this.dateValue(b.createTime) - this.dateValue(a.createTime));
+    },
+    dialogTitle() {
+      const prefix = this.dialogMode === 'edit' ? '编辑' : '新建';
+      const labelMap = { voucher: '优惠券', dish: '招牌菜', deal: '团购' };
+      return prefix + labelMap[this.dialogType];
     }
   },
   created() {
+    this.form = this.createEmptyForm('voucher');
     this.bootstrap();
   },
   methods: {
-    createEmptyForm() {
+    async bootstrap() {
+      const ok = await window.authHelper.ensureLogin(location.pathname + location.search);
+      if (!ok) return;
+      this.loadMerchantProfile();
+    },
+    friendlyError(err, fallback) {
+      const message = util.getErrorMessage(err, fallback);
+      if (!message || typeof message !== 'string') return fallback || '操作失败，请稍后再试';
+      if (message.length > 80 || message.indexOf('###') > -1 || message.toLowerCase().indexOf('sql') > -1) {
+        return fallback || '操作失败，请稍后再试';
+      }
+      return message;
+    },
+    createEmptyForm(type) {
+      if (type === 'dish') {
+        return {
+          id: null,
+          shopId: this.selectedShopId || null,
+          name: '',
+          description: '',
+          image: '',
+          priceYuan: '',
+          sort: 0
+        };
+      }
+      if (type === 'deal') {
+        return {
+          id: null,
+          shopId: this.selectedShopId || null,
+          title: '',
+          description: '',
+          images: '',
+          rules: '',
+          priceYuan: '',
+          originalPriceYuan: '',
+          stock: 100,
+          beginTime: null,
+          endTime: null
+        };
+      }
       return {
         id: null,
         shopId: this.selectedShopId || null,
@@ -65,23 +147,6 @@ new Vue({
         beginTime: null,
         endTime: null
       };
-    },
-    async bootstrap() {
-      const ok = await window.authHelper.ensureLogin(location.pathname + location.search);
-      if (!ok) {
-        return;
-      }
-      this.loadMerchantProfile();
-    },
-    friendlyError(err, fallback) {
-      const message = util.getErrorMessage(err, fallback);
-      if (!message || typeof message !== 'string') {
-        return fallback || '操作失败，请稍后再试';
-      }
-      if (message.length > 80 || message.indexOf('###') > -1 || message.toLowerCase().indexOf('sql') > -1) {
-        return fallback || '操作失败，请稍后再试';
-      }
-      return message;
     },
     loadMerchantProfile() {
       this.loading = true;
@@ -102,6 +167,37 @@ new Vue({
         this.loading = false;
       });
     },
+    loadShops() {
+      this.loading = true;
+      axios.get('/merchant/shops', {
+        params: { keyword: this.shopKeyword || undefined, current: 1 }
+      }).then(({ data }) => {
+        this.shops = Array.isArray(data) ? data : [];
+        if (!this.shops.length) {
+          this.selectedShopId = null;
+          this.resetLists();
+          util.writeStorageJSON('merchant_selected_shop_id', null);
+          return;
+        }
+        if (!this.selectedShopId || !this.shops.some(shop => String(shop.id) === String(this.selectedShopId))) {
+          this.selectedShopId = this.shops[0].id;
+        }
+        util.writeStorageJSON('merchant_selected_shop_id', this.selectedShopId);
+        this.refreshCurrentTab();
+      }).catch((err) => {
+        this.$message.error(this.friendlyError(err, '加载店铺失败'));
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    resetLists() {
+      this.merchantVouchers = [];
+      this.merchantDishes = [];
+      this.merchantGroupDeals = [];
+      this.merchantOrders = [];
+      this.groupOrders = [];
+      this.dishOrders = [];
+    },
     goBack() {
       history.back();
     },
@@ -121,64 +217,65 @@ new Vue({
       }
       location.href = '../admin/merchant-reviews.html';
     },
-    loadShops() {
-      this.loading = true;
-      axios.get('/merchant/shops', {
-        params: { keyword: this.shopKeyword || undefined, current: 1 }
-      }).then(({ data }) => {
-        this.shops = Array.isArray(data) ? data : [];
-        if (!this.shops.length) {
-          this.selectedShopId = null;
-          this.merchantVouchers = [];
-          this.merchantOrders = [];
-          util.writeStorageJSON('merchant_selected_shop_id', null);
-          return;
-        }
-        if (!this.selectedShopId || !this.shops.some(shop => String(shop.id) === String(this.selectedShopId))) {
-          this.selectedShopId = this.shops[0].id;
-        }
-        util.writeStorageJSON('merchant_selected_shop_id', this.selectedShopId);
-        this.refreshCurrentTab();
-      }).catch((err) => {
-        this.$message.error(this.friendlyError(err, '加载店铺失败'));
-      }).finally(() => {
-        this.loading = false;
-      });
+    openSelectedShopDetail() {
+      if (!this.selectedShopId) {
+        this.$message.warning('请先选择店铺');
+        return;
+      }
+      location.href = '/pages/shop/shop-detail.html?id=' + encodeURIComponent(this.selectedShopId) + '&merchant=1';
     },
     handleShopChange() {
       util.writeStorageJSON('merchant_selected_shop_id', this.selectedShopId);
+      this.resetLists();
       this.refreshCurrentTab();
     },
     switchTab(tab) {
       this.activeTab = tab;
       this.refreshCurrentTab();
     },
+    switchManageType(type) {
+      this.manageType = type;
+      this.refreshCurrentTab();
+    },
+    switchVerifyType(type) {
+      this.verifyType = type;
+      this.refreshCurrentTab();
+    },
     refreshCurrentTab() {
-      if (!this.selectedShopId) {
+      if (!this.selectedShopId) return;
+      if (this.activeTab === 'verify') {
+        this.loadOrdersForVerify();
         return;
       }
-      if (this.activeTab === 'orders') {
-        this.loadMerchantOrders();
+      if (this.manageType === 'dish') {
+        this.loadMerchantDishes();
+      } else if (this.manageType === 'deal') {
+        this.loadMerchantGroupDeals();
       } else {
         this.loadMerchantVouchers();
       }
     },
-    setVoucherStatus(status) {
-      this.voucherStatusFilter = status;
-      this.loadMerchantVouchers();
+    setProductStatus(status) {
+      if (this.manageType === 'voucher') {
+        this.voucherStatusFilter = status;
+      } else {
+        this.productStatusFilter = status;
+      }
     },
     setOrderStatus(status) {
       this.orderStatusFilter = status;
-      this.loadMerchantOrders();
+      this.loadOrdersForVerify();
+    },
+    filteredByStatus(list, status) {
+      const rows = Array.isArray(list) ? list : [];
+      if (status === null || status === undefined) return rows;
+      return rows.filter(item => Number(item.status) === Number(status));
     },
     loadMerchantVouchers() {
       if (!this.selectedShopId) return;
       this.loading = true;
       axios.get('/merchant/vouchers', {
-        params: {
-          shopId: this.selectedShopId,
-          status: this.voucherStatusFilter
-        }
+        params: { shopId: this.selectedShopId, status: this.voucherStatusFilter }
       }).then(({ data }) => {
         this.merchantVouchers = Array.isArray(data) ? data : [];
       }).catch((err) => {
@@ -187,49 +284,123 @@ new Vue({
         this.loading = false;
       });
     },
-    loadMerchantOrders() {
+    loadMerchantDishes() {
       if (!this.selectedShopId) return;
       this.loading = true;
-      axios.get('/merchant/voucher-orders', {
-        params: {
-          shopId: this.selectedShopId,
-          status: this.orderStatusFilter,
-          current: 1
-        }
-      }).then(({ data }) => {
-        this.merchantOrders = Array.isArray(data) ? data : [];
+      axios.get('/merchant/shops/' + this.selectedShopId + '/featured-dishes').then(({ data }) => {
+        this.merchantDishes = Array.isArray(data) ? data : [];
       }).catch((err) => {
-        this.$message.error(this.friendlyError(err, '加载订单失败'));
+        this.$message.error(this.friendlyError(err, '加载招牌菜失败'));
       }).finally(() => {
         this.loading = false;
       });
     },
-    openCreateDialog() {
+    loadMerchantGroupDeals() {
+      if (!this.selectedShopId) return;
+      this.loading = true;
+      axios.get('/merchant/shops/' + this.selectedShopId + '/group-deals').then(({ data }) => {
+        this.merchantGroupDeals = Array.isArray(data) ? data : [];
+      }).catch((err) => {
+        this.$message.error(this.friendlyError(err, '加载团购失败'));
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    loadOrdersForVerify() {
+      if (!this.selectedShopId) return;
+      this.loading = true;
+      const status = this.orderStatusFilter;
+      const requests = [];
+      if (this.verifyType === 'all' || this.verifyType === 'voucher') {
+        requests.push(axios.get('/merchant/voucher-orders', {
+          params: { shopId: this.selectedShopId, status, current: 1 }
+        }).then(({ data }) => { this.merchantOrders = Array.isArray(data) ? data : []; }));
+      } else {
+        this.merchantOrders = [];
+      }
+      if (this.verifyType === 'all' || this.verifyType === 'deal') {
+        requests.push(axios.get('/merchant/group-deal-orders', {
+          params: { shopId: this.selectedShopId, status, current: 1 }
+        }).then(({ data }) => { this.groupOrders = Array.isArray(data) ? data : []; }));
+      } else {
+        this.groupOrders = [];
+      }
+      if (this.verifyType === 'all' || this.verifyType === 'dish') {
+        requests.push(axios.get('/merchant/featured-dish-orders', {
+          params: { shopId: this.selectedShopId, status, current: 1 }
+        }).then(({ data }) => { this.dishOrders = Array.isArray(data) ? data : []; }));
+      } else {
+        this.dishOrders = [];
+      }
+      Promise.all(requests).catch((err) => {
+        this.$message.error(this.friendlyError(err, '加载核销订单失败'));
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    openCreateDialog(type) {
       if (!this.selectedShopId) {
         this.$message.warning('请先认领店铺或新建店铺');
         return;
       }
+      this.dialogType = type || this.manageType || 'voucher';
       this.dialogMode = 'create';
-      this.form = this.createEmptyForm();
-      this.form.shopId = this.selectedShopId || null;
+      this.form = this.createEmptyForm(this.dialogType);
+      this.form.shopId = this.selectedShopId;
       this.dialogVisible = true;
     },
-    editVoucher(voucher) {
+    editItem(item, type) {
+      this.dialogType = type || this.manageType;
       this.dialogMode = 'edit';
-      this.form = {
-        id: voucher.id,
-        shopId: voucher.shopId,
-        title: voucher.title,
-        subTitle: voucher.subTitle,
-        rules: voucher.rules,
-        type: voucher.type,
-        payValueYuan: this.toYuan(voucher.payValue),
-        actualValueYuan: this.toYuan(voucher.actualValue),
-        stock: voucher.stock || 1,
-        beginTime: voucher.beginTime ? new Date(voucher.beginTime) : null,
-        endTime: voucher.endTime ? new Date(voucher.endTime) : null
-      };
+      if (this.dialogType === 'dish') {
+        this.form = {
+          id: item.id,
+          shopId: item.shopId,
+          name: item.name || '',
+          description: item.description || '',
+          image: item.image || '',
+          priceYuan: item.price ? this.toYuan(item.price) : '',
+          sort: item.sort || 0
+        };
+      } else if (this.dialogType === 'deal') {
+        this.form = {
+          id: item.id,
+          shopId: item.shopId,
+          title: item.title || '',
+          description: item.description || '',
+          images: item.images || '',
+          rules: item.rules || '',
+          priceYuan: item.price ? this.toYuan(item.price) : '',
+          originalPriceYuan: item.originalPrice ? this.toYuan(item.originalPrice) : '',
+          stock: item.stock || 1,
+          beginTime: item.beginTime ? new Date(item.beginTime) : null,
+          endTime: item.endTime ? new Date(item.endTime) : null
+        };
+      } else {
+        this.form = {
+          id: item.id,
+          shopId: item.shopId,
+          title: item.title || '',
+          subTitle: item.subTitle || '',
+          rules: item.rules || '',
+          type: item.type || 0,
+          payValueYuan: this.toYuan(item.payValue),
+          actualValueYuan: this.toYuan(item.actualValue),
+          stock: item.stock || 1,
+          beginTime: item.beginTime ? new Date(item.beginTime) : null,
+          endTime: item.endTime ? new Date(item.endTime) : null
+        };
+      }
       this.dialogVisible = true;
+    },
+    saveCurrentForm() {
+      if (this.dialogType === 'dish') {
+        this.saveDish();
+      } else if (this.dialogType === 'deal') {
+        this.saveGroupDeal();
+      } else {
+        this.saveVoucher();
+      }
     },
     saveVoucher() {
       const payload = this.buildVoucherPayload();
@@ -240,49 +411,67 @@ new Vue({
       request.then(() => {
         this.$message.success(this.dialogMode === 'edit' ? '优惠券已更新' : '优惠券已创建');
         this.dialogVisible = false;
+        this.manageType = 'voucher';
         this.loadMerchantVouchers();
       }).catch((err) => {
         this.$message.error(this.friendlyError(err, '保存优惠券失败'));
       });
     },
-    publishVoucher(voucher) {
-      axios.post('/merchant/vouchers/' + voucher.id + '/publish').then(() => {
-        this.$message.success('优惠券已上架');
-        this.loadMerchantVouchers();
-      }).catch((err) => {
-        this.$message.error(this.friendlyError(err, '上架失败'));
-      });
-    },
-    unpublishVoucher(voucher) {
-      axios.post('/merchant/vouchers/' + voucher.id + '/unpublish').then(() => {
-        this.$message.success('优惠券已下架');
-        this.loadMerchantVouchers();
-      }).catch((err) => {
-        this.$message.error(this.friendlyError(err, '下架失败'));
-      });
-    },
-    verifyByCode() {
-      if (!this.verifyCode) {
-        this.$message.warning('请先输入券码');
+    saveDish() {
+      if (!this.form.name) {
+        this.$message.warning('请填写招牌菜名称');
         return;
       }
-      axios.post('/merchant/voucher-orders/verify-code', {
+      const payload = {
+        id: this.form.id,
         shopId: this.selectedShopId,
-        verifyCode: this.verifyCode
-      }).then(({ data }) => {
-        this.$message.success('核销成功');
-        this.verifyCode = '';
-        if (data && data.id) {
-          this.merchantOrders = [data].concat(this.merchantOrders.filter(item => item.id !== data.id));
-        }
-        this.loadMerchantOrders();
-        this.loadMerchantVouchers();
+        name: this.form.name,
+        description: this.form.description,
+        image: this.form.image,
+        price: this.toFen(this.form.priceYuan),
+        sort: this.form.sort || 0
+      };
+      const request = payload.id
+        ? axios.put('/merchant/shops/' + this.selectedShopId + '/featured-dishes', payload)
+        : axios.post('/merchant/shops/' + this.selectedShopId + '/featured-dishes', payload);
+      request.then(() => {
+        this.$message.success('招牌菜已保存');
+        this.dialogVisible = false;
+        this.manageType = 'dish';
+        this.loadMerchantDishes();
       }).catch((err) => {
-        this.$message.error(this.friendlyError(err, '核销失败'));
+        this.$message.error(this.friendlyError(err, '保存招牌菜失败'));
       });
     },
-    fillVerifyCode(code) {
-      this.verifyCode = code || '';
+    saveGroupDeal() {
+      if (!this.form.title) {
+        this.$message.warning('请填写团购标题');
+        return;
+      }
+      const payload = {
+        id: this.form.id,
+        shopId: this.selectedShopId,
+        title: this.form.title,
+        description: this.form.description,
+        images: this.form.images,
+        rules: this.form.rules,
+        price: this.toFen(this.form.priceYuan),
+        originalPrice: this.toFen(this.form.originalPriceYuan),
+        stock: this.form.stock,
+        beginTime: this.form.beginTime,
+        endTime: this.form.endTime
+      };
+      const request = payload.id
+        ? axios.put('/merchant/shops/' + this.selectedShopId + '/group-deals', payload)
+        : axios.post('/merchant/shops/' + this.selectedShopId + '/group-deals', payload);
+      request.then(() => {
+        this.$message.success('团购已保存');
+        this.dialogVisible = false;
+        this.manageType = 'deal';
+        this.loadMerchantGroupDeals();
+      }).catch((err) => {
+        this.$message.error(this.friendlyError(err, '保存团购失败'));
+      });
     },
     buildVoucherPayload() {
       if (!this.form.shopId) {
@@ -306,21 +495,100 @@ new Vue({
         subTitle: this.form.subTitle,
         rules: this.form.rules,
         type: this.form.type,
-        payValue: payValue,
-        actualValue: actualValue,
+        payValue,
+        actualValue,
         stock: this.form.stock,
         beginTime: this.form.beginTime,
         endTime: this.form.endTime
       };
     },
+    publishItem(item, type) {
+      const actualType = type || this.manageType;
+      const url = actualType === 'dish'
+        ? '/merchant/featured-dishes/' + item.id + '/publish'
+        : actualType === 'deal'
+          ? '/merchant/group-deals/' + item.id + '/publish'
+          : '/merchant/vouchers/' + item.id + '/publish';
+      axios.post(url).then(() => {
+        this.$message.success('已上架');
+        this.refreshCurrentTab();
+      }).catch((err) => {
+        this.$message.error(this.friendlyError(err, '上架失败'));
+      });
+    },
+    unpublishItem(item, type) {
+      const actualType = type || this.manageType;
+      const url = actualType === 'dish'
+        ? '/merchant/featured-dishes/' + item.id + '/unpublish'
+        : actualType === 'deal'
+          ? '/merchant/group-deals/' + item.id + '/unpublish'
+          : '/merchant/vouchers/' + item.id + '/unpublish';
+      axios.post(url).then(() => {
+        this.$message.success('已下架');
+        this.refreshCurrentTab();
+      }).catch((err) => {
+        this.$message.error(this.friendlyError(err, '下架失败'));
+      });
+    },
+    verifyByCode() {
+      if (!this.verifyCode) {
+        this.$message.warning('请先输入券码');
+        return;
+      }
+      const code = this.verifyCode.trim().toUpperCase();
+      const type = code.indexOf('GD') === 0 ? 'deal' : code.indexOf('FD') === 0 ? 'dish' : 'voucher';
+      const url = type === 'deal'
+        ? '/merchant/group-deal-orders/verify-code'
+        : type === 'dish'
+          ? '/merchant/featured-dish-orders/verify-code'
+          : '/merchant/voucher-orders/verify-code';
+      axios.post(url, {
+        shopId: this.selectedShopId,
+        verifyCode: code
+      }).then(() => {
+        this.$message.success('核销成功');
+        this.verifyCode = '';
+        this.activeTab = 'verify';
+        this.verifyType = type;
+        this.loadOrdersForVerify();
+        if (type === 'voucher') this.loadMerchantVouchers();
+        if (type === 'deal') this.loadMerchantGroupDeals();
+      }).catch((err) => {
+        this.$message.error(this.friendlyError(err, '核销失败'));
+      });
+    },
+    fillVerifyCode(code) {
+      this.verifyCode = code || '';
+    },
+    normalizeOrder(order, type) {
+      order = order || {};
+      const titleMap = {
+        voucher: order.voucherTitle || '优惠券订单',
+        deal: order.dealTitle || '团购订单',
+        dish: order.dishName || '招牌菜订单'
+      };
+      const imageMap = {
+        voucher: order.voucherImages || this.getShopImage(),
+        deal: order.dealImages || this.getShopImage(),
+        dish: order.dishImage || this.getShopImage()
+      };
+      return Object.assign({}, order, {
+        productType: type,
+        productLabel: type === 'voucher' ? '优惠券' : type === 'deal' ? '团购' : '招牌菜',
+        displayTitle: titleMap[type],
+        displayImage: imageMap[type],
+        displayPrice: order.payValue
+      });
+    },
+    dateValue(value) {
+      if (!value) return 0;
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? 0 : date.getTime();
+    },
     toFen(value) {
-      if (value === null || value === undefined || value === '') {
-        return null;
-      }
+      if (value === null || value === undefined || value === '') return null;
       const num = Number(value);
-      if (!isFinite(num) || num <= 0) {
-        return null;
-      }
+      if (!isFinite(num) || num < 0) return null;
       return Math.round(num * 100);
     },
     toYuan(value) {
@@ -337,20 +605,29 @@ new Vue({
       const minutes = String(date.getMinutes()).padStart(2, '0');
       return month + '月' + day + '日 ' + hours + ':' + minutes;
     },
-    getVoucherStatusText(status) {
+    getStatusText(status) {
       const map = { 0: '草稿', 1: '已上架', 2: '已下架', 3: '已结束' };
       return map[status] || '未知状态';
     },
     getOrderStatusText(status) {
-      const map = { 1: '待支付', 2: '已支付', 3: '已核销', 4: '已取消', 5: '退款中', 6: '已退款' };
+      const map = { 1: '待支付', 2: '待核销', 3: '已核销', 4: '已取消', 5: '退款中', 6: '已退款' };
       return map[status] || '未知状态';
     },
     getShopImage() {
-      var shop = this.selectedShop;
+      const shop = this.selectedShop;
       if (!shop) return '/imgs/icons/default-icon.png';
-      var raw = shop.images || '';
-      var first = raw.split(',')[0] || '';
+      const raw = shop.images || '';
+      const first = raw.split(',')[0] || '';
       return util.resolveImageUrl(first, '/imgs/icons/default-icon.png');
+    },
+    getItemImage(item) {
+      if (!item) return this.getShopImage();
+      const raw = item.image || item.images || item.voucherImages || item.dealImages || item.dishImage || '';
+      const first = raw.split(',')[0] || '';
+      return util.resolveImageUrl(first, this.getShopImage());
+    },
+    handleImageError(event) {
+      util.applyImageFallback(event, '/imgs/icons/default-icon.png');
     }
   }
 });

@@ -93,6 +93,38 @@ public class MerchantAuthService {
                 .count() > 0;
     }
 
+    public boolean canEditShop(Long userId, Long shopId) {
+        if (userId == null || shopId == null) {
+            return false;
+        }
+        if (isAdmin(userId)) {
+            return shopService.getById(shopId) != null;
+        }
+        String role = getShopRole(userId, shopId);
+        return MerchantRoleConstants.SHOP_ROLE_OWNER.equals(role)
+                || MerchantRoleConstants.SHOP_ROLE_MANAGER.equals(role);
+    }
+
+    public boolean canVerifyShopOrder(Long userId, Long shopId) {
+        return canManageShop(userId, shopId);
+    }
+
+    public String getShopRole(Long userId, Long shopId) {
+        if (userId == null || shopId == null) {
+            return "";
+        }
+        if (isAdmin(userId)) {
+            return MerchantRoleConstants.ROLE_ADMIN;
+        }
+        ShopMember member = shopMemberService.lambdaQuery()
+                .eq(ShopMember::getUserId, userId)
+                .eq(ShopMember::getShopId, shopId)
+                .eq(ShopMember::getStatus, MerchantRoleConstants.MEMBER_STATUS_ENABLED)
+                .last("limit 1")
+                .one();
+        return member == null || member.getRoleCode() == null ? "" : member.getRoleCode();
+    }
+
     public List<Shop> listManagedShops(Long userId, String keyword, Integer current) {
         MerchantProfileDTO profile = buildProfile(userId);
         if (!Boolean.TRUE.equals(profile.getMerchantEnabled())) {

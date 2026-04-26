@@ -36,6 +36,8 @@ public interface IFavoritesService extends IService<Favorites> {
      */
     Result isFavorite(Integer type, Long targetId);
 
+    Result toggleFavorite(Integer type, Long targetId);
+
     /**
      * 查询收藏列表
      *

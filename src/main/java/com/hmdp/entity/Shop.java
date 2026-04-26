@@ -120,6 +120,11 @@ public class Shop implements Serializable {
     private String openHours;
 
     /**
+     * 店铺联系电话
+     */
+    private String phone;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;
@@ -142,6 +147,8 @@ public class Shop implements Serializable {
     @TableField(exist = false)
     private String decisionReason;
 
-    public void setPhone(String s) {
+    public Shop setPhone(String s) {
+        this.phone = s;
+        return this;
     }
 }

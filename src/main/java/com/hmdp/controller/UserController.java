@@ -1,6 +1,7 @@
 package com.hmdp.controller;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.LoginFormDTO;
 import com.hmdp.dto.RegisterFormDTO;
 import com.hmdp.dto.Result;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -82,6 +85,20 @@ public class UserController {
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         merchantAuthService.fillUserFlags(userDTO);
         return Result.ok(userDTO);
+    }
+
+    @GetMapping("/recommendations")
+    public Result recommendations(@RequestParam(value = "current", defaultValue = "1") Integer current) {
+        UserDTO currentUser = UserHolder.getUser();
+        Long currentUserId = currentUser == null ? null : currentUser.getId();
+        Page<User> page = userService.lambdaQuery()
+                .ne(currentUserId != null, User::getId, currentUserId)
+                .orderByDesc(User::getUpdateTime)
+                .page(new Page<>(current == null || current < 1 ? 1 : current, 20));
+        List<UserDTO> users = page.getRecords().stream()
+                .map(user -> BeanUtil.copyProperties(user, UserDTO.class))
+                .collect(Collectors.toList());
+        return Result.ok(users, page.getTotal());
     }
 
     @PostMapping("/sign")

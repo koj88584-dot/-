@@ -1,78 +1,146 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <title>发布笔记</title>
   <link rel="stylesheet" href="/css/element.css">
-  <link href="/css/main.css" rel="stylesheet">
-  <link href="/css/blog-edit.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/blog-edit.css">
 </head>
 <body>
-
-<div id="app" v-show="pageReady" style="display:none;">
-  <div class="header">
-    <div class="header-cancel-btn" @click="goBack">取消</div>
-    <div class="header-title">&nbsp;&nbsp;发笔记 <i class="el-icon-info"></i></div>
-    <div class="header-commit">
-      <div class="header-commit-btn" @click="submitBlog">发布</div>
+<div id="app" class="editor-page" v-show="pageReady" v-cloak>
+  <header class="editor-header">
+    <button class="ghost-btn" @click="goBack">取消</button>
+    <div class="editor-header__title">
+      <strong>写一篇探店笔记</strong>
+      <span>把今天值得被记住的地方，认真放进来</span>
     </div>
-  </div>
+    <button class="publish-btn" :disabled="submitting || !canPublish" @click="submitBlog">
+      {{ submitting ? '发布中' : '发布' }}
+    </button>
+  </header>
 
-  <div class="upload-box">
-    <input type="file" @change="fileSelected" name="file" ref="fileInput" style="display:none">
-    <div class="upload-btn" @click="openFileDialog">
-      <i class="el-icon-camera"></i>
-      <div style="font-size:12px;line-height:12px">上传照片</div>
-    </div>
-    <div class="pic-list">
-      <div class="pic-box" v-for="(f, i) in fileList" :key="i">
-        <img :src="normalizeImageUrl(f)" alt="">
-        <i class="el-icon-close" @click="deletePic(i)"></i>
+  <main class="editor-main">
+    <section class="hero-card">
+      <div>
+        <p>HMDP NOTEBOOK</p>
+        <h1>好内容不需要很吵，但要有细节。</h1>
+        <span>建议上传 1-9 张照片，写清楚位置、体验和推荐理由。</span>
       </div>
-    </div>
-  </div>
+      <div class="hero-badge">
+        <strong>{{ fileList.length }}</strong>
+        <span>张照片</span>
+      </div>
+    </section>
 
-  <div class="blog-title">
-    <input v-model="params.title" type="text" maxlength="50" placeholder="填写标题更容易上首页哦~">
-  </div>
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <strong>照片墙</strong>
+          <span>第一张会作为封面</span>
+        </div>
+        <em>{{ fileList.length }}/9</em>
+      </div>
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        multiple
+        style="display:none"
+        @change="fileSelected"
+      >
+      <div class="photo-grid">
+        <button class="upload-tile" :disabled="uploading || fileList.length >= 9" @click="openFileDialog">
+          <i :class="uploading ? 'el-icon-loading' : 'el-icon-camera'"></i>
+          <span>{{ uploading ? '上传中' : '添加照片' }}</span>
+        </button>
+        <div class="photo-tile" v-for="(item, index) in fileList" :key="item + index">
+          <img :src="normalizeImageUrl(item)" alt="">
+          <button @click="deletePic(index)"><i class="el-icon-close"></i></button>
+          <em v-if="index === 0">封面</em>
+        </div>
+      </div>
+    </section>
 
-  <div class="blog-content">
-    <textarea v-model="params.content" placeholder="最近打卡了什么地方，有什么新奇体验呢？"></textarea>
-  </div>
+    <section class="panel">
+      <label class="field-label">标题</label>
+      <input
+        class="title-input"
+        v-model.trim="params.title"
+        maxlength="50"
+        placeholder="比如：这家巷口小店，真的会让人想二刷"
+      >
+      <div class="field-meta">{{ params.title.length }}/50</div>
 
-  <div class="divider"></div>
+      <label class="field-label field-label--spaced">正文</label>
+      <textarea
+        class="content-input"
+        v-model.trim="params.content"
+        maxlength="2000"
+        placeholder="写写环境、菜品、服务、价格和适合什么场景。越具体，越像朋友在认真推荐。"
+      ></textarea>
+      <div class="field-meta">{{ params.content.length }}/2000</div>
+    </section>
 
-  <div class="blog-shop" @click="showDialog = true">
-    <div class="shop-left">关联商户</div>
-    <div v-if="selectedShop.name">{{ selectedShop.name }}</div>
-    <div v-else>去选择&nbsp;<i class="el-icon-arrow-right"></i></div>
-  </div>
+    <section class="shop-card" @click="showDialog = true">
+      <div class="shop-card__icon"><i class="el-icon-location-outline"></i></div>
+      <div class="shop-card__main">
+        <strong>{{ selectedShop.name || '关联商户' }}</strong>
+        <span>{{ selectedShop.name ? (selectedShop.area || selectedShop.address || '已选择商户') : '让读者一键跳到店铺详情' }}</span>
+      </div>
+      <i class="el-icon-arrow-right"></i>
+    </section>
+
+    <section class="preview-card">
+      <div class="panel-head">
+        <div>
+          <strong>发布预览</strong>
+          <span>大致会以这样的节奏出现在笔记流里</span>
+        </div>
+      </div>
+      <div class="preview-note">
+        <img :src="previewCoverImage" alt="" @error="handlePreviewImageError">
+        <div class="preview-note__body">
+          <h2>{{ previewTitle }}</h2>
+          <p>{{ previewContent }}</p>
+          <span v-if="previewShopText" class="preview-note__shop">
+            <i class="el-icon-location"></i> {{ previewShopText }}
+          </span>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <div class="mask" v-show="showDialog" @click="showDialog = false"></div>
-
   <transition name="el-zoom-in-bottom">
-    <div class="shop-dialog" v-show="showDialog">
-      <div class="blog-shop">
-        <div class="shop-left">关联商户</div>
+    <section class="shop-dialog" v-show="showDialog">
+      <div class="dialog-grip"></div>
+      <div class="dialog-head">
+        <div>
+          <strong>选择关联商户</strong>
+          <span>{{ currentCity }}</span>
+        </div>
+        <button @click="showDialog = false"><i class="el-icon-close"></i></button>
       </div>
       <div class="search-bar">
-        <div class="city-select">{{ currentCity }} <i class="el-icon-arrow-down"></i></div>
-        <div class="search-input">
-          <i class="el-icon-search" @click="queryShops"></i>
-          <input v-model="shopName" type="text" placeholder="搜索商户名称" @keyup.enter="queryShops">
-        </div>
+        <i class="el-icon-search"></i>
+        <input v-model.trim="shopName" type="text" placeholder="搜索商户名称" @keyup.enter="queryShops">
+        <button @click="queryShops">搜索</button>
       </div>
       <div class="shop-list" v-loading="shopLoading">
-        <div v-for="s in shops" :key="s.id" class="shop-item" @click="selectShop(s)">
-          <div class="shop-name">{{ s.name }}</div>
-          <div>{{ s.area || s.address || '暂无地址' }}</div>
-        </div>
-        <div v-if="!shopLoading && shops.length === 0" style="padding:24px 16px;color:#999;text-align:center;">
-          当前位置缓存中还没有可关联的商户，先去首页或店铺页浏览一下附近商铺再来试试
+        <article v-for="shop in shops" :key="shop.id" class="shop-item" @click="selectShop(shop)">
+          <div>
+            <strong>{{ shop.name }}</strong>
+            <span>{{ shop.area || shop.address || '暂无地址' }}</span>
+          </div>
+          <i class="el-icon-check" v-if="selectedShop.id === shop.id"></i>
+        </article>
+        <div v-if="!shopLoading && shops.length === 0" class="shop-empty">
+          当前位置缓存中还没有可关联商户，可以先去首页或店铺页浏览附近商铺。
         </div>
       </div>
-    </div>
+    </section>
   </transition>
 </div>
 
@@ -81,7 +149,6 @@
 <script src="/js/element.js"></script>
 <script src="/js/common.js"></script>
 <script src="/js/auth.js"></script>
-<script src="/js/footer.js"></script>
 <script src="/js/blog-edit-page.js"></script>
 </body>
 </html>

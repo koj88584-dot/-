@@ -70,6 +70,8 @@ public class PrivacySettingServiceImpl extends ServiceImpl<PrivacySettingMapper,
             setting.setAllowMessage(1);
             setting.setAllowRecommend(1);
             setting.setShowOnlineStatus(1);
+            setting.setStealthMode(0);
+            setting.setAllowVisitNotify(1);
         }
         return setting;
     }
@@ -123,6 +125,8 @@ public class PrivacySettingServiceImpl extends ServiceImpl<PrivacySettingMapper,
         setting.setAllowMessage(1);
         setting.setAllowRecommend(1);
         setting.setShowOnlineStatus(1);
+        setting.setStealthMode(0);
+        setting.setAllowVisitNotify(1);
         setting.setCreateTime(LocalDateTime.now());
         setting.setUpdateTime(LocalDateTime.now());
         save(setting);

@@ -6,12 +6,15 @@ var app = new Vue({
       user: {},
       loginUser: null,
       info: {},
+      publicPrivacy: {},
       blogs: [],
       followed: false,
       isMutual: false,
       commonFollows: [],
       followCount: 0,
       followerCount: 0,
+      followCountPrivate: false,
+      followerCountPrivate: false,
       activeTab: 'blogs',
       showVisitToast: false,
       fallbackAvatar: '/imgs/icons/default-icon.png',
@@ -51,6 +54,7 @@ var app = new Vue({
       axios.get('/user/' + this.userId).then(function(res) {
         this.user = res.data || {};
         this.loadUserInfo();
+        this.loadPublicPrivacy();
         this.loadBlogs();
         this.checkFollowed();
         this.loadFollowCounts();
@@ -65,6 +69,13 @@ var app = new Vue({
           this.info = res.data;
         }
       }.bind(this)).catch(function() {});
+    },
+    loadPublicPrivacy: function() {
+      axios.get('/privacy/public/' + this.userId).then(function(res) {
+        this.publicPrivacy = res.data || {};
+      }.bind(this)).catch(function() {
+        this.publicPrivacy = {};
+      }.bind(this));
     },
     loadBlogs: function() {
       axios.get('/blog/of/user', {
@@ -87,22 +98,16 @@ var app = new Vue({
       }.bind(this));
     },
     checkMutual: function() {
-      // Check if the target user follows me back (mutual follow)
-      // We can check by querying common follows with self
       if (!this.loginUser) return;
-      axios.get('/follow/common/' + this.userId).then(function(res) {
-        var commons = Array.isArray(res.data) ? res.data : [];
-        // If I follow them and they follow me, it's mutual
-        // Simple heuristic: check if me is in their followers
-        this.isMutual = this.followed; // We'll refine this
-      }.bind(this)).catch(function() {}.bind(this));
-
-      // Better approach: check if they follow me
-      if (this.loginUser && this.loginUser.id) {
-        axios.get('/follow/or/not/' + this.loginUser.id).catch(function() {});
-      }
+      axios.get('/follow/is-mutual/' + this.userId).then(function(res) {
+        this.isMutual = !!res.data;
+      }.bind(this)).catch(function() {
+        this.isMutual = false;
+      }.bind(this));
     },
     loadFollowCounts: function() {
+      this.followCountPrivate = false;
+      this.followerCountPrivate = false;
       // Load follow count
       axios.get('/follow/list/' + this.userId, { params: { current: 1 } })
         .then(function(res) {
@@ -112,7 +117,10 @@ var app = new Vue({
           } else if (Array.isArray(data)) {
             this.followCount = data.length;
           }
-        }.bind(this)).catch(function() {}.bind(this));
+        }.bind(this)).catch(function() {
+          this.followCountPrivate = true;
+          this.followCount = 0;
+        }.bind(this));
 
       // Load follower count
       axios.get('/follow/followers/' + this.userId, { params: { current: 1 } })
@@ -123,7 +131,10 @@ var app = new Vue({
           } else if (Array.isArray(data)) {
             this.followerCount = data.length;
           }
-        }.bind(this)).catch(function() {}.bind(this));
+        }.bind(this)).catch(function() {
+          this.followerCountPrivate = true;
+          this.followerCount = 0;
+        }.bind(this));
     },
     toggleFollow: function() {
       if (!util.hasToken()) {
@@ -151,11 +162,13 @@ var app = new Vue({
         util.redirectToLogin(location.pathname + location.search, 200);
         return;
       }
-      // Navigate to chat page (will be created)
-      // For now, show a message
-      this.$message.info('聊天功能开发中，敬请期待');
+      location.href = '/pages/misc/chat.html?userId=' + this.userId;
     },
     switchToCommon: function() {
+      if (this.followCountPrivate) {
+        this.$message.info('对方已隐藏关注列表');
+        return;
+      }
       this.activeTab = 'common';
       if (!this.commonFollows.length) {
         this.loadCommonFollows();
@@ -170,14 +183,13 @@ var app = new Vue({
     },
     recordVisit: function() {
       if (!util.hasToken()) return;
-      // Record profile visit via browse history API
-      axios.post('/browse-history', null, {
-        params: { targetType: 'USER', targetId: this.userId }
-      }).then(function() {
-        this.showVisitToast = true;
-        setTimeout(function() { this.showVisitToast = false; }.bind(this), 2000);
+      axios.post('/profile-visit/record/' + this.userId).then(function(res) {
+        var data = res.data || {};
+        if (data.recorded) {
+          this.showVisitToast = true;
+          setTimeout(function() { this.showVisitToast = false; }.bind(this), 2000);
+        }
       }.bind(this)).catch(function() {
-        // Visit recording is optional, don't show errors
       });
     },
     openBlog: function(id) {
@@ -188,6 +200,14 @@ var app = new Vue({
       location.href = 'other-info.html?id=' + id;
     },
     viewFollowList: function(type) {
+      if (type === 'follow' && this.followCountPrivate) {
+        this.$message.info('对方已隐藏关注列表');
+        return;
+      }
+      if (type === 'follower' && this.followerCountPrivate) {
+        this.$message.info('对方已隐藏粉丝列表');
+        return;
+      }
       location.href = '/pages/misc/follow-list.html?id=' + this.userId + '&type=' + type;
     },
     sharePage: function() {

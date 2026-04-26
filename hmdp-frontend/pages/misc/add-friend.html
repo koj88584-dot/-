@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>添加好友</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #fff;
+      color: #16191f;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .page {
+      width: min(100%, 430px);
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+    .nav {
+      display: grid;
+      grid-template-columns: 42px 1fr 42px;
+      align-items: center;
+      margin-bottom: 26px;
+    }
+    .nav button {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      background: #fff;
+      font-size: 22px;
+    }
+    .nav strong {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 900;
+    }
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .quick-card {
+      height: 86px;
+      border: 0;
+      border-radius: 8px;
+      background: #f6f6f6;
+      color: #1f2329;
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+    .quick-card i {
+      font-size: 28px;
+    }
+    .section-title {
+      margin: 0 0 18px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+    .friend-row {
+      display: grid;
+      grid-template-columns: 62px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .friend-row img {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #f3f3f3;
+    }
+    .friend-main strong {
+      display: block;
+      overflow: hidden;
+      font-size: 19px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .friend-main p {
+      margin: 6px 0 0;
+      color: #9b9b9b;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .friend-main em {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #f5f5f5;
+      color: #777;
+      font-style: normal;
+      font-size: 12px;
+    }
+    .follow-btn {
+      min-width: 74px;
+      height: 34px;
+      border: 1px solid #d87055;
+      border-radius: 999px;
+      background: #fff;
+      color: #d87055;
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .empty {
+      padding: 38px 0;
+      color: #999;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div id="app" class="page" v-cloak>
+  <header class="nav">
+    <button @click="goBack"><i class="el-icon-arrow-left"></i></button>
+    <strong>添加好友</strong>
+    <span></span>
+  </header>
+
+  <section class="quick-grid">
+    <button class="quick-card" @click="scan"><i class="el-icon-full-screen"></i>扫一扫</button>
+    <button class="quick-card" @click="showCard"><i class="el-icon-menu"></i>我的名片</button>
+  </section>
+
+  <h2 class="section-title">发现好友</h2>
+  <div v-loading="loading">
+    <article class="friend-row" v-for="friend in friends" :key="friend.id">
+      <img :src="avatarUrl(friend.icon)" alt="" @error="handleAvatarError">
+      <div class="friend-main" @click="openProfile(friend.id)">
+        <strong>{{ friend.nickName || '用户' + friend.id }}</strong>
+        <p>{{ friend.introduce || friend.city || '近期在本地互动活跃' }}</p>
+        <em>{{ friend.merchantEnabled ? '商家主理人' : '本地生活玩家' }}</em>
+      </div>
+      <button class="follow-btn" @click="follow(friend)" :disabled="friend.following">
+        {{ friend.following ? '已关注' : '关注' }}
+      </button>
+    </article>
+    <div class="empty" v-if="!loading && !friends.length">暂时没有推荐用户，稍后再来看看。</div>
+  </div>
+</div>
+
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/add-friend-page.js"></script>
+</body>
+</html>

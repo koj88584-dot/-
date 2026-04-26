@@ -1486,6 +1486,9 @@
         </el-dropdown-menu>
       </el-dropdown>
       <div class="search-box">
+        <button class="scan-btn" @click="scanCode" title="扫一扫">
+          <i class="el-icon-full-screen"></i>
+        </button>
         <input 
           class="search-input" 
           v-model="searchKeyword" 
@@ -1499,6 +1502,16 @@
         </button>
       </div>
     </header>
+
+    <nav class="home-tabs">
+      <button
+        v-for="tab in homeTabItems"
+        :key="tab.key"
+        class="home-tab"
+        :class="{ 'is-active': homeTab === tab.key }"
+        @click="switchHomeTab(tab.key)"
+      >{{ tab.label }}</button>
+    </nav>
 
     <div class="container">
       <div class="content-wrapper">
@@ -1540,6 +1553,21 @@
             <button class="city-route-chip" v-for="route in cityFeaturedRoutes" :key="route" @click="openCityRoute(route)">
               {{ route }}
             </button>
+          </div>
+        </section>
+
+        <section class="hot-feed fade-in" v-if="homeTab === 'hot'">
+          <div class="section-header">
+            <h2 class="section-title">{{ currentCity }}热点</h2>
+            <span class="section-more">基于本城店铺和热搜</span>
+          </div>
+          <div class="hot-row" v-for="(event, index) in cityHotEvents" :key="event.keyword || event.title">
+            <div class="hot-rank">{{ index + 1 }}</div>
+            <div class="hot-main" @click="searchCityHotKeyword(event.keyword || event.title)">
+              <strong>{{ event.title }}</strong>
+              <span>{{ event.subtitle }}</span>
+            </div>
+            <img class="hot-thumb" :src="resolveImageUrl(event.image)" alt="" @error="handleImageError($event, 'shop')">
           </div>
         </section>
 
@@ -1594,14 +1622,14 @@
 
       <section class="content-section">
         <div class="section-header">
-          <h2 class="section-title">推荐笔记</h2>
+          <h2 class="section-title">{{ noteSectionTitle }}</h2>
           <span class="section-more" @click="viewMoreNotes">
             更多 <i class="el-icon-arrow-right"></i>
           </span>
         </div>
         <div class="waterfall">
           <div class="note-card fade-in" 
-               v-for="(note, index) in notes" 
+               v-for="(note, index) in displayNotes" 
                :key="note.id" 
                @click="viewNote(note)"
                :style="{ animationDelay: (index * 0.1) + 's' }">
@@ -1703,28 +1731,8 @@
     </div>
 
     <!-- 搴曢儴瀵艰埅 -->
-    <!-- 底部导航 (App-like Glassmorphism Tab Bar) -->
-    <nav class="foot">
-      <div class="foot-box active" @click="goHome">
-        <i class="el-icon-s-home foot-view"></i>
-        <span class="foot-text">首页</span>
-      </div>
-      <div class="foot-box tap-effect" @click="goMap">
-        <i class="el-icon-map-location foot-view"></i>
-        <span class="foot-text">地图</span>
-      </div>
-      <div class="add-btn tap-effect" @click="publish">
-        <i class="el-icon-plus"></i>
-      </div>
-      <div class="foot-box tap-effect" @click="goMessages">
-        <i class="el-icon-chat-dot-round foot-view"></i>
-        <span class="foot-text">消息</span>
-      </div>
-      <div class="foot-box tap-effect" @click="goProfile">
-        <i class="el-icon-user foot-view"></i>
-        <span class="foot-text">我的</span>
-      </div>
-    </nav>
+    <!-- 底部导航统一使用 foot-bar，避免不同页面切换时按钮尺寸跳变 -->
+    <foot-bar :active-btn="1"></foot-bar>
 
     <!-- 鍩庡競閫夋嫨瀵硅瘽妗?-->
     <el-dialog
@@ -1786,6 +1794,7 @@
   <script src="/js/element.js"></script>
   <script src="/js/common.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/footer.js"></script>
   <script src="/js/index-page.js"></script>
 
   <style>
@@ -1931,12 +1940,163 @@
     .note-likes { font-size: 11px; }
     .note-likes i { font-size: 12px; }
     .note-badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
+    .waterfall {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 12px !important;
+      column-count: initial !important;
+      column-gap: 12px !important;
+      align-items: start;
+    }
+    .note-card {
+      position: relative;
+      margin-bottom: 0 !important;
+      break-inside: auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(58, 52, 50, 0.06);
+    }
+    .note-image-wrapper {
+      aspect-ratio: 1 / 1.08;
+      background: linear-gradient(135deg, #fff4ee 0%, #f6eee8 100%);
+    }
+    .note-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .note-author {
+      gap: 6px;
+    }
+    .author-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .note-likes {
+      margin-left: auto;
+      white-space: nowrap;
+    }
     .shop-section { margin-top: 10px; padding: 0 0 16px; border-radius: 16px; }
     .shop-card { padding: 12px; border-radius: 14px; gap: 12px; }
     .shop-image { width: 80px !important; height: 80px !important; border-radius: 12px !important; }
     .shop-name { font-size: 14px !important; }
     .bottom-nav { border-radius: 20px 20px 0 0; }
     .nav-add { width: 48px; height: 48px; margin-top: -24px; font-size: 24px; border: 3px solid var(--bg); }
+
+    .home-tabs {
+      position: sticky;
+      top: 58px;
+      z-index: 90;
+      display: flex;
+      gap: 10px;
+      overflow: visible;
+      padding: 8px 14px 10px;
+      margin: 0 auto 8px;
+      width: min(100%, 390px);
+      background: rgba(253, 251, 249, 0.92);
+      backdrop-filter: blur(18px);
+    }
+    .home-tabs::-webkit-scrollbar { display: none; }
+    .home-tab {
+      position: relative;
+      flex: 1 1 0;
+      border: 0;
+      background: transparent;
+      color: #5f6674;
+      font-size: 19px;
+      font-weight: 900;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .home-tab.is-active {
+      color: #101828;
+    }
+    .home-tab.is-active::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: -8px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--primary);
+    }
+    .scan-btn {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--primary);
+      font-size: 18px;
+      z-index: 2;
+    }
+    .search-input { padding-left: 42px !important; }
+    .city-hot-tags { display: none !important; }
+    .city-section-subtitle { display: none !important; }
+    .city-panel { padding-top: 14px !important; }
+    .city-scene-card p,
+    .city-scene-desc { display: none !important; }
+    .assistant-showcase { margin-top: 4px !important; }
+    .assistant-shell {
+      min-height: auto !important;
+      padding: 14px !important;
+      grid-template-columns: 1fr !important;
+    }
+    .assistant-copy h2 { font-size: 18px !important; }
+    .assistant-copy p,
+    .assistant-demo { display: none !important; }
+    .assistant-shortcuts { margin-top: 10px !important; }
+    .assistant-enter { margin-top: 10px !important; }
+    .hot-feed {
+      margin-bottom: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(58, 52, 50, 0.06);
+    }
+    .hot-row {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) 76px;
+      gap: 10px;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid #f3eee9;
+    }
+    .hot-row:last-child { border-bottom: 0; }
+    .hot-rank {
+      color: var(--primary);
+      font-size: 19px;
+      font-weight: 900;
+    }
+    .hot-main strong {
+      display: block;
+      overflow: hidden;
+      color: #172033;
+      font-size: 16px;
+      font-weight: 900;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .hot-main span {
+      display: block;
+      margin-top: 4px;
+      color: #8b94a5;
+      font-size: 12px;
+    }
+    .hot-thumb {
+      width: 76px;
+      height: 56px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #fff1e8;
+    }
 </style>
 </body>
 </html>

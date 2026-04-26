@@ -128,6 +128,45 @@
           </div>
         </div>
       </el-tab-pane>
+      <el-tab-pane label="资料变更" name="shopUpdate">
+        <div class="list">
+          <div class="card" v-for="item in shopUpdateApplications" :key="item.id">
+            <div style="font-weight:700;">{{ item.shopName || ('店铺 #' + item.shopId) }}</div>
+            <div class="meta">
+              <div>申请人：{{ item.userNickName || ('用户 #' + item.userId) }}</div>
+              <div>状态：{{ item.statusText }}</div>
+              <div>提交时间：{{ item.createTime }}</div>
+              <div v-if="item.message">说明：{{ item.message }}</div>
+              <div v-if="item.reviewRemark">审核备注：{{ item.reviewRemark }}</div>
+            </div>
+            <div class="meta" v-if="formatChangePayload(item.changePayload).length">
+              <div v-for="field in formatChangePayload(item.changePayload)" :key="field.key">
+                {{ field.label }}：{{ field.value }}
+              </div>
+            </div>
+            <div class="image-section" v-if="splitImages(item.proofImages).length">
+              <div class="image-title">证明图片</div>
+              <div class="image-list">
+                <button class="image-thumb" v-for="(image, index) in splitImages(item.proofImages)" :key="image + index" @click="previewImage(image)">
+                  <img :src="resolveImage(image)" alt="证明图片">
+                </button>
+              </div>
+            </div>
+            <div class="image-section" v-for="field in formatChangePayload(item.changePayload).filter(field => field.key === 'images')" :key="'images-' + item.id">
+              <div class="image-title">变更后的门店图片</div>
+              <div class="image-list">
+                <button class="image-thumb" v-for="(image, index) in splitImages(field.value)" :key="image + index" @click="previewImage(image)">
+                  <img :src="resolveImage(image)" alt="门店图片">
+                </button>
+              </div>
+            </div>
+            <div class="actions" v-if="item.status === 0">
+              <el-button size="mini" type="primary" @click="approve('shopUpdate', item.id)">通过并生效</el-button>
+              <el-button size="mini" type="danger" @click="reject('shopUpdate', item.id)">驳回</el-button>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
     </el-tabs>
   </div>
   <el-dialog :visible.sync="imagePreviewVisible" width="92%" append-to-body>

@@ -43,7 +43,7 @@ const DEFAULT_LOCATION = { lng: 112.9388, lat: 28.2282, accuracy: 1000 };
         currentCityCode() { return util.getActiveCityCode(this.cityProfile); },
         cityMapTitle() {
           return this.cityEditionEnabled
-            ? this.currentCity + '玩法地图 · ' + this.cityProfile.cityTagline
+            ? this.currentCity + '玩法地图'
             : this.currentCity + '附近地图';
         },
         radiusLabel() { return this.radius < 1000 ? this.radius + '米' : (this.radius / 1000) + '公里'; },

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>私信聊天</title>
+  <link rel="stylesheet" href="/css/element.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/chat.css">
+</head>
+<body>
+<div id="app" class="chat-shell" v-cloak>
+  <header class="chat-top">
+    <button class="icon-button" @click="goBack">
+      <i class="el-icon-arrow-left"></i>
+    </button>
+    <div class="chat-title">
+      <strong>{{ targetUserId ? (targetUser.nickName || '私信') : '私信会话' }}</strong>
+      <span>{{ targetUserId ? chatSubtitle : '把想说的话，认真送到对方那边' }}</span>
+    </div>
+    <button class="icon-button" @click="targetUserId ? loadMessages(true) : loadConversations()">
+      <i class="el-icon-refresh"></i>
+    </button>
+  </header>
+
+  <main v-if="!targetUserId" class="conversation-panel" v-loading="loading">
+    <section class="chat-empty" v-if="!loading && conversations.length === 0">
+      <div class="chat-empty__orb"><i class="el-icon-chat-line-round"></i></div>
+      <h3>还没有私信会话</h3>
+      <p>去喜欢的作者主页点“发消息”，第一句话就从那里开始。</p>
+    </section>
+
+    <article
+      v-for="item in conversations"
+      :key="item.id"
+      class="conversation-card"
+      @click="openConversation(item.otherUserId)"
+    >
+      <img class="conversation-avatar" :src="avatarUrl(item.otherUserIcon)" alt="" @error="handleAvatarError">
+      <div class="conversation-main">
+        <div class="conversation-row">
+          <strong>{{ item.otherUserName || '用户' }}</strong>
+          <span>{{ formatRelativeTime(item.lastMessageTime) }}</span>
+        </div>
+        <p>{{ item.previewText || conversationPreview(item.lastMessage) }}</p>
+      </div>
+      <em v-if="item.unreadCount > 0">{{ item.unreadCount > 99 ? '99+' : item.unreadCount }}</em>
+    </article>
+  </main>
+
+  <main v-else class="message-panel">
+    <div class="message-list" ref="messageList" v-loading="loading">
+      <button class="load-more" v-if="hasMore && !loading" @click="loadMore">加载更早消息</button>
+      <section class="chat-empty chat-empty--small" v-if="!loading && messages.length === 0">
+        <div class="chat-empty__orb"><i class="el-icon-position"></i></div>
+        <h3>还没开始聊天</h3>
+        <p>友好、具体、别太长。第一条消息会被认真对待。</p>
+      </section>
+
+      <div
+        v-for="msg in messages"
+        :key="msg.id"
+        class="bubble-row"
+        :class="{ 'is-mine': msg.mine }"
+      >
+        <img
+          v-if="!msg.mine"
+          class="bubble-avatar"
+          :src="avatarUrl(targetUser.icon)"
+          alt=""
+          @error="handleAvatarError"
+        >
+        <div class="bubble" :class="{ 'bubble--share': isShareMessage(msg) }">
+          <div v-if="isShareMessage(msg)" class="share-card-message" @click="openSharedBlog(msg)">
+            <div class="share-card-message__cover">
+              <img :src="shareCoverUrl(sharePayload(msg).cover)" alt="" @error="handleShareCoverError">
+            </div>
+            <div class="share-card-message__body">
+              <div class="share-card-message__label">
+                <i class="el-icon-document"></i> 笔记分享
+              </div>
+              <strong>{{ sharePayload(msg).title || '一篇探店笔记' }}</strong>
+              <p>{{ sharePayload(msg).summary || '点击查看这篇笔记详情' }}</p>
+              <div class="share-card-message__meta">
+                <span>{{ sharePayload(msg).shopName || sharePayload(msg).authorName || 'HMDP' }}</span>
+                <em>去看看</em>
+              </div>
+            </div>
+          </div>
+          <template v-else>
+            <p>{{ msg.content }}</p>
+          </template>
+          <span>{{ formatClock(msg.createTime) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <footer class="composer">
+      <div class="send-hint" v-if="sendNotice">{{ sendNotice }}</div>
+      <div class="composer-box">
+        <textarea
+          v-model.trim="draft"
+          :disabled="sending || !canSend"
+          :placeholder="canSend ? '写点真诚的，说人话就很好。' : disabledPlaceholder"
+          @keydown.enter.exact.prevent="sendMessage"
+        ></textarea>
+        <button :disabled="sending || !canSend || !draft" @click="sendMessage">
+          {{ sending ? '发送中' : '发送' }}
+        </button>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<script src="/js/vue.js"></script>
+<script src="/js/axios.min.js"></script>
+<script src="/js/element.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/chat-page.js"></script>
+</body>
+</html>

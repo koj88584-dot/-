@@ -9,8 +9,8 @@ Vue.component("footBar", {
         <div class="foot-view"><i class="el-icon-map-location"></i></div>
         <div class="foot-text">地图</div>
       </div>
-      <div class="foot-box" @click="toPage(0)">
-        <img class="add-btn" src="/imgs/add.png" alt="">
+      <div class="foot-box foot-box--add" @click="toPage(0)" aria-label="发布笔记">
+        <div class="add-btn"><i class="el-icon-plus"></i></div>
       </div>
       <div class="foot-box" :class="{active: activeBtn === 3}" @click="toPage(3)">
         <div class="foot-view"><i class="el-icon-chat-dot-round"></i></div>

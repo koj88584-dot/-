@@ -90,6 +90,38 @@ public class FavoritesServiceImpl extends ServiceImpl<FavoritesMapper, Favorites
     }
 
     @Override
+    public Result toggleFavorite(Integer type, Long targetId) {
+        Long userId = UserHolder.getUser().getId();
+
+        Long count = lambdaQuery()
+                .eq(Favorites::getUserId, userId)
+                .eq(Favorites::getType, type)
+                .eq(Favorites::getTargetId, targetId)
+                .count();
+
+        if (count > 0) {
+            remove(new LambdaQueryWrapper<Favorites>()
+                    .eq(Favorites::getUserId, userId)
+                    .eq(Favorites::getType, type)
+                    .eq(Favorites::getTargetId, targetId));
+            return Result.ok(false);
+        }
+
+        Favorites favorites = new Favorites();
+        favorites.setUserId(userId);
+        favorites.setType(type);
+        favorites.setTargetId(targetId);
+        favorites.setCreateTime(LocalDateTime.now());
+        save(favorites);
+
+        if (type != null && type == 1) {
+            shopService.ensureShopExists(targetId);
+        }
+
+        return Result.ok(true);
+    }
+
+    @Override
     public Result queryFavorites(Integer type, Integer current) {
         Long userId = UserHolder.getUser().getId();
         

@@ -49,6 +49,16 @@ public class FavoritesController {
         return favoritesService.isFavorite(type, targetId);
     }
 
+    @PostMapping("/blog/{blogId}")
+    public Result toggleBlogFavorite(@PathVariable("blogId") Long blogId) {
+        return favoritesService.toggleFavorite(2, blogId);
+    }
+
+    @GetMapping("/blog/is/{blogId}")
+    public Result isBlogFavorite(@PathVariable("blogId") Long blogId) {
+        return favoritesService.isFavorite(2, blogId);
+    }
+
     /**
      * 查询收藏列表
      * @param type 收藏类型：1-店铺 2-博客，不传则查全部

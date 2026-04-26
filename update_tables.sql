@@ -95,6 +95,68 @@ CREATE TABLE `tb_privacy_setting` (
 -- Table structure for tb_voucher_order
 -- 优惠券订单表
 -- ----------------------------
+-- Recreate privacy settings in the column schema used by PrivacySetting.java.
+DROP TABLE IF EXISTS `tb_privacy_setting`;
+CREATE TABLE `tb_privacy_setting` (
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '用户id（主键）',
+  `show_following` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否显示关注列表：0-隐藏 1-公开',
+  `show_followers` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否显示粉丝列表：0-隐藏 1-公开',
+  `show_favorites` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否显示收藏：0-隐藏 1-公开',
+  `show_history` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否显示浏览历史：0-隐藏 1-公开',
+  `allow_message` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否允许陌生人私信：0-不允许 1-允许',
+  `allow_recommend` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否允许被推荐：0-不允许 1-允许',
+  `show_online_status` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否显示在线状态：0-隐藏 1-显示',
+  `stealth_mode` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '隐身访问：0-关闭 1-开启',
+  `allow_visit_notify` tinyint(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '允许访客通知：0-关闭 1-允许',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`user_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户隐私设置表' ROW_FORMAT = Compact;
+
+CREATE TABLE IF NOT EXISTS `tb_chat_conversation` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id_a` bigint(20) UNSIGNED NOT NULL COMMENT '用户A（ID较小的一方）',
+  `user_id_b` bigint(20) UNSIGNED NOT NULL COMMENT '用户B（ID较大的一方）',
+  `last_message` varchar(500) DEFAULT NULL COMMENT '最新消息内容',
+  `last_sender_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '最新消息发送者',
+  `unread_count_a` int UNSIGNED DEFAULT 0 COMMENT 'A的未读数',
+  `unread_count_b` int UNSIGNED DEFAULT 0 COMMENT 'B的未读数',
+  `last_message_time` timestamp NULL DEFAULT NULL COMMENT '最新消息时间',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_users` (`user_id_a`, `user_id_b`),
+  KEY `idx_user_a` (`user_id_a`),
+  KEY `idx_user_b` (`user_id_b`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='聊天会话表';
+
+CREATE TABLE IF NOT EXISTS `tb_chat_message` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `conversation_id` bigint(20) UNSIGNED NOT NULL COMMENT '会话ID',
+  `sender_id` bigint(20) UNSIGNED NOT NULL COMMENT '发送者ID',
+  `receiver_id` bigint(20) UNSIGNED NOT NULL COMMENT '接收者ID',
+  `content` varchar(2000) NOT NULL COMMENT '消息内容',
+  `type` tinyint UNSIGNED DEFAULT 1 COMMENT '1-文本 2-图片',
+  `is_read` tinyint UNSIGNED DEFAULT 0 COMMENT '是否已读',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_conversation` (`conversation_id`),
+  KEY `idx_sender_receiver` (`sender_id`, `receiver_id`),
+  KEY `idx_receiver` (`receiver_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='聊天消息表';
+
+CREATE TABLE IF NOT EXISTS `tb_profile_visit` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `visitor_id` bigint(20) UNSIGNED NOT NULL COMMENT '访问者ID',
+  `visited_id` bigint(20) UNSIGNED NOT NULL COMMENT '被访问者ID',
+  `visit_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '访问时间',
+  `is_stealth` tinyint UNSIGNED DEFAULT 0 COMMENT '是否隐身访问',
+  `is_read` tinyint UNSIGNED DEFAULT 0 COMMENT '是否已读',
+  PRIMARY KEY (`id`),
+  KEY `idx_visited_time` (`visited_id`, `visit_time`),
+  KEY `idx_visitor` (`visitor_id`),
+  KEY `idx_unread` (`visited_id`, `is_read`, `is_stealth`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='主页访客记录表';
+
 DROP TABLE IF EXISTS `tb_voucher_order`;
 CREATE TABLE `tb_voucher_order` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',

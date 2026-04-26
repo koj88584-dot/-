@@ -1,11 +1,11 @@
 package com.hmdp.controller;
 
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.Shop;
 import com.hmdp.service.IShopService;
-import com.hmdp.utils.SystemConstants;
+import com.hmdp.service.impl.MerchantAuthService;
+import com.hmdp.service.impl.MerchantShopManagementService;
+import com.hmdp.utils.UserHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +23,10 @@ public class ShopController {
 
     @Resource
     public IShopService shopService;
+    @Resource
+    private MerchantAuthService merchantAuthService;
+    @Resource
+    private MerchantShopManagementService merchantShopManagementService;
 
     @GetMapping("/{id}")
     public Result queryShopById(@PathVariable("id") Long id) {
@@ -31,13 +35,31 @@ public class ShopController {
 
     @PostMapping
     public Result saveShop(@RequestBody Shop shop) {
+        Result access = assertAdminWriteAccess();
+        if (access != null) {
+            return access;
+        }
         shopService.save(shop);
         return Result.ok();
     }
 
     @PutMapping
     public Result updateShop(@RequestBody Shop shop) {
+        Result access = assertAdminWriteAccess();
+        if (access != null) {
+            return access;
+        }
         return shopService.update(shop);
+    }
+
+    @GetMapping("/{id}/featured-dishes")
+    public Result queryFeaturedDishes(@PathVariable("id") Long id) {
+        return Result.ok(merchantShopManagementService.listPublicDishes(id));
+    }
+
+    @GetMapping("/{id}/group-deals")
+    public Result queryGroupDeals(@PathVariable("id") Long id) {
+        return Result.ok(merchantShopManagementService.listPublicDeals(id));
     }
 
     @GetMapping("/of/type")
@@ -68,5 +90,12 @@ public class ShopController {
             @RequestParam(value = "cityCode", required = false) String cityCode
     ) {
         return shopService.searchShopsForAssociation(name, x, y, cityCode);
+    }
+
+    private Result assertAdminWriteAccess() {
+        if (UserHolder.getUser() == null || !merchantAuthService.isAdmin(UserHolder.getUser().getId())) {
+            return Result.fail("店铺公开写接口已关闭，请使用商家资料变更审核流程");
+        }
+        return null;
     }
 }

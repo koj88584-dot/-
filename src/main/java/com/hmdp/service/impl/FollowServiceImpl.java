@@ -9,6 +9,7 @@ import com.hmdp.entity.Follow;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.FollowMapper;
 import com.hmdp.service.IFollowService;
+import com.hmdp.service.IPrivacySettingService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.UserHolder;
@@ -34,6 +35,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private IUserService userService;
+    @Resource
+    private IPrivacySettingService privacySettingService;
 
     @Override
     public Result follow(Long followUserId, Boolean isFollow) {
@@ -77,7 +80,32 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     }
 
     @Override
+    public Result isMutualFollow(Long targetUserId) {
+        Long userId = UserHolder.getUser().getId();
+        if (userId == null || targetUserId == null || userId.equals(targetUserId)) {
+            return Result.ok(false);
+        }
+
+        Long forwardCount = lambdaQuery()
+                .eq(Follow::getUserId, userId)
+                .eq(Follow::getFollowUserId, targetUserId)
+                .count();
+        if (forwardCount <= 0) {
+            return Result.ok(false);
+        }
+
+        Long backwardCount = lambdaQuery()
+                .eq(Follow::getUserId, targetUserId)
+                .eq(Follow::getFollowUserId, userId)
+                .count();
+        return Result.ok(backwardCount > 0);
+    }
+
+    @Override
     public Result followCommons(Long id) {
+        if (!privacySettingService.canViewFollowing(id)) {
+            return Result.fail("对方已隐藏关注列表");
+        }
         //获取登陆用户
         Long userId = UserHolder.getUser().getId();
         String key="follows:"+userId;
@@ -99,6 +127,9 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
 
     @Override
     public Result queryFollowList(Long userId, Integer current) {
+        if (!privacySettingService.canViewFollowing(userId)) {
+            return Result.fail("对方已隐藏关注列表");
+        }
         // 查询当前用户的关注列表
         List<Follow> follows = lambdaQuery()
                 .eq(Follow::getUserId, userId)
@@ -128,6 +159,9 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
 
     @Override
     public Result queryFollowerList(Long userId, Integer current) {
+        if (!privacySettingService.canViewFollowers(userId)) {
+            return Result.fail("对方已隐藏粉丝列表");
+        }
         // 查询当前用户的粉丝列表（谁关注了我）
         List<Follow> followers = lambdaQuery()
                 .eq(Follow::getFollowUserId, userId)

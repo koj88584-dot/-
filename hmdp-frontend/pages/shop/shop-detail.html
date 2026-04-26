@@ -551,6 +551,377 @@
       box-shadow: none;
     }
 
+    .merchant-admin-card {
+      margin: 12px 16px 0;
+      padding: 16px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(255,122,69,.12), rgba(255,255,255,.96));
+      border: 1px solid rgba(255,122,69,.18);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .merchant-admin-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .merchant-admin-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .merchant-admin-sub {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .merchant-admin-badge {
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(255,122,69,.12);
+    }
+
+    .merchant-action-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .merchant-action {
+      border: 0;
+      border-radius: 16px;
+      background: #fff;
+      color: var(--text-primary);
+      padding: 10px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(255,122,69,.08);
+    }
+
+    .merchant-action i {
+      color: var(--primary);
+      font-size: 18px;
+    }
+
+    .featured-grid {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 2px 2px 8px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .featured-grid::-webkit-scrollbar {
+      display: none;
+    }
+
+    .featured-card {
+      flex: 0 0 86%;
+      display: grid;
+      grid-template-columns: 104px 1fr;
+      gap: 12px;
+      min-height: 116px;
+      overflow: hidden;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #fffaf6 0%, #fff 100%);
+      border: 1px solid rgba(255,122,69,.12);
+      box-shadow: 0 10px 26px rgba(255,122,69,.07);
+      scroll-snap-align: start;
+    }
+
+    .featured-card img {
+      width: 104px;
+      height: 100%;
+      min-height: 116px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .featured-body {
+      min-width: 0;
+      padding: 12px 12px 12px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .featured-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .featured-desc {
+      margin-top: 4px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .featured-price {
+      color: var(--primary);
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .featured-buy-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 10px;
+    }
+
+    .featured-meta {
+      margin-top: 8px;
+      color: #96a0af;
+      font-size: 11px;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .featured-buy-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 7px 12px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .group-deal-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .group-deal-card {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #fff7f0 0%, #fff 100%);
+      border: 1px solid rgba(255,122,69,.14);
+    }
+
+    .group-deal-cover {
+      width: 96px;
+      height: 96px;
+      border-radius: 16px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #fff1e8;
+    }
+
+    .group-deal-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .group-deal-title {
+      font-weight: 900;
+      font-size: 15px;
+      color: var(--text-primary);
+      line-height: 1.35;
+    }
+
+    .group-deal-desc {
+      margin-top: 4px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .group-deal-price {
+      margin-top: 8px;
+      color: var(--primary);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .group-deal-price del {
+      margin-left: 6px;
+      color: var(--text-tertiary);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .group-deal-bottom {
+      margin-top: auto;
+      padding-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .group-deal-stock {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .group-deal-buy {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .merchant-dialog .el-dialog {
+      border-radius: 22px;
+      overflow: hidden;
+    }
+
+    .merchant-form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .merchant-field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .merchant-field .el-input__inner,
+    .merchant-field .el-textarea__inner {
+      border-radius: 14px;
+      border-color: #f0e6df;
+    }
+
+    .merchant-mini-title {
+      margin: 16px 0 10px;
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--text-primary);
+    }
+
+    .merchant-tip {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,122,69,.08);
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .image-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .image-chip {
+      position: relative;
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff1e8;
+    }
+
+    .image-chip img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .image-chip button {
+      position: absolute;
+      right: 2px;
+      top: 2px;
+      width: 18px;
+      height: 18px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,.56);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .merchant-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .merchant-row {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 16px;
+      background: #fffaf6;
+      border: 1px solid rgba(255,122,69,.12);
+    }
+
+    .merchant-row img {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .merchant-row-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .merchant-row-title {
+      font-weight: 900;
+      color: var(--text-primary);
+      line-height: 1.35;
+    }
+
+    .merchant-row-meta {
+      margin-top: 3px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .merchant-row-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
     .seckill-badge {
       position: absolute;
       top: 0;
@@ -575,6 +946,69 @@
       flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 20px;
+    }
+
+    .comment-composer {
+      margin-bottom: 18px;
+      padding: 14px;
+      border-radius: 18px;
+      background: #fff8f4;
+      border: 1px solid rgba(255,122,69,.12);
+    }
+
+    .comment-composer-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .comment-composer textarea {
+      width: 100%;
+      min-height: 76px;
+      resize: vertical;
+      border: 0;
+      border-radius: 16px;
+      padding: 12px;
+      color: var(--text-primary);
+      background: #fff;
+      outline: none;
+      font: inherit;
+    }
+
+    .comment-composer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .comment-upload-btn,
+    .comment-submit-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .comment-upload-btn {
+      color: var(--text-secondary);
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
+    }
+
+    .comment-submit-btn {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    }
+
+    .comment-submit-btn:disabled {
+      opacity: .65;
+      cursor: not-allowed;
     }
 
     .comment-tag {
@@ -617,6 +1051,7 @@
       border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
+      cursor: pointer;
     }
 
     .comment-content {
@@ -779,6 +1214,181 @@
       font-size: 22px;
     }
 
+    .share-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 1800;
+      background: rgba(17, 24, 39, 0.46);
+      backdrop-filter: blur(2px);
+    }
+
+    .share-sheet {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      z-index: 1900;
+      width: min(100%, 430px);
+      max-height: 82vh;
+      padding: 24px 18px calc(24px + env(safe-area-inset-bottom));
+      border-radius: 30px 30px 0 0;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 -22px 48px rgba(15, 23, 42, 0.16);
+      transform: translateX(-50%);
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    .share-sheet__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .share-sheet__head strong {
+      color: #111827;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .share-sheet__head button {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: #f4f4f5;
+      color: #6b7280;
+      font-size: 18px;
+    }
+
+    .share-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px 10px;
+    }
+
+    .share-option {
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      color: #374151;
+      font: inherit;
+    }
+
+    .share-option__icon {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 9px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 24px;
+      font-weight: 900;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+    }
+
+    .share-option em {
+      display: block;
+      overflow: hidden;
+      font-style: normal;
+      font-size: 12px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .share-option--private .share-option__icon { background: linear-gradient(135deg, #ff6b35, #ff8c61); }
+    .share-option--wechat .share-option__icon { background: linear-gradient(135deg, #20c45a, #35d76f); }
+    .share-option--moments .share-option__icon { background: linear-gradient(135deg, #54d31e, #74df42); }
+    .share-option--qq .share-option__icon { background: linear-gradient(135deg, #19b7ee, #35c9ff); }
+    .share-option--qzone .share-option__icon { background: linear-gradient(135deg, #ffc43d, #ffd86a); }
+    .share-option--image .share-option__icon,
+    .share-option--copy .share-option__icon,
+    .share-option--more .share-option__icon {
+      background: #fff;
+      color: #6b7280;
+      border: 1px solid rgba(229, 231, 235, 0.9);
+    }
+
+    .share-friends {
+      margin-top: 22px;
+      padding: 14px;
+      border-radius: 22px;
+      background: #f8fafc;
+    }
+
+    .share-friends__title {
+      margin-bottom: 12px;
+      color: #111827;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .share-friends__loading,
+    .share-friends__empty {
+      padding: 18px 10px;
+      color: #6b7280;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .share-friend {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-top: 1px solid rgba(229, 231, 235, 0.75);
+    }
+
+    .share-friend:first-of-type {
+      border-top: 0;
+    }
+
+    .share-friend img {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #fff2ea;
+    }
+
+    .share-friend span {
+      overflow: hidden;
+      font-size: 14px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .share-friend button {
+      height: 34px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .share-friend button:disabled {
+      opacity: 0.65;
+    }
+
+    .share-slide-enter-active,
+    .share-slide-leave-active {
+      transition: transform 0.24s ease, opacity 0.24s ease;
+    }
+
+    .share-slide-enter,
+    .share-slide-leave-to {
+      opacity: 0;
+      transform: translateX(-50%) translateY(24px);
+    }
+
     .bottom-btn {
       transition: var(--transition-smooth);
       flex: 1;
@@ -838,8 +1448,8 @@
       <i class="el-icon-arrow-left"></i>
     </div>
     <div class="header-title">店铺详情</div>
-    <div class="header-share">
-      <i class="el-icon-share"></i>
+    <div class="header-share" @click="canManageShop ? openMerchantDialog('shop') : shareShop()">
+      <i :class="canManageShop ? 'el-icon-s-tools' : 'el-icon-share'"></i>
     </div>
   </div>
 
@@ -890,6 +1500,32 @@
       </button>
     </div>
 
+    <div class="merchant-admin-card" v-if="canManageShop">
+      <div class="merchant-admin-head">
+        <div>
+          <div class="merchant-admin-title">商家管理</div>
+          <div class="merchant-admin-sub">
+            {{ merchantAccess.pendingUpdate ? '资料变更正在审核中，用户侧仍展示旧资料' : '你可以维护店铺资料、招牌菜和团购' }}
+          </div>
+        </div>
+        <div class="merchant-admin-badge">{{ merchantAccess.memberRole || '商家' }}</div>
+      </div>
+      <div class="merchant-action-grid">
+        <button class="merchant-action" v-if="canEditShop" @click="openMerchantDialog('shop')">
+          <i class="el-icon-edit-outline"></i><span>编辑资料</span>
+        </button>
+        <button class="merchant-action" v-if="canEditShop" @click="openMerchantDialog('dishes')">
+          <i class="el-icon-dish"></i><span>招牌菜</span>
+        </button>
+        <button class="merchant-action" v-if="canEditShop" @click="openMerchantDialog('deals')">
+          <i class="el-icon-shopping-bag-1"></i><span>团购上架</span>
+        </button>
+        <button class="merchant-action" v-if="merchantAccess.canVerify" @click="openMerchantDialog('orders')">
+          <i class="el-icon-finished"></i><span>订单核销</span>
+        </button>
+      </div>
+    </div>
+
     <div class="city-worth-section" v-if="cityEditionEnabled">
       <div class="city-worth-title">
         <i class="el-icon-location-information"></i>
@@ -923,6 +1559,60 @@
           <div class="info-value">{{shop.openHours || '09:00 - 22:00'}}</div>
         </div>
         <i class="el-icon-arrow-right info-arrow"></i>
+      </div>
+    </div>
+
+    <div class="section" v-if="featuredDishes && featuredDishes.length">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="section-title-icon"></div>
+          招牌菜
+        </div>
+        <div class="section-more">商家推荐</div>
+      </div>
+      <div class="featured-grid">
+        <div class="featured-card" v-for="dish in featuredDishes" :key="dish.id">
+          <img :src="resolveImageUrl(dish.image || firstImage(shop.images))" alt="招牌菜" @error="handleImageError">
+          <div class="featured-body">
+            <div class="featured-name">{{ dish.name }}</div>
+            <div class="featured-desc">{{ dish.description || '到店可以优先试试这一款。' }}</div>
+            <div class="featured-buy-row">
+              <div class="featured-price" v-if="dish.price">¥{{ priceToYuan(dish.price) }}</div>
+              <button class="featured-buy-btn" v-if="dish.price" @click="buyFeaturedDish(dish)">购买</button>
+            </div>
+            <div class="featured-meta">
+              <i class="el-icon-ticket"></i>
+              购买后生成券码，到店消费核销
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" v-if="groupDeals && groupDeals.length">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="section-title-icon"></div>
+          团购套餐
+        </div>
+        <div class="section-more">购买后到店核销</div>
+      </div>
+      <div class="group-deal-list">
+        <div class="group-deal-card" v-for="deal in groupDeals" :key="deal.id">
+          <img class="group-deal-cover" :src="firstImage(deal.images)" alt="团购" @error="handleImageError">
+          <div class="group-deal-body">
+            <div class="group-deal-title">{{ deal.title }}</div>
+            <div class="group-deal-desc">{{ deal.description || deal.rules || '到店出示券码即可核销。' }}</div>
+            <div class="group-deal-price">
+              ¥{{ priceToYuan(deal.price) }}
+              <del>¥{{ priceToYuan(deal.originalPrice) }}</del>
+            </div>
+            <div class="group-deal-bottom">
+              <span class="group-deal-stock">已售 {{ deal.sold || 0 }} · 剩余 {{ deal.stock || 0 }}</span>
+              <button class="group-deal-buy" @click="buyGroupDeal(deal)">购买</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -982,6 +1672,29 @@
         </div>
       </div>
 
+      <div class="comment-composer">
+        <div class="comment-composer-top">
+          <strong>真实发声，言之有物</strong>
+          <el-rate v-model="commentForm.score" :max="5" :colors="['#FF7A45', '#FF7A45', '#FF7A45']"></el-rate>
+        </div>
+        <textarea v-model.trim="commentForm.content" placeholder="购买并到店核销后可以评价，说说口味、环境、服务吧。"></textarea>
+        <div class="image-chip-list" v-if="commentForm.images.length">
+          <div class="image-chip" v-for="image in commentForm.images" :key="image">
+            <img :src="resolveImageUrl(image)" alt="">
+            <button @click="removeCommentImage(image)">×</button>
+          </div>
+        </div>
+        <div class="comment-composer-actions">
+          <button class="comment-upload-btn" @click="$refs.commentImageInput.click()" :disabled="commentImageUploading">
+            <i :class="commentImageUploading ? 'el-icon-loading' : 'el-icon-picture-outline'"></i> 发图片
+          </button>
+          <input ref="commentImageInput" type="file" accept="image/*" style="display:none" @change="handleCommentImageUpload">
+          <button class="comment-submit-btn" @click="submitShopComment" :disabled="commentSubmitting">
+            {{ commentSubmitting ? '发送中' : '发布评价' }}
+          </button>
+        </div>
+      </div>
+
       <div class="comment-tags" v-if="commentTagOptions.length">
         <span
           v-for="tag in commentTagOptions"
@@ -993,7 +1706,7 @@
 
       <div class="comment-list">
         <div class="comment-item" v-for="comment in filteredComments" :key="comment.id">
-          <img :src="resolveImageUrl(comment.userIcon)" class="comment-avatar" alt="头像" @error="handleImageError">
+          <img :src="resolveImageUrl(comment.userIcon)" class="comment-avatar" alt="头像" @click="openUserProfile(comment.userId)" @error="handleImageError">
           <div class="comment-content">
             <div class="comment-header">
               <span class="comment-user">
@@ -1038,6 +1751,324 @@
     </div>
   </div>
 
+  <el-dialog
+    class="merchant-dialog"
+    :title="merchantDialogTitle"
+    :visible.sync="merchantDialogVisible"
+    width="94%"
+    append-to-body
+  >
+    <div v-if="merchantDialogMode === 'shop'" class="merchant-form-grid">
+      <div class="merchant-tip">
+        营业时间、均价、联系电话会立即生效；店名、地址、商圈、坐标、门店图片需要管理员审核后才会更新。
+      </div>
+      <div class="merchant-mini-title">立即生效</div>
+      <div class="merchant-field">
+        <label>营业时间</label>
+        <el-input v-model.trim="quickForm.openHours" placeholder="例如 10:00-22:00"></el-input>
+      </div>
+      <div class="merchant-field">
+        <label>人均价格</label>
+        <el-input v-model.trim="quickForm.avgPrice" placeholder="例如 45"></el-input>
+      </div>
+      <div class="merchant-field">
+        <label>联系电话</label>
+        <el-input v-model.trim="quickForm.phone" placeholder="例如 13800000000"></el-input>
+      </div>
+      <el-button type="primary" @click="saveQuickInfo" :disabled="!canEditShop">保存基础资料</el-button>
+
+      <div class="merchant-mini-title">需审核变更</div>
+      <div class="merchant-field">
+        <label>店铺名称</label>
+        <el-input v-model.trim="updateForm.name"></el-input>
+      </div>
+      <div class="merchant-field">
+        <label>类型 ID</label>
+        <el-input v-model.trim="updateForm.typeId"></el-input>
+      </div>
+      <div class="merchant-field">
+        <label>商圈</label>
+        <el-input v-model.trim="updateForm.area"></el-input>
+      </div>
+      <div class="merchant-field">
+        <label>地址</label>
+        <el-input v-model.trim="updateForm.address"></el-input>
+      </div>
+      <div class="merchant-field">
+        <label>经纬度</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <el-input v-model.trim="updateForm.x" placeholder="经度"></el-input>
+          <el-input v-model.trim="updateForm.y" placeholder="纬度"></el-input>
+        </div>
+      </div>
+      <div class="merchant-field">
+        <label>门店图片</label>
+        <el-button size="mini" @click="$refs.shopImageInput.click()" :loading="merchantImageUploading">上传门店图</el-button>
+        <input ref="shopImageInput" type="file" accept="image/*" style="display:none" @change="handleMerchantImageUpload($event, 'shopImages')">
+        <div class="image-chip-list">
+          <div class="image-chip" v-for="image in splitImages(updateForm.images)" :key="image">
+            <img :src="resolveImageUrl(image)" alt="">
+            <button @click="removeUpdateImage('shop', image)">×</button>
+          </div>
+        </div>
+      </div>
+      <div class="merchant-field">
+        <label>证明图片</label>
+        <el-button size="mini" @click="$refs.proofImageInput.click()" :loading="merchantImageUploading">上传证明</el-button>
+        <input ref="proofImageInput" type="file" accept="image/*" style="display:none" @change="handleMerchantImageUpload($event, 'proofImages')">
+        <div class="image-chip-list">
+          <div class="image-chip" v-for="image in splitImages(updateForm.proofImages)" :key="image">
+            <img :src="resolveImageUrl(image)" alt="">
+            <button @click="removeUpdateImage('proof', image)">×</button>
+          </div>
+        </div>
+      </div>
+      <div class="merchant-field">
+        <label>补充说明</label>
+        <el-input v-model.trim="updateForm.message" type="textarea" :rows="3" placeholder="说明为什么需要修改，方便管理员审核"></el-input>
+      </div>
+      <el-button type="warning" @click="submitUpdateApplication" :disabled="!canEditShop || merchantAccess.pendingUpdate">提交审核</el-button>
+    </div>
+
+    <div v-else-if="merchantDialogMode === 'dishes'">
+      <div class="merchant-form-grid">
+        <div class="merchant-field">
+          <label>招牌菜名称</label>
+          <el-input v-model.trim="dishForm.name" maxlength="32"></el-input>
+        </div>
+        <div class="merchant-field">
+          <label>描述</label>
+          <el-input v-model.trim="dishForm.description" type="textarea" :rows="2"></el-input>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 96px;gap:8px;">
+          <div class="merchant-field">
+            <label>参考价</label>
+            <el-input v-model.trim="dishForm.priceYuan" placeholder="例如 28"></el-input>
+          </div>
+          <div class="merchant-field">
+            <label>排序</label>
+            <el-input-number v-model="dishForm.sort" :min="0" :max="999" size="small"></el-input-number>
+          </div>
+        </div>
+        <div class="merchant-field">
+          <label>图片</label>
+          <el-button size="mini" @click="$refs.dishImageInput.click()" :loading="merchantImageUploading">上传图片</el-button>
+          <input ref="dishImageInput" type="file" accept="image/*" style="display:none" @change="handleMerchantImageUpload($event, 'dish')">
+          <div class="image-chip-list" v-if="dishForm.image">
+            <div class="image-chip">
+              <img :src="resolveImageUrl(dishForm.image)" alt="">
+              <button @click="dishForm.image = ''">×</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <el-button type="primary" @click="saveDish">{{ dishForm.id ? '保存修改' : '新增招牌菜' }}</el-button>
+          <el-button @click="resetDishForm">清空</el-button>
+        </div>
+      </div>
+      <div class="merchant-list" v-loading="merchantLoading">
+        <div class="merchant-row" v-for="dish in merchantDishes" :key="dish.id">
+          <img :src="resolveImageUrl(dish.image || (shop.images && shop.images[0]))" alt="" @error="handleImageError">
+          <div class="merchant-row-main">
+            <div class="merchant-row-title">{{ dish.name }}</div>
+            <div class="merchant-row-meta">{{ formatDishStatus(dish.status) }} · ¥{{ dish.price ? priceToYuan(dish.price) : '未填' }}</div>
+            <div class="merchant-row-actions">
+              <el-button size="mini" @click="editDish(dish)">编辑</el-button>
+              <el-button v-if="dish.status !== 1" size="mini" type="primary" @click="publishDish(dish)">上架</el-button>
+              <el-button v-if="dish.status === 1" size="mini" type="warning" @click="unpublishDish(dish)">下架</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="merchantDialogMode === 'deals'">
+      <div class="merchant-form-grid">
+        <div class="merchant-field">
+          <label>团购标题</label>
+          <el-input v-model.trim="groupDealForm.title" maxlength="48"></el-input>
+        </div>
+        <div class="merchant-field">
+          <label>套餐描述</label>
+          <el-input v-model.trim="groupDealForm.description" type="textarea" :rows="2"></el-input>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="merchant-field">
+            <label>团购价</label>
+            <el-input v-model.trim="groupDealForm.priceYuan" placeholder="例如 45"></el-input>
+          </div>
+          <div class="merchant-field">
+            <label>门市价</label>
+            <el-input v-model.trim="groupDealForm.originalPriceYuan" placeholder="例如 80"></el-input>
+          </div>
+        </div>
+        <div class="merchant-field">
+          <label>库存</label>
+          <el-input-number v-model="groupDealForm.stock" :min="1" :max="99999"></el-input-number>
+        </div>
+        <div class="merchant-field">
+          <label>有效期</label>
+          <div style="display:grid;gap:8px;">
+            <el-date-picker v-model="groupDealForm.beginTime" type="datetime" placeholder="开始时间" style="width:100%;"></el-date-picker>
+            <el-date-picker v-model="groupDealForm.endTime" type="datetime" placeholder="结束时间" style="width:100%;"></el-date-picker>
+          </div>
+        </div>
+        <div class="merchant-field">
+          <label>使用规则</label>
+          <el-input v-model.trim="groupDealForm.rules" type="textarea" :rows="3"></el-input>
+        </div>
+        <div class="merchant-field">
+          <label>团购图片</label>
+          <el-button size="mini" @click="$refs.dealImageInput.click()" :loading="merchantImageUploading">上传图片</el-button>
+          <input ref="dealImageInput" type="file" accept="image/*" style="display:none" @change="handleMerchantImageUpload($event, 'deal')">
+          <div class="image-chip-list">
+            <div class="image-chip" v-for="image in splitImages(groupDealForm.images)" :key="image">
+              <img :src="resolveImageUrl(image)" alt="">
+              <button @click="removeDealImage(image)">×</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <el-button type="primary" @click="saveGroupDeal">{{ groupDealForm.id ? '保存修改' : '新增团购' }}</el-button>
+          <el-button @click="resetGroupDealForm">清空</el-button>
+        </div>
+      </div>
+      <div class="merchant-list" v-loading="merchantLoading">
+        <div class="merchant-row" v-for="deal in merchantGroupDeals" :key="deal.id">
+          <img :src="firstImage(deal.images)" alt="" @error="handleImageError">
+          <div class="merchant-row-main">
+            <div class="merchant-row-title">{{ deal.title }}</div>
+            <div class="merchant-row-meta">{{ formatDealStatus(deal.status) }} · ¥{{ priceToYuan(deal.price) }} · 剩余 {{ deal.stock || 0 }}</div>
+            <div class="merchant-row-actions">
+              <el-button size="mini" @click="editGroupDeal(deal)" :disabled="deal.status === 1">编辑</el-button>
+              <el-button v-if="deal.status !== 1 && deal.status !== 3" size="mini" type="primary" @click="publishGroupDeal(deal)">上架</el-button>
+              <el-button v-if="deal.status === 1" size="mini" type="warning" @click="unpublishGroupDeal(deal)">下架</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="merchantDialogMode === 'orders'">
+      <div class="merchant-form-grid">
+        <el-radio-group v-model="orderManageType" size="mini">
+          <el-radio-button label="group">团购订单</el-radio-button>
+          <el-radio-button label="dish">招牌菜订单</el-radio-button>
+        </el-radio-group>
+        <template v-if="orderManageType === 'group'">
+          <div class="merchant-field">
+            <label>团购券码</label>
+            <el-input v-model.trim="groupVerifyCode" placeholder="输入用户出示的 GD 开头券码"></el-input>
+          </div>
+          <el-button type="primary" @click="verifyGroupDealOrder">核销团购</el-button>
+          <el-radio-group v-model="groupOrderStatusFilter" @change="loadGroupOrders" size="mini">
+            <el-radio-button :label="2">待核销</el-radio-button>
+            <el-radio-button :label="3">已核销</el-radio-button>
+            <el-radio-button :label="null">全部</el-radio-button>
+          </el-radio-group>
+        </template>
+        <template v-else>
+          <div class="merchant-field">
+            <label>招牌菜券码</label>
+            <el-input v-model.trim="dishVerifyCode" placeholder="输入用户出示的 FD 开头券码"></el-input>
+          </div>
+          <el-button type="primary" @click="verifyDishOrder">核销招牌菜</el-button>
+          <el-radio-group v-model="dishOrderStatusFilter" @change="loadDishOrders" size="mini">
+            <el-radio-button :label="2">待核销</el-radio-button>
+            <el-radio-button :label="3">已核销</el-radio-button>
+            <el-radio-button :label="null">全部</el-radio-button>
+          </el-radio-group>
+        </template>
+      </div>
+      <div class="merchant-list" v-loading="merchantLoading" v-if="orderManageType === 'group'">
+        <div class="merchant-row" v-for="order in groupOrders" :key="order.id">
+          <img :src="firstImage(order.dealImages)" alt="" @error="handleImageError">
+          <div class="merchant-row-main">
+            <div class="merchant-row-title">{{ order.dealTitle || '团购订单' }}</div>
+            <div class="merchant-row-meta">{{ order.statusText }} · {{ order.verifyCode }} · {{ formatDateTime(order.createTime) }} · {{ order.commented ? '已评价' : '未评价' }}</div>
+            <div class="merchant-row-actions" v-if="order.status === 2">
+              <el-button size="mini" type="success" @click="groupVerifyCode = order.verifyCode">填入核销框</el-button>
+            </div>
+          </div>
+        </div>
+        <div class="comment-empty" v-if="!groupOrders.length">当前没有团购订单。</div>
+      </div>
+      <div class="merchant-list" v-loading="merchantLoading" v-else>
+        <div class="merchant-row" v-for="order in dishOrders" :key="order.id">
+          <img :src="resolveImageUrl(order.dishImage || (shop.images && shop.images[0]))" alt="" @error="handleImageError">
+          <div class="merchant-row-main">
+            <div class="merchant-row-title">{{ order.dishName || '招牌菜订单' }}</div>
+            <div class="merchant-row-meta">{{ order.statusText }} · {{ order.verifyCode }} · {{ formatDateTime(order.createTime) }} · {{ order.commented ? '已评价' : '未评价' }}</div>
+            <div class="merchant-row-actions" v-if="order.status === 2">
+              <el-button size="mini" type="success" @click="dishVerifyCode = order.verifyCode">填入核销框</el-button>
+            </div>
+          </div>
+        </div>
+        <div class="comment-empty" v-if="!dishOrders.length">当前没有招牌菜订单。</div>
+      </div>
+    </div>
+  </el-dialog>
+
+  <div class="share-mask" v-show="shareSheetVisible" @click="closeShareSheet"></div>
+  <transition name="share-slide">
+    <section class="share-sheet" v-show="shareSheetVisible">
+      <div class="share-sheet__head">
+        <strong>分享至</strong>
+        <button @click="closeShareSheet"><i class="el-icon-close"></i></button>
+      </div>
+      <div class="share-grid">
+        <button class="share-option share-option--private" @click="openPrivateShare">
+          <span class="share-option__icon"><i class="el-icon-position"></i></span>
+          <em>私信好友</em>
+        </button>
+        <button class="share-option share-option--wechat" @click="shareExternal('wechat')">
+          <span class="share-option__icon"><i class="el-icon-chat-dot-round"></i></span>
+          <em>微信好友</em>
+        </button>
+        <button class="share-option share-option--moments" @click="shareExternal('moments')">
+          <span class="share-option__icon"><i class="el-icon-camera"></i></span>
+          <em>朋友圈</em>
+        </button>
+        <button class="share-option share-option--qq" @click="shareExternal('qq')">
+          <span class="share-option__icon">Q</span>
+          <em>QQ好友</em>
+        </button>
+        <button class="share-option share-option--qzone" @click="shareExternal('qzone')">
+          <span class="share-option__icon"><i class="el-icon-star-on"></i></span>
+          <em>QQ空间</em>
+        </button>
+        <button class="share-option share-option--image" @click="generateShareImage">
+          <span class="share-option__icon"><i :class="shareImageGenerating ? 'el-icon-loading' : 'el-icon-picture-outline'"></i></span>
+          <em>生成分享图</em>
+        </button>
+        <button class="share-option share-option--copy" @click="copyShareLink">
+          <span class="share-option__icon"><i class="el-icon-link"></i></span>
+          <em>复制链接</em>
+        </button>
+        <button class="share-option share-option--more" @click="shareExternal('more')">
+          <span class="share-option__icon"><i class="el-icon-more"></i></span>
+          <em>更多</em>
+        </button>
+      </div>
+      <div class="share-friends" v-if="shareFriendPanelVisible">
+        <div class="share-friends__title">选择站内好友</div>
+        <div class="share-friends__loading" v-if="shareFriendLoading">
+          <i class="el-icon-loading"></i> 正在加载好友...
+        </div>
+        <div class="share-friends__empty" v-else-if="!shareFriends.length">
+          暂时没有可私信的好友，可以先复制链接分享。
+        </div>
+        <div class="share-friend" v-else v-for="friend in shareFriends" :key="friend.id">
+          <img :src="resolveImageUrl(friend.icon)" alt="" @error="handleImageError">
+          <span>{{ friend.nickName || '用户' + friend.id }}</span>
+          <button :disabled="shareSendingId === friend.id" @click="sendShareToFriend(friend)">
+            {{ shareSendingId === friend.id ? '发送中' : '发送' }}
+          </button>
+        </div>
+      </div>
+    </section>
+  </transition>
+
   <!-- Bottom Action Bar -->
   <div class="bottom-bar">
     <div class="bottom-actions">
@@ -1045,7 +2076,7 @@
         <i :class="isFavorite ? 'el-icon-star-on' : 'el-icon-star-off'"></i>
         <span>{{isFavorite ? '已收藏' : '收藏'}}</span>
       </div>
-      <div class="bottom-action">
+      <div class="bottom-action" @click="shareShop">
         <i class="el-icon-share"></i>
         <span>分享</span>
       </div>

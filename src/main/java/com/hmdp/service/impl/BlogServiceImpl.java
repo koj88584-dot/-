@@ -8,9 +8,11 @@ import com.hmdp.dto.Result;
 import com.hmdp.dto.ScrollResult;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
+import com.hmdp.entity.Favorites;
 import com.hmdp.entity.Follow;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.BlogMapper;
+import com.hmdp.mapper.FavoritesMapper;
 import com.hmdp.service.IBlogService;
 import com.hmdp.service.IBrowseHistoryService;
 import com.hmdp.service.IFollowService;
@@ -42,6 +44,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     private IBrowseHistoryService browseHistoryService;
     @Resource
     private IShopService shopService;
+    @Resource
+    private FavoritesMapper favoritesMapper;
 
     @Override
     public Result queryHotBlog(Integer current) {
@@ -184,7 +188,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         for (Long id : ids) {
             blogs.add(getById(id));
         }
-        blogs.forEach(this::isBlogLiked);
+        blogs.forEach(blog -> {
+            queryBlogUser(blog);
+            isBlogLiked(blog);
+        });
 
         ScrollResult scrollResult = new ScrollResult();
         scrollResult.setList(blogs);
@@ -211,6 +218,11 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         String key = RedisConstants.BLOG_LIKED_KEY + blog.getId();
         Double score = stringRedisTemplate.opsForZSet().score(key, userId.toString());
         blog.setIsLike(score != null);
+        Long favoriteCount = favoritesMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Favorites>()
+                .eq(Favorites::getUserId, userId)
+                .eq(Favorites::getType, 2)
+                .eq(Favorites::getTargetId, blog.getId()));
+        blog.setIsFavorited(favoriteCount > 0);
     }
 
     private String buildBlogTitle(String content) {

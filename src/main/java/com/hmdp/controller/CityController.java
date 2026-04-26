@@ -5,11 +5,13 @@ import com.hmdp.dto.CityProfileDTO;
 import com.hmdp.dto.CityScenePackDTO;
 import com.hmdp.dto.MerchantCityStatsDTO;
 import com.hmdp.dto.Result;
+import com.hmdp.service.ICityHotNewsService;
 import com.hmdp.service.ICityService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -23,6 +25,9 @@ public class CityController {
 
     @Resource
     private ICityService cityService;
+
+    @Resource
+    private ICityHotNewsService cityHotNewsService;
 
     @GetMapping("/list")
     public Result listCities() {
@@ -45,6 +50,12 @@ public class CityController {
     public Result getCityScenes(@PathVariable("cityCode") String cityCode) {
         List<CityScenePackDTO> scenes = cityService.listCityScenes(cityCode);
         return Result.ok(scenes);
+    }
+
+    @GetMapping("/{cityCode}/hot-news")
+    public Result getCityHotNews(@PathVariable("cityCode") String cityCode,
+                                 @RequestParam(value = "current", defaultValue = "1") Integer current) {
+        return cityHotNewsService.queryHotNews(cityCode, current);
     }
 
     @GetMapping("/{cityCode}/merchant-stats")

@@ -4,11 +4,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.ShopComment;
 import com.hmdp.mapper.ShopCommentMapper;
+import com.hmdp.service.IGroupDealOrderService;
 import com.hmdp.service.IShopCommentService;
+import com.hmdp.service.IShopFeaturedDishOrderService;
 import com.hmdp.service.IShopSyncService;
 import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -20,6 +23,10 @@ public class ShopCommentServiceImpl extends ServiceImpl<ShopCommentMapper, ShopC
 
     @Resource
     private IShopSyncService shopSyncService;
+    @Resource
+    private IGroupDealOrderService groupDealOrderService;
+    @Resource
+    private IShopFeaturedDishOrderService shopFeaturedDishOrderService;
 
     @Override
     public Result queryCommentList(Long shopId, Integer current, Integer size) {
@@ -60,6 +67,7 @@ public class ShopCommentServiceImpl extends ServiceImpl<ShopCommentMapper, ShopC
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Result addComment(ShopComment comment) {
         Long userId = UserHolder.getUser().getId();
         if (userId == null) {
@@ -84,6 +92,12 @@ public class ShopCommentServiceImpl extends ServiceImpl<ShopCommentMapper, ShopC
             }
         }
 
+        boolean hasGroupDealOrder = groupDealOrderService.hasVerifiedUncommentedOrder(userId, shopId);
+        boolean hasDishOrder = shopFeaturedDishOrderService.hasVerifiedUncommentedOrder(userId, shopId);
+        if (!hasGroupDealOrder && !hasDishOrder) {
+            return Result.fail("购买团购或招牌菜并到店核销后才能评价");
+        }
+
         comment.setUserId(userId);
         comment.setStatus(0);
         comment.setLiked(0);
@@ -91,6 +105,11 @@ public class ShopCommentServiceImpl extends ServiceImpl<ShopCommentMapper, ShopC
         boolean success = save(comment);
         if (!success) {
             return Result.fail("评价失败");
+        }
+        if (hasGroupDealOrder) {
+            groupDealOrderService.markOneCommented(userId, shopId);
+        } else {
+            shopFeaturedDishOrderService.markOneCommented(userId, shopId);
         }
         return Result.ok(comment.getId());
     }

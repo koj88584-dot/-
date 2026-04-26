@@ -10,6 +10,8 @@
       followCount: 0,
       followerCount: 0,
       unreadCount: 0,
+      visitorUnreadCount: 0,
+      pendingReviewCount: 0,
       pageReady: false,
       params: {
         minTime: 0,
@@ -119,6 +121,22 @@
           this.unreadCount = result.data || 0;
         })
         .catch(() => {});
+      axios.get("/profile-visit/count")
+        .then((result) => {
+          this.visitorUnreadCount = result.data || 0;
+        })
+        .catch(() => {});
+      this.queryPendingReviews();
+    },
+    queryPendingReviews() {
+      Promise.all([
+        axios.get("/group-deals/orders/my", { params: { status: 3, commented: 0, current: 1 } }).catch(() => ({ data: [] })),
+        axios.get("/featured-dishes/orders/my", { params: { status: 3, commented: 0, current: 1 } }).catch(() => ({ data: [] }))
+      ]).then((results) => {
+        this.pendingReviewCount = results.reduce((sum, result) => sum + (Array.isArray(result.data) ? result.data.length : 0), 0);
+      }).catch(() => {
+        this.pendingReviewCount = 0;
+      });
     },
     addLike(blog) {
       axios.put("/blog/like/" + blog.id)
@@ -180,11 +198,17 @@
     toMessages() {
       location.href = "../misc/messages.html";
     },
+    toVisitors() {
+      location.href = "../misc/visitors.html";
+    },
     toVouchers() {
       location.href = "../misc/vouchers.html";
     },
     toOrders() {
       location.href = "../order/orders.html";
+    },
+    toPendingReviews() {
+      location.href = "../order/orders.html?status=review";
     },
     toMap() {
       location.href = "../map/map.html";

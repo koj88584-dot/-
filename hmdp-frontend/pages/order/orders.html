@@ -185,6 +185,7 @@
         <el-tab-pane label="已支付" name="2"></el-tab-pane>
         <el-tab-pane label="已核销" name="3"></el-tab-pane>
         <el-tab-pane label="已取消" name="4"></el-tab-pane>
+        <el-tab-pane label="待评价" name="review"></el-tab-pane>
       </el-tabs>
 
       <div class="loading-wrap" v-if="loading">
@@ -211,7 +212,11 @@
                   <div class="order-title">{{ order.voucherTitle || '优惠券订单' }}</div>
                   <div class="order-shop">{{ order.shopName || order.voucherSubTitle || '关联商户信息待补充' }}</div>
                   <div class="order-meta">
-                    <div class="order-chip">
+                    <div class="order-chip" v-if="order.productLabel">
+                      <i class="el-icon-s-goods"></i>
+                      {{ order.productLabel }}
+                    </div>
+                    <div class="order-chip" v-if="!order.productLabel">
                       <i class="el-icon-s-ticket"></i>
                       {{ order.voucherType === 1 ? '秒杀券' : '普通券' }}
                     </div>
@@ -252,19 +257,40 @@
                   立即支付
                 </el-button>
                 <el-button
-                  v-if="order.status === 2"
+                  v-if="order.status === 2 && order.productType === 'voucher'"
                   type="success"
                   @click="useOrder(order.id)"
                 >
                   立即核销
                 </el-button>
                 <el-button
-                  v-if="order.status === 2"
+                  v-if="order.status === 2 && order.productType === 'voucher'"
                   type="warning"
                   plain
                   @click="refundOrder(order.id)"
                 >
                   申请退款
+                </el-button>
+                <el-button
+                  v-if="order.status === 2 && order.productType !== 'voucher'"
+                  type="success"
+                  @click="showVerifyCode(order)"
+                >
+                  查看券码
+                </el-button>
+                <el-button
+                  v-if="order.canReview"
+                  type="primary"
+                  @click="reviewOrder(order)"
+                >
+                  去评价
+                </el-button>
+                <el-button
+                  v-if="order.shopId"
+                  plain
+                  @click="goShop(order)"
+                >
+                  进店
                 </el-button>
               </div>
             </div>
